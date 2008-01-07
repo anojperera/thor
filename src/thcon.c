@@ -888,10 +888,6 @@ static void* _thcon_thread_function_client(void* obj)
 static int _thcon_send_info(int fd, void* msg, size_t sz)
 {
     size_t _buff_sent = 0;
-    char _err_msg[THOR_BUFF_SZ];
-
-    sprintf(_err_msg, "Sending message on socket: %i, of size: %i", fd, sz);
-    THOR_LOG_ERROR(_err_msg);
     
     /*
      * Send message in non blocking mode. Iterate until the message was sent.
@@ -1343,7 +1339,7 @@ static void* _thcon_thread_function_write_server(void* obj)
 	    /*--------------------------------------------------*/
 	    /************* Mutex Lock This Section **************/
 	    pthread_mutex_lock(&_obj->_var_mutex);
-	    for(i = 0; i < _obj->var_num_conns; i++);
+	    for(i = 0; i < _obj->var_num_conns; i++)
 		_thcon_send_info(_obj->_var_cons_fds[i], _msg->memory, _msg->size);
 	    pthread_mutex_unlock(&_obj->_var_mutex);
 	    /*--------------------------------------------------*/
