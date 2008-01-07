@@ -1,6 +1,7 @@
 #include "thcon.h"
 #include "thornifix.h"
 
+#include <string.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/epoll.h>
@@ -469,6 +470,7 @@ int thcon_multicast(thcon* obj, void* data, size_t sz)
     pthread_mutex_lock(&obj->_var_mutex_q);
     gqueue_in(&obj->_msg_queue, (void*) _msg);
     pthread_mutex_unlock(&obj->_var_mutex_q);
+    sem_post(&obj->_var_sem);
     /*--------------------------------------------------*/
     return 0;
 }
@@ -853,6 +855,12 @@ static void* _thcon_thread_function_client(void* obj)
 	    pthread_testcancel();
 	    _stat = recv(_obj->var_acc_sock, _t_buff, THORNIFIX_MSG_BUFF_SZ, MSG_DONTWAIT);
 
+	    /*
+	     * Server has closed the connection therefore we exit the
+	     * loop.
+	     */
+	    if(_stat == 0)
+	      break;
 
 	    /* disable thread cancel state */
 	    pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &_cancel_state);
@@ -880,7 +888,11 @@ static void* _thcon_thread_function_client(void* obj)
 static int _thcon_send_info(int fd, void* msg, size_t sz)
 {
     size_t _buff_sent = 0;
+    char _err_msg[THOR_BUFF_SZ];
 
+    sprintf(_err_msg, "Sending message on socket: %i, of size: %i", fd, sz);
+    THOR_LOG_ERROR(_err_msg);
+    
     /*
      * Send message in non blocking mode. Iterate until the message was sent.
      */
@@ -1001,7 +1013,7 @@ static void* _thcon_thread_function_server(void* obj)
 			    pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &_old_state);
 			    _thcon_accept_conn(_obj, _obj->var_con_sock, _e_sock, &_event);
 
-    			    THOR_LOG_ERROR("Connection made");
+
 			    /*
 			     * Fire callback to indicate connection was established and that
 			     * the sys object should be started.
@@ -1144,6 +1156,11 @@ static int _thcon_accept_conn(thcon* obj, int list_sock, int epoll_inst, struct 
 	    /* counter incremented in a mutex */
 	    pthread_mutex_lock(&obj->_var_mutex);
 	    obj->_var_cons_fds[obj->var_num_conns++] = _fd;
+	    
+	    /* Display message in debug mode */
+	    sprintf(_err_msg, "Connection made on socket: %i\n", obj->_var_cons_fds[obj->var_num_conns-1]);
+	    THOR_LOG_ERROR(_err_msg);
+	    
 	    pthread_mutex_unlock(&obj->_var_mutex);
 	}
 
