@@ -1,6 +1,7 @@
 /* Test program for checking the messages recieved from the server */
 #include <stdlib.h>
 #include <unistd.h>
+#include <signal.h>
 #include <string.h>
 #include "thornifix.h"
 #include "thcon.h"
@@ -19,7 +20,7 @@ int main(int argc, char** argv)
     thcon_set_port_name(&_con, "11000");
 
     thcon_set_recv_callback(&_con, _recv_callback);
-
+    signal(SIGINT, _sig_handler);
     thcon_start(&_con);
 
     return 0;
