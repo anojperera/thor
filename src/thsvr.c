@@ -133,15 +133,15 @@ int thsvr_start(thsvr* obj)
 		_thsvr_copy_admin2(obj, _t_buff, THCON_URL_BUFF_SZ);
 	}
 
-    _setting = config_lookup(obj->_var_config, THSVR_COM_PORT);
-    _t_buff = NULL;
-    if(_setting)
-	{
-	    _t_buff = config_setting_get_string(_setting);
-	    if(_t_buff)
-		thcon_set_port_name(&obj->_var_con, _t_buff);
-	}
-    else
+    /* _setting = config_lookup(obj->_var_config, THSVR_COM_PORT); */
+    /* _t_buff = NULL; */
+    /* if(_setting) */
+    /* 	{ */
+    /* 	    _t_buff = config_setting_get_string(_setting); */
+    /* 	    if(_t_buff) */
+    /* 		thcon_set_port_name(&obj->_var_con, _t_buff); */
+    /* 	} */
+    /* else */
 	thcon_set_port_name(&obj->_var_con, THSVR_DEF_COM_PORT);
     
     /*
