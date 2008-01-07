@@ -487,6 +487,7 @@ static int _thcon_create_connection(thcon* obj, int _con_mode)
     /* set hints */
     obj->_var_info.ai_family = AF_UNSPEC;
     obj->_var_info.ai_socktype = SOCK_STREAM;
+    obj->_var_info.ai_protocol = 0;
 
     if(_con_mode)
 	obj->_var_info.ai_flags = AI_PASSIVE;
@@ -503,7 +504,7 @@ static int _thcon_create_connection(thcon* obj, int _con_mode)
     /* create socket for client mode, connect to the server */
     for(_p = _result; _p != NULL; _p = _p->ai_next)
 	{
-	    obj->var_con_sock = socket(obj->_var_info.ai_family, obj->_var_info.ai_socktype, obj->_var_info.ai_protocol);
+	  obj->var_con_sock = socket(_p->ai_family, _p->ai_socktype, _p->ai_protocol);
 	    if(obj->var_con_sock == -1)
 		continue;
 
