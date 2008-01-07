@@ -47,7 +47,7 @@ int thsys_init(thsys* obj, int (*callback) (thsys*, void*))
 /* Delete object pointer */
 void thsys_delete(thsys* obj)
 {
-    if(!obj->var_flg || obj->var_client_count == 0)
+    if(!obj->var_flg || obj->var_client_count > 0)
 	return;
 
     if(obj->var_run_flg)
