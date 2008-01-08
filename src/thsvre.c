@@ -33,6 +33,11 @@ static void _thsvre_sigterm_handler(int signo);
 
 int main(int argc, char** argv)
 {
+    /*
+     * Read the configuration file before all the files were closed.
+     */
+    if(_thsvre_load_config())
+	exit(1);
     
     /* Only daemonise in headless mode */
 #ifdef THOR_HEADLESS    
@@ -57,11 +62,6 @@ int main(int argc, char** argv)
 	exit(EXIT_FAILURE);
 #endif
     
-    /*
-     * Read the configuration file before all the files were closed.
-     */
-    if(_thsvre_load_config())
-	exit(1);
 
     /* Only daemonise in headless mode */
 #ifdef THOR_HEADLESS        
