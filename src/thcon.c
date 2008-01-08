@@ -1310,7 +1310,6 @@ static void* _thcon_thread_function_write_server(void* obj)
     int i, _old_state;
     thcon* _obj;
     struct _curl_mem* _msg;
-    int _stat;
     
     if(obj == NULL)
 	return NULL;
