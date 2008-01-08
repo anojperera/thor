@@ -174,8 +174,6 @@ int thcon_init(thcon* obj, thcon_mode mode)
     pthread_mutex_init(&obj->_var_mutex, NULL);
     pthread_mutex_init(&obj->_var_mutex_q, NULL);
 
-    /* Ignore sigpipe event */
-    signal(SIGPIPE, SIG_IGN);
     return 0;
 }
 
@@ -1316,7 +1314,10 @@ static void* _thcon_thread_function_write_server(void* obj)
 
     /* cast argument to correct object pointer */
     _obj = (thcon*) obj;
-
+    
+    /* Ignore sigpipe event */
+    signal(SIGPIPE, SIG_IGN);
+    
     while(1)
 	{
 	    pthread_testcancel();
