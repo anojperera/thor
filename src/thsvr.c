@@ -193,7 +193,7 @@ int thsvr_start(thsvr* obj)
 int thsvr_stop(thsvr* obj)
 {
     /* give command to stop the system */
-    thsys_stop(&obj->_var_sys);
+    thsys_e_stop(&obj->_var_sys);
     thcon_stop(&obj->_var_con);
 
     return 0;
