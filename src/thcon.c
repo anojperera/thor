@@ -867,6 +867,9 @@ static void* _thcon_thread_function_client(void* obj)
 
     pthread_testcancel();
 
+    /* indicate server is idling */
+    _obj->_var_con_stat = thcon_connected;
+
     /* loop while connection is active and recieving messages */
     do
 	{
