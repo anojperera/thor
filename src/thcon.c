@@ -188,7 +188,7 @@ void thcon_delete(thcon* obj)
     obj->_thcon_recv_callback = NULL;
     obj->_thcon_write_callback = NULL;
     obj->_thcon_conn_made = NULL;
-    obj->_thcon_conn_closed = NULL;    
+    obj->_thcon_conn_closed = NULL;
 
     /* check scope */
     sem_destroy(&obj->_var_sem);
@@ -969,7 +969,7 @@ static void* _thcon_thread_function_server(void* obj)
 	goto epoll_exit_lbl;
     _obj->_var_epol_inst = &_e_sock;
     _event.data.fd = _obj->var_con_sock;
-    _event.events = EPOLLIN | EPOLLET | EPOLLRDHUP;
+    _event.events = EPOLLIN | EPOLLET;
 
     if(epoll_ctl(_e_sock, EPOLL_CTL_ADD, _obj->var_con_sock, &_event))
 	goto epoll_exit_lbl;
@@ -998,26 +998,41 @@ static void* _thcon_thread_function_server(void* obj)
 		    _complete = 0;
 
 		    /* check for errors */
-		    if((_events[_i].events & EPOLLERR) ||
-		       (_events[_i].events & EPOLLHUP) ||
+		    if(((_events[_i].events & EPOLLERR) ||
+			(_events[_i].events & EPOLLHUP)) &&
 		       (!(_events[_i].events & EPOLLIN)))
 			{
-			    /* errors have occured */
-			    THOR_LOG_ERROR("epoll error");
-
+			  /*
+			   * If the socket is not the listening socket,
+			   * we close the file descriptor and remove the
+			   * socket from the socket array.
+			   */
 			    if(_events[_i].data.fd != _obj->var_con_sock)
 				{
+				  /*
+				   * Number of connections are decremented by the
+				   * adjust file descriptor methods.
+				   * The all operations involved in object variables
+				   * are wrapped in mutex for thread safety.
+				   */
 				    _thcon_adjust_fds(_obj, _events[_i].data.fd);
 				    close(_events[_i].data.fd);
 
 				    pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &_old_state);
-				    pthread_mutex_lock(&_obj->_var_mutex);
-				    _obj->var_num_conns--;
-				    pthread_mutex_unlock(&_obj->_var_mutex);
 				    pthread_setcancelstate(_old_state, NULL);
+
+				    /*
+				     * Indicate, the connection object was closed.
+				     */
 				    if(_obj->_thcon_conn_closed)
 					_obj->_thcon_conn_closed(_obj->_ext_obj, obj, _events[_i].data.fd);
 				}
+			    else
+			      {
+				/* errors have occured */
+				THOR_LOG_ERROR("epoll error");
+			      }
+
 			    pthread_testcancel();
 			    continue;
 			}
@@ -1048,7 +1063,7 @@ static void* _thcon_thread_function_server(void* obj)
 				}
 			    else
 				{
-			    
+
 				    /*
 				     * Data on socket waiting to be read. All data shall be read
 				     * in a single pass. Since we are running on edge triggered mode
@@ -1081,24 +1096,27 @@ static void* _thcon_thread_function_server(void* obj)
 			}
 		    if(_complete)
 			{
-			    /* remote client has closed the connection */
-			    sprintf(_err_msg, "Connection closed on socket - %i\n", _events[_i].data.fd);
-			    THOR_LOG_ERROR(_err_msg);
-
 			    pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &_old_state);
 
-			    /* decrement counter in a mutex */
-			    pthread_mutex_lock(&_obj->_var_mutex);
-			    _thcon_adjust_fds(_obj, _events[_i].data.fd);			    
-			    _obj->var_num_conns--;
-			    pthread_mutex_unlock(&_obj->_var_mutex);
-
+			    /*
+			     * Number of connections are decremented by the
+			     * adjust file descriptor methods.
+			     * The all operations involved in object variables
+			     * are wrapped in mutex for thread safety.
+			     */
+			    _thcon_adjust_fds(_obj, _events[_i].data.fd);
+			    
+			    
+			    /*
+			     * Indicate, the connection object was closed.
+			     */
+			    if(_obj->_thcon_conn_closed)
+			      _obj->_thcon_conn_closed(_obj->_ext_obj, obj, _events[_i].data.fd);
 
 			    /* close connection so that epoll shall remove the watching descriptor */
 			    close(_events[_i].data.fd);
     			    pthread_setcancelstate(_old_state, NULL);
 			    pthread_testcancel();
-
 			}
 		}
 	}
@@ -1129,7 +1147,7 @@ static int _thcon_accept_conn(thcon* obj, int list_sock, int epoll_inst, struct 
     socklen_t _in_len=0;
     int _fd=0, _stat=0;
     char _err_msg[THOR_BUFF_SZ];
-    
+
     char _hbuf[NI_MAXHOST], _sbuf[NI_MAXSERV];
     memset((void*) &_in_addr, 0, sizeof(struct sockaddr));
     memset(_err_msg, 0, THOR_BUFF_SZ);
@@ -1170,7 +1188,7 @@ static int _thcon_accept_conn(thcon* obj, int list_sock, int epoll_inst, struct 
 	    _thcon_make_socket_nonblocking(_fd);
 
 	    event->data.fd = _fd;
-	    event->events = EPOLLIN | EPOLLET | EPOLLRDHUP;
+	    event->events = EPOLLIN | EPOLLET;
 	    epoll_ctl(epoll_inst, EPOLL_CTL_ADD, _fd, event);
 
 	    /*
@@ -1300,7 +1318,10 @@ inline __attribute__ ((always_inline)) static int _thcon_adjust_fds(thcon* obj, 
     obj->_var_cons_fds = _t_buff;
     /*--------------------------------------------------*/
 
+    /* Decrement number of connections */
+    obj->var_num_conns--;
  _thcon_adjust_fds_exit:
+
     pthread_mutex_unlock(&obj->_var_mutex);
     return 0;
 }
@@ -1315,13 +1336,13 @@ static void* _thcon_thread_function_write_server(void* obj)
     int i, _old_state;
     thcon* _obj;
     struct _curl_mem* _msg;
-    
+
     if(obj == NULL)
 	return NULL;
 
     /* cast argument to correct object pointer */
     _obj = (thcon*) obj;
-    
+
     while(1)
 	{
 	    pthread_testcancel();
