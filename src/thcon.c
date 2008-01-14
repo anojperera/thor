@@ -1075,7 +1075,7 @@ static void* _thcon_thread_function_server(void* obj)
 				    while(1)
 					{
 					    _stat = _thcon_write_to_int_buff(_obj, _events[_i].data.fd);
-					    if(_obj->_thcon_recv_callback && _stat > 0)
+					    if(_obj->_thcon_recv_callback)
 						_obj->_thcon_recv_callback(_obj->_ext_obj, _obj->var_membuff_in, THORNIFIX_MSG_BUFF_SZ);
 					    if(_stat == -1)
 						{
