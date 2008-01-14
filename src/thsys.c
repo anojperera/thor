@@ -47,14 +47,20 @@ int thsys_init(thsys* obj, int (*callback) (thsys*, void*))
 /* Delete object pointer */
 void thsys_delete(thsys* obj)
 {
-    if(!obj->var_flg || obj->var_client_count > 0)
+  /* Stop test regardless of number of connections */
+    if(!obj->var_flg)
 	return;
 
     if(obj->var_run_flg)
       {
+	/*
+	 * Call e stop to stop the test.
+	 * Wait until, test is stopped then
+	 * clean up resources.
+	 */
+	thsys_e_stop(obj);
 	sem_wait(&obj->var_sem);
-	/* NIStopTask(obj->var_a_outask); */
-	/* NIStopTask(obj->var_a_intask); */
+
       }
     NIClearTask(obj->var_a_outask);
     NIClearTask(obj->var_a_intask);
@@ -66,7 +72,7 @@ void thsys_delete(thsys* obj)
     obj->var_callback_update = NULL;
     obj->var_ext_obj = NULL;
     sem_destroy(&obj->var_sem);
-    THOR_LOG_ERROR("thor system stopped");
+    THOR_LOG_ERROR("thor system cleaned up");
     return;
 }
 
@@ -86,6 +92,8 @@ int thsys_start(thsys* obj)
     /* configure timing and start tasks */
     ERR_CHECK(NICfgSampClkTiming(obj->var_a_intask, THSYS_CLOCK_SOURCE, obj->var_sample_rate, DAQmx_Val_Rising, DAQmx_Val_ContSamps, 1));
 
+    THOR_LOG_ERROR("thor timer configure complete");
+    
     /* creat thread */
     pthread_create(&obj->var_thread, NULL, _thsys_start_async, (void*) obj);
 
@@ -113,6 +121,17 @@ int thsys_stop(thsys* obj)
     pthread_cancel(obj->var_thread);
     pthread_join(obj->var_thread, NULL);
     return 0;
+}
+
+int thsys_e_stop(thsys* obj)
+{
+    /* Check for object pointer */
+    if(obj == NULL)
+      return -1;
+
+    /* Decrement client count */
+    obj->var_client_count = 1;
+    return thsys_stop(obj);
 }
 
 /* set write buffer */
@@ -147,7 +166,7 @@ static void _thsys_thread_cleanup(void* para)
     _obj->var_run_flg = 0;
     sem_post(&_obj->var_sem);
 
-    THOR_LOG_ERROR("thor system cleaned up");
+    THOR_LOG_ERROR("thor system stopped");
     return;
  }
 
@@ -168,7 +187,7 @@ static void* _thsys_start_async(void* para)
     
     _obj = (thsys*) para;    
     THOR_LOG_ERROR("thor system started");
-
+    
     ERR_CHECK(NIStartTask(_obj->var_a_intask));
     ERR_CHECK(NIStartTask(_obj->var_a_outask));    
 
@@ -190,7 +209,6 @@ static void* _thsys_start_async(void* para)
 	      _obj->var_callback_update(_obj, _obj->var_ext_obj, _obj->var_inbuff, THSYS_NUM_AI_CHANNELS);
 	    pthread_setcancelstate(_old_state, NULL);
 
-	    
     	    pthread_testcancel();
     	    usleep(1000 /(_obj->var_sample_rate*THSYS_READ_WRITE_FACTOR));
     	}
