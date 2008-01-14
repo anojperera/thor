@@ -59,6 +59,7 @@ extern "C" {
     /* start method */
     int thsys_start(thsys* obj);
     int thsys_stop(thsys* obj);
+    int thsys_e_stop(thsys* obj);
 
     /* set write buffer value */
     /* the buffer shall be THSYS_NUM_AO_CHANNELS */
