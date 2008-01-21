@@ -282,6 +282,12 @@ static int _thapp_init_helper(thapp* obj)
 	    return -1;
 	}
 
+    /* Get sleep time */
+    _setting = config_lookup(&obj->var_config, THAPP_SLEEP_KEY);
+    if(_setting != NULL)
+      obj->var_sleep_time = config_setting_get_int(_setting);
+
+
     /* Get applications sleep time */
     _setting = config_lookup(&obj->var_config, THAPP_SLEEP_KEY);
     if(_setting != NULL)

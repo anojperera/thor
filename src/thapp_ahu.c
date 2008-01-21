@@ -9,6 +9,18 @@
 #define THAPP_STT_KEY "st1"
 #define THAPP_SMT_KEY "lkg"
 
+
+/* Control Keys */
+#define THAPP_AHU_ACT_INCR_CODE 43							/* + */
+#define THAPP_AHU_ACT_DECR_CODE 45							/* - */
+#define THAPP_AHU_PRG_START_CODE 83							/* S */
+#define THAPP_AHU_PRG_STOP_CODE 115							/* s */
+#define THAPP_AHU_ACT_INCRF_CODE 42							/* * */
+#define THAPP_AHU_ACT_DECRF_CODE 47							/* / */
+#define THAPP_AHU_PAUSE_CODE 112							/* p */
+#define THAPP_AHU_YES_CODE 121								/* y */
+#define THAPP_AHU_YES2_CODE 89								/* Y */
+
 /* Callback methods */
 static int _thapp_ahu_init(thapp* obj, void* self);
 static int _thapp_ahu_start(thapp* obj, void* self);
@@ -43,6 +55,7 @@ thapp* thapp_ahu_new(void)
     THAPP_INIT_FPTR(_obj);
 
     /* Set function pointers of parent object */
+    thapp_set_init_ptr(_obj, _thapp_ahu_init);
     thapp_set_start_ptr(_obj, _thapp_ahu_start);
     thapp_set_stop_ptr(_obj, _thapp_ahu_stop);
     thapp_set_cmdhnd_ptr(_obj, _thapp_cmd);
@@ -209,7 +222,25 @@ static int _thapp_cmd(thapp* obj, void* self, int cmd)
     _obj = (thapp_ahu*) self;
     switch(cmd)
 	{
-
+	case THAPP_AHU_ACT_INCR_CODE:
+	  break;
+	case THAPP_AHU_ACT_DECR_CODE:
+	  break;
+	case THAPP_AHU_PRG_START_CODE:
+	  break;
+	case THAPP_AHU_PRG_STOP_CODE:
+	  break;
+	case THAPP_AHU_ACT_INCRF_CODE:
+	  break;
+	case THAPP_AHU_ACT_DECRF_CODE:
+	  break;
+	case THAPP_AHU_PAUSE_CODE:
+	  break;
+	case THAPP_AHU_YES_CODE:
+	  break;
+	case THAPP_AHU_YES2_CODE:
+	  break;
+	default:
 	}
 
     return 0;
