@@ -103,6 +103,7 @@ extern "C" {
 
 	/* Set value and call function pointer if was set */
 	obj->var_setting = setting;
+	obj->_var_num_config = config_setting_length(obj->var_setting);
 	if(obj->var_fptr.var_set_config_fptr)
 	    obj->var_fptr.var_set_config_fptr(obj->var_child);
 
