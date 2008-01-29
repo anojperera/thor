@@ -160,7 +160,7 @@ int thapp_start(thapp* obj)
      * Start connection object in a loop.
      * Try for 5seconds with a wait of 2seconds.
      */
-    while(!thcon_start(&obj->_var_con))
+    while(thcon_start(&obj->_var_con))
 	{
 	    if(--cnt < 1)
 		break;
@@ -364,7 +364,7 @@ static int _thapp_con_recv_callback(void* obj, void* msg, size_t sz)
     thapp* _obj;
     
     /* Check for arguments */
-    if(obj == NULL || msg == NULL)
+    if(obj == NULL || msg == NULL || sz <= 0)
 	return -1;
 
     /* Cast object to the correct pointer */

@@ -36,7 +36,7 @@ static int _thapp_new_helper(thapp_ahu* obj);
 /* Constructor */
 thapp* thapp_ahu_new(void)
 {
-    int i;
+    int i=0;
     thapp_ahu* _obj;
 
     _obj = (thapp_ahu*) malloc(sizeof(thapp_ahu));
