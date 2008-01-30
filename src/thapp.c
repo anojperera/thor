@@ -191,7 +191,15 @@ int thapp_stop(thapp* obj)
 	return -1;
     
     obj->var_run_flg = 0;
-
+    if(obj->var_op_mode == thapp_headless)
+	{
+	    pthread_cancel(obj->_var_thread);
+	    pthread_join(obj->_var_thread, NULL);
+	    
+	}
+    else
+	_flg = 0;
+    thcon_delete(
     sem_post(&obj->_var_sem);
     return 0;
 }
