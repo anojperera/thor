@@ -311,7 +311,7 @@ static void* _thapp_start_handler(void* obj)
 		    timeout(-1);
 		    clear();
 
-		    
+
 		    /*
 		     *  The user has entered start therefore we call the
 		     *  derived classes start callback method to start the
@@ -319,11 +319,6 @@ static void* _thapp_start_handler(void* obj)
 		     */
 		    if(_obj->_var_fptr.var_start_ptr)
 			_obj->_var_fptr.var_start_ptr(_obj, _obj->var_child);
-
-		    /*---------------------------------------------------*/
-		    /* Temporary print statements for the display values */
-		    printw("%s", _obj->var_disp_header);
-		    refresh();
 
 		    /* Disable line buffering and keyboard echo */
 		    raw();
@@ -336,7 +331,7 @@ static void* _thapp_start_handler(void* obj)
 		    /*  Check if the program has already been stopped. */
 		    if(_st_flg == 0)
 			break;
-		    
+
 		    /* Handle quit event */
 		    if(_obj->_var_fptr.var_stop_ptr)
 			_obj->_var_fptr.var_stop_ptr(_obj, _obj->var_child);
@@ -347,7 +342,7 @@ static void* _thapp_start_handler(void* obj)
 		    /* Reset the queue */
 		    gqueue_delete(&_obj->_var_msg_queue);
 		    gqueue_new(&_obj->_var_msg_queue, _thapp_queue_del_helper);
-		    
+
 		    _st_flg = 0;
 		    break;
 		case THAPP_PAUSE_CODE:
@@ -396,7 +391,9 @@ static void* _thapp_start_handler(void* obj)
 		_flg = _obj->_var_fptr.var_cmdhnd_ptr(_obj, _obj->var_child, _cmd);
 
 	    /* Temporary print statements for the display values */
-	    mvprintw((_max_row*2)/3, 5,"%s", _obj->var_disp_vals);
+	    mvprintw((_max_row*2)/3, 0,"%s", _obj->var_disp_header);
+	    refresh();
+	    mvprintw((_max_row*2)/3+1, 0,"%s", _obj->var_disp_vals);
 	    refresh();
 
 	    memset(_obj->var_disp_vals, 0, THAPP_DISP_BUFF_SZ);
@@ -509,7 +506,7 @@ static int _thapp_con_recv_callback(void* obj, void* msg, size_t sz)
 
     if(strlen((char*) msg) <= 1)
 	return 0;
-    
+
     /* Create memory */
     _msg = (struct thor_msg*) malloc(sizeof(struct thor_msg));
 
