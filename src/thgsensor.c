@@ -187,7 +187,7 @@ static double _thgsensor_get_val(void* obj)
     _obj->var_val = _obj->_var_ave_buff / (_obj->_count_flg > 0? THGS_CH_RBUFF_SZ : _obj->_count+1);
 
     /* increment counter and reset at max */
-    if(_obj->_count++ >= THGS_CH_RBUFF_SZ)
+    if(++_obj->_count >= THGS_CH_RBUFF_SZ)
 	{
 	    _obj->_count = 0;
 	    _obj->_count_flg = 1;
