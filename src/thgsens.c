@@ -44,47 +44,47 @@ static inline int thgsens_calc_value(thgsens** obj)
  * 0 - 10v */
 static inline int thgsens_init(thgsens* obj)
 {
-  if(!obj)
-    {
-      printf("%s\n","initialisation failed");
-      return 0;
-    }
+    if(!obj)
+	{
+	    printf("%s\n","initialisation failed");
+	    return 0;
+	}
 
-  if(!obj->var_ch_name)
-    {
-      printf("%s\n","initialisation failed");
-      return 0;
-    }
+    if(!obj->var_ch_name)
+	{
+	    printf("%s\n","initialisation failed");
+	    return 0;
+	}
 
-  int32 err_code;		/* error code */
-  char err_msg[256];		/* error message */
+    int32 err_code;		/* error code */
+    char err_msg[256];		/* error message */
     
-  /* create analog input channel specified in
-   * constructor */
-  err_code =
-    NICreateAIVoltageChan(*obj->var_task,	/* task handle */
-			  obj->var_ch_name,	/* channel name */
-			  NULL,			/* name of channel set to default */
-			  DAQmx_Val_NRSE,	/* configuration set to referenced */
-			  THGSENS_MIN_VOLT,	/* minimum voltage */
-			  THGSENS_MAX_VOLT,	/* maximum voltage */
-			  DAQmx_Val_Volts,	/* measurement in volts */
-			  NULL);			/* custom scaling */
+    /* create analog input channel specified in
+     * constructor */
+    err_code =
+	NICreateAIVoltageChan(*obj->var_task,	/* task handle */
+			      obj->var_ch_name,	/* channel name */
+			      NULL,			/* name of channel set to default */
+			      DAQmx_Val_NRSE,	/* configuration set to referenced */
+			      THGSENS_MIN_VOLT,	/* minimum voltage */
+			      THGSENS_MAX_VOLT,	/* maximum voltage */
+			      DAQmx_Val_Volts,	/* measurement in volts */
+			      NULL);			/* custom scaling */
 
-  /* check for errors */
-  if(err_code)
-    {
+    /* check for errors */
+    if(err_code)
+	{
 #if defined(WIN32) || defined(_WIN32)
-      NIGetErrorString(err_code, err_msg, 256);
+	    NIGetErrorString(err_code, err_msg, 256);
 #else
-      NIGetErrorString(err_msg, 256);
+	    NIGetErrorString(err_msg, 256);
 #endif
-      fprintf(stderr, "%s\n", err_msg);
-      return 0;
-    }
+	    fprintf(stderr, "%s\n", err_msg);
+	    return 0;
+	}
 
 
-  return 1;
+    return 1;
 }
 
 /********************************************************************************/
@@ -212,6 +212,3 @@ inline int thgsens_reset_value(thgsens* obj)
     obj->var_val = 0;
     return 1;
 }
-
-
-

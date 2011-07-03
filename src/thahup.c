@@ -54,9 +54,9 @@ static inline int ERR_CHECK(int32 err)
     if(err)
 	{
 #if defined (WIN32) || defined (_WIN32)      
-      NIGetErrorString(err_code, err_msg, THAHUP_BUFF_SZ);
+	    NIGetErrorString(err_code, err_msg, THAHUP_BUFF_SZ);
 #else
-      NIGetErrorString(err_msg, THAHUP_BUFF_SZ);
+	    NIGetErrorString(err_msg, THAHUP_BUFF_SZ);
 #endif
 	    fprintf(stderr, "%s\n", err_msg);
 	    return 1;
@@ -157,119 +157,119 @@ static inline void thahup_write_results()
 /* start test asynchronously */
 void* thahup_async_start(void* obj)
 {
-  counter = 0;		/* reset counter */
-  gcounter = 0;		/* reset counter */
+    counter = 0;		/* reset counter */
+    gcounter = 0;		/* reset counter */
 
-  /* flag to indicate if test started */
-  start_test = 1;
+    /* flag to indicate if test started */
+    start_test = 1;
 
-  /* start both acquiring and writing tasks */
-  if(ERR_CHECK(NIStartTask(var_thahup->var_outask)))
-    return NULL;
-  if(ERR_CHECK(NIStartTask(var_thahup->var_intask)))
-    return NULL;
+    /* start both acquiring and writing tasks */
+    if(ERR_CHECK(NIStartTask(var_thahup->var_outask)))
+	return NULL;
+    if(ERR_CHECK(NIStartTask(var_thahup->var_intask)))
+	return NULL;
 
-  float64 var_act_st_val = 0.0;	/* actuator stop val */
-  int32 spl_read = 0;		/* number of samples read */
-  int32 spl_write = 0;		/* number of samples written */
+    float64 var_act_st_val = 0.0;	/* actuator stop val */
+    int32 spl_read = 0;		/* number of samples read */
+    int32 spl_write = 0;		/* number of samples written */
 
-  /* output to screen */
-  printf("Counter\tDP1\tDP2\tDP3\tDP4\tV\tVol\tTmp\n");
+    /* output to screen */
+    printf("Counter\tDP1\tDP2\tDP3\tDP4\tV\tVol\tTmp\n");
 
-  /* use software timing */
-  while(var_thahup->var_stflg)
-    {
-#if defined(WIN32) || defined(_WIN32)
-      Sleep(500);
-#else
-      sleep(1);
-#endif
-      /* check control option */
-      if(var_thahup->var_stctrl == thahup_auto)
+    /* use software timing */
+    while(var_thahup->var_stflg)
 	{
-	  var_thahup->var_actsignal =
-	    var_thahup->var_actout[counter];
+#if defined(WIN32) || defined(_WIN32)
+	    Sleep(500);
+#else
+	    sleep(1);
+#endif
+	    /* check control option */
+	    if(var_thahup->var_stctrl == thahup_auto)
+		{
+		    var_thahup->var_actsignal =
+			var_thahup->var_actout[counter];
 
-	  /* reset counter if exceed limit */
-	  if(var_thahup->var_idlflg == 0)
-	    {
-	      if(++counter >= THAHUP_RATE)
-		counter = 0;
-	    }
+		    /* reset counter if exceed limit */
+		    if(var_thahup->var_idlflg == 0)
+			{
+			    if(++counter >= THAHUP_RATE)
+				counter = 0;
+			}
+		}
+
+	    /* write to out channel */
+#if defined (WIN32) || defined (_WIN32)
+	    if(ERR_CHECK(NIWriteAnalogF64(var_thahup->var_outask,
+					  0,
+					  10.0,
+					  (float64) var_thahup->var_actsignal,
+					  NULL)))
+		break;
+#else
+	    if(ERR_CHECK(NIWriteAnalogF64(var_thahup->var_outask,
+					  1,
+					  0,
+					  10.0,
+					  DAQmx_Val_GroupByChannel,
+					  (float64*) &var_thahup->var_actsignal,
+					  &spl_write,
+					  NULL)))
+		break;
+#endif
+
+	    /* read channel values */
+	    if(ERR_CHECK(NIReadAnalogF64(var_thahup->var_intask,
+					 1,
+					 10.0,
+					 DAQmx_Val_GroupByScanNumber,
+					 val_buff,
+					 THAHUP_NUM_INPUT_CHANNELS,
+					 &spl_read,
+					 NULL)))
+		break;
+
+	    /* call function to assign values to sensors */
+	    thahup_set_values();
+
+	    /* check control mode - if automatic, set test to
+	       idle when static pressure reach desired */
+	    if(var_thahup->var_stctrl == thahup_auto &&
+	       var_thahup->var_static_val > var_thahup->var_stopval)
+		var_thahup->var_idlflg = 1;
+
+	    /* call to write results to file and screen */
+	    thahup_write_results();
+	    gcounter++;
 	}
 
-      /* write to out channel */
+    /* stop actuator */
 #if defined (WIN32) || defined (_WIN32)
-      if(ERR_CHECK(NIWriteAnalogF64(var_thahup->var_outask,
-				    0,
-				    10.0,
-				    (float64) var_thahup->var_actsignal,
-				    NULL)))
-	break;
+    if(ERR_CHECK(NIWriteAnalogF64(var_thahup->var_outask,
+				  0,
+				  10.0,
+				  0.0,
+				  NULL)))
 #else
-      if(ERR_CHECK(NIWriteAnalogF64(var_thahup->var_outask,
-				    1,
-				    0,
-				    10.0,
-				    DAQmx_Val_GroupByChannel,
-				    (float64*) &var_thahup->var_actsignal,
-				    &spl_write,
-				    NULL)))
-	break;
+	if(ERR_CHECK(NIWriteAnalogF64(var_thahup->var_outask,
+				      1,
+				      0,
+				      10.0,
+				      DAQmx_Val_GroupByChannel,
+				      &var_act_st_val,
+				      &spl_write,
+				      NULL)))
 #endif
 
-      /* read channel values */
-      if(ERR_CHECK(NIReadAnalogF64(var_thahup->var_intask,
-				   1,
-				   10.0,
-				   DAQmx_Val_GroupByScanNumber,
-				   val_buff,
-				   THAHUP_NUM_INPUT_CHANNELS,
-				   &spl_read,
-				   NULL)))
-	break;
+	    printf("\n");
 
-      /* call function to assign values to sensors */
-      thahup_set_values();
+    /* stop task */
+    ERR_CHECK(NIStopTask(var_thahup->var_outask));
+    ERR_CHECK(NIStopTask(var_thahup->var_intask));
 
-      /* check control mode - if automatic, set test to
-	 idle when static pressure reach desired */
-      if(var_thahup->var_stctrl == thahup_auto &&
-	 var_thahup->var_static_val > var_thahup->var_stopval)
-	var_thahup->var_idlflg = 1;
-
-      /* call to write results to file and screen */
-      thahup_write_results();
-      gcounter++;
-    }
-
-  /* stop actuator */
-#if defined (WIN32) || defined (_WIN32)
-      if(ERR_CHECK(NIWriteAnalogF64(var_thahup->var_outask,
-				    0,
-				    10.0,
-				    0.0,
-				    NULL)))
-#else
-      if(ERR_CHECK(NIWriteAnalogF64(var_thahup->var_outask,
-				    1,
-				    0,
-				    10.0,
-				    DAQmx_Val_GroupByChannel,
-				    &var_act_st_val,
-				    &spl_write,
-				    NULL)))
-#endif
-
-  printf("\n");
-
-  /* stop task */
-  ERR_CHECK(NIStopTask(var_thahup->var_outask));
-  ERR_CHECK(NIStopTask(var_thahup->var_intask));
-
-  /* indicate test stopped */
-  start_test = 0;
-  return NULL;
+    /* indicate test stopped */
+    start_test = 0;
+    return NULL;
 }
 
 /*************************************************************/
@@ -308,12 +308,12 @@ int thahup_initialise(thahup_stopctrl ctrl_st,		/* start control */
 
     /* create output channel for actuator control */
     if(ERR_CHECK(NICreateAOVoltageChan(var_thahup->var_outask,
-					  THAHUP_ACT_CTRL_CHANNEL,
-					  "",
-					  0.0,
-					  10.0,
-					  DAQmx_Val_Volts,
-					  NULL)))
+				       THAHUP_ACT_CTRL_CHANNEL,
+				       "",
+				       0.0,
+				       10.0,
+				       DAQmx_Val_Volts,
+				       NULL)))
 	{
 	    printf("%s\n","create output channel failed!");
 	    thahup_clear_tasks();
@@ -333,10 +333,10 @@ int thahup_initialise(thahup_stopctrl ctrl_st,		/* start control */
 
     /* create static sensor */
     if(!thgsens_new(&var_thahup->var_stsensor,
-		   THAHUP_ST_CHANNEL,
-		   &var_thahup->var_intask,
-		   update_static,
-		   sobj))
+		    THAHUP_ST_CHANNEL,
+		    &var_thahup->var_intask,
+		    update_static,
+		    sobj))
 	{
 	    printf ("%s\n","error creating static sensor");
 	    thvelsen_delete(&var_thahup->var_velocity);
@@ -346,10 +346,10 @@ int thahup_initialise(thahup_stopctrl ctrl_st,		/* start control */
 
     /* create temperature sensor */
     if(!thgsens_new(&var_thahup->var_tmpsensor,
-		   THAHUP_TMP_CHANNEL,
-		   &var_thahup->var_intask,
-		   update_tmp,
-		   sobj))
+		    THAHUP_TMP_CHANNEL,
+		    &var_thahup->var_intask,
+		    update_tmp,
+		    sobj))
 	{
 	    printf ("%s\n","error creating temperature sensor");
 	    thvelsen_delete(&var_thahup->var_velocity);

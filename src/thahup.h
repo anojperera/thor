@@ -17,6 +17,13 @@
 #include "thgsens.h"		/* generic sensor */
 #include "thvelsen.h"		/* velocity sensor */
 
+/* object conversion macros */
+#define AHUP_GET_VELOCITYDT(obj) \
+    (obj->var_velocity)
+
+#define AHUP_GET_STATIC(obj) \
+    (obj->var_stsensor)
+
 /* control type */
 typedef enum
     {
