@@ -124,6 +124,9 @@ static inline void thahup_set_values()
 	M_PI * pow(var_thahup->var_ductdia / 2000, 2) *
 	var_thahup->var_velocity_val;
 
+    if(var_thahup->var_volupdate)
+	var_thahup->var_volupdate(var_thahup->var_sobj, &var_thahup->var_volflow_val);
+
 }
 
 /* get values */
@@ -143,7 +146,8 @@ static inline void thahup_write_results()
 	}
 
     /* update screen */
-    printf("%f,%f,%f,%f,%f,%f,%f\n",
+    printf("%i\t%7.2f\t%7.2f\t%7.2f\t%7.2f\t%7.2f\t%7.2f\t%7.2f\n",
+	   gcounter,
 	   var_thahup->var_velocity->var_v1->var_val,
 	   var_thahup->var_velocity->var_v2->var_val,
 	   var_thahup->var_velocity->var_v3->var_val,
@@ -560,10 +564,10 @@ int thahup_reset_sensors(thahup* obj)
 {
     var_thahup->var_actsignal = 0.0;
 
-    thgsens_reset_all(var_thahup->var_velocity->var_v1);
-    thgsens_reset_all(var_thahup->var_velocity->var_v2);
-    thgsens_reset_all(var_thahup->var_velocity->var_v3);
-    thgsens_reset_all(var_thahup->var_velocity->var_v4);
+    thgsens_reset_value(var_thahup->var_velocity->var_v1);
+    thgsens_reset_value(var_thahup->var_velocity->var_v2);
+    thgsens_reset_value(var_thahup->var_velocity->var_v3);
+    thgsens_reset_value(var_thahup->var_velocity->var_v4);
     
     thgsens_reset_all(var_thahup->var_stsensor);
     thgsens_reset_all(var_thahup->var_tmpsensor);
