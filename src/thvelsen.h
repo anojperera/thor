@@ -39,6 +39,20 @@ struct _thvelsen
 
     unsigned int var_okflg;	/* ok flag to indicate
 				 * range is set */
+    double var_gmin;		/* generic minimum value */
+    double var_gmax;		/* generic maximum value */
+
+    /* channel names */
+    char* var_ch1;
+    char* var_ch2;
+    char* var_ch3;
+    char* var_ch4;
+
+    /* local copy of function pointers */
+    gthsen_fptr var_fptr_s1;	/* function pointer */
+    gthsen_fptr var_fptr_s2;	/* function pointer */
+    gthsen_fptr var_fptr_s3;	/* function pointer */
+    gthsen_fptr var_fptr_s4;	/* function pointer */
 };
 
 #ifdef __cplusplus
@@ -54,7 +68,11 @@ extern "C" {
     /* destructor */
     void thvelsen_delete(thvelsen** obj);
 
-    /* configure sensors */
+    /* configure sensors:
+     * if all sensors were previously configured
+     * passing NULL pointer to channel name and 0 to
+     * min and max range shall configure the sensor usin
+     * the previous settings */
     int thvelsen_config_sensor(thvelsen* obj,		/* object */
     			       unsigned int ix,		/* index */
 			       const char* ch_name,	/* channel name */
@@ -65,6 +83,7 @@ extern "C" {
     /* disable sensor */
     int thvelsen_disable_sensor(thvelsen* obj,
 				unsigned int ix);
+
 
     double thvelsen_get_velocity(thvelsen* obj);
 
