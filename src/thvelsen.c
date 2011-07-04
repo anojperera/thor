@@ -177,16 +177,14 @@ int thvelsen_config_sensor(thvelsen* obj,		/* object */
 	case 1:
 	    printf("%s\n","v1 sensor");
 	    if(thgsens_new(&obj->var_v2,
-			   (obj->var_okflg? && ch_name==NULL?
-			    obj->var_ch2 : ch_name),
+			   (ch_flg? obj->var_ch2 : ch_name),
 			   obj->var_task,
-			   (fptr==NULL? && obj->var_okflg?
-			    obj->var_fptr2 : fptr),
+			   (ptr_flg? obj->var_ptr_s2, fptr),
 			   obj->var_sobj))
 		{
 		    thgsens_set_range(obj->var_v2,
-				      (min==0.0? && obj->var_okflg? obj->var_gmin : min),
-				      (max==0.0? && obj->var_okflg? obj->var_gmax : max));
+				      (rng_flg? obj->var_gmin : min),
+				      (rng_flg? obj->var_gmax : max));
 		    obj->var_v2_flg = 1;
 		    printf("%s %i %s\n","velocity sensor", ix, "complete");
 
@@ -203,16 +201,14 @@ int thvelsen_config_sensor(thvelsen* obj,		/* object */
 	case 2:
 	    printf("%s\n","v2 sensor");
 	    if(thgsens_new(&obj->var_v3,
-			   (obj->var_okflg? && ch_name==NULL?
-			    obj->var_ch3 : ch_name),
+			   (ch_flg? obj->var_ch3 : ch_name),
 			   obj->var_task,
-			   (fptr==NULL? && obj->var_okflg?
-			    obj->var_fptr3 : fptr),
+			   (ptr_flg? obj->var_ptr_s3, fptr),
 			   obj->var_sobj))
 		{
 		    thgsens_set_range(obj->var_v3,
-				      (min==0.0? && obj->var_okflg? obj->var_gmin : min),
-				      (max==0.0? && obj->var_okflg? obj->var_gmax : max));
+				      (rng_flg? obj->var_gmin : min),
+				      (rng_flg? obj->var_gmax : max));
 		    obj->var_v3_flg = 1;
 		    printf("%s %i %s\n","velocity sensor", ix, "complete");
 
@@ -229,16 +225,14 @@ int thvelsen_config_sensor(thvelsen* obj,		/* object */
 	default:
 	    printf("%s\n","v3 sensor");
 	    if(thgsens_new(&obj->var_v4,
-			   (obj->var_okflg? && ch_name==NULL?
-			    obj->var_ch4 : ch_name),
+			   (ch_flg? obj->var_ch4 : ch_name),
 			   obj->var_task,
-			   (fptr==NULL? && obj->var_okflg?
-			    obj->var_fptr4 : fptr),
+			   (ptr_flg? obj->var_ptr_s4, fptr),
 			   obj->var_sobj))
 		{
 		    thgsens_set_range(obj->var_v4,
-				      (min==0.0? && obj->var_okflg? obj->var_gmin : min),
-				      (max==0.0? && obj->var_okflg? obj->var_gmax : max));
+				      (rng_flg? obj->var_gmin : min),
+				      (rng_flg? obj->var_gmax : max));
 		    obj->var_v4_flg = 1;
 		    printf("%s %i %s\n","velocity sensor", ix, "complete");
 
