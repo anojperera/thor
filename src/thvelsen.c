@@ -12,8 +12,8 @@
 
 /* channel name macro */
 #define THVELSET_CPYSTR(ch_ptr, channel_name) \
-    (*ch_ptr = (char*) malloc(sizeof(char) * (strlen(channel_name) + 1)); \
-     strcpy(*ch_ptr, channel_name);)
+    (*ch_ptr) = (char*) malloc(sizeof(char) * (strlen(channel_name) + 1)); \
+     strcpy(*ch_ptr, channel_name);
 
 /* Constructor */
 int thvelsen_new(thvelsen** obj,
@@ -155,17 +155,17 @@ int thvelsen_config_sensor(thvelsen* obj,		/* object */
 	    if(thgsens_new(&obj->var_v1,
 			   (ch_flg? obj->var_ch1 : ch_name),
 			   obj->var_task,
-			   (ptr_flg? obj->var_ptr_s1, fptr),
+			   (ptr_flg? obj->var_fptr_s1 : fptr),
 			   obj->var_sobj))
 		{
 		    thgsens_set_range(obj->var_v1,
-				      (rng_flg? obj->var_gmin : min),
-				      (rng_flg? obj->var_gmax : max));
+		    		      (rng_flg>0? obj->var_gmin : min),
+		    		      (rng_flg>0? obj->var_gmax : max));
 		    obj->var_v1_flg = 1;
 		    printf("%s %i %s\n","velocity sensor", ix, "complete");
 
 		    /* copy string and generic min and max val */
-		    THVELSET_CPYSTR(&obj->var_ch1, ch_name);
+		    THVELSET_CPYSTR(&obj->var_ch1, ch_name)
 		    obj->var_gmin = min;
 		    obj->var_gmax = max;
 		}
@@ -179,7 +179,7 @@ int thvelsen_config_sensor(thvelsen* obj,		/* object */
 	    if(thgsens_new(&obj->var_v2,
 			   (ch_flg? obj->var_ch2 : ch_name),
 			   obj->var_task,
-			   (ptr_flg? obj->var_ptr_s2, fptr),
+			   (ptr_flg? obj->var_fptr_s2 : fptr),
 			   obj->var_sobj))
 		{
 		    thgsens_set_range(obj->var_v2,
@@ -203,7 +203,7 @@ int thvelsen_config_sensor(thvelsen* obj,		/* object */
 	    if(thgsens_new(&obj->var_v3,
 			   (ch_flg? obj->var_ch3 : ch_name),
 			   obj->var_task,
-			   (ptr_flg? obj->var_ptr_s3, fptr),
+			   (ptr_flg? obj->var_fptr_s3 : fptr),
 			   obj->var_sobj))
 		{
 		    thgsens_set_range(obj->var_v3,
@@ -227,7 +227,7 @@ int thvelsen_config_sensor(thvelsen* obj,		/* object */
 	    if(thgsens_new(&obj->var_v4,
 			   (ch_flg? obj->var_ch4 : ch_name),
 			   obj->var_task,
-			   (ptr_flg? obj->var_ptr_s4, fptr),
+			   (ptr_flg? obj->var_fptr_s4 : fptr),
 			   obj->var_sobj))
 		{
 		    thgsens_set_range(obj->var_v4,

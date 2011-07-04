@@ -2,6 +2,7 @@
  * Sun May 15 16:20:25 BST 2011 */
 
 #include "thlkg.h"
+#include "thornifix.h"
 #if defined(WIN32) || defined(_WIN32)
 #include <windows.h>
 #else
@@ -185,8 +186,10 @@ static void* thlkg_async_start(void* obj)
 	return NULL;
 
     int32 spl_read = 0;			/* number of samples read */
-    int32 spl_write = 0;			/* number of samples written */
-
+#if !defined(WIN32) || !defined(_WIN32)    
+    int32 spl_write = 0;		/* number of samples written */
+#endif
+    
     /* output to screen */
     printf("Counter\tFan\t\tDP\t\tST\t\tLkg\t\tTmp\n");
     
@@ -217,14 +220,14 @@ static void* thlkg_async_start(void* obj)
 	    
 	    /* write to out channel */
 #if defined (WIN32) || defined (_WIN32)	    
-	    if(ERR_CHECK(NIWriteAnalogScalarF64(var_thlkg->var_outask,
+	    if(ERR_CHECK(NIWriteAnalogF64(var_thlkg->var_outask,
 						0,
 						10.0,
 						(float64) var_thlkg->var_fansignal,
 						NULL)))
 		break;
 #else
-	    if(ERR_CHECK(DAQmxBaseWriteAnalogF64(var_thlkg->var_outask,
+	    if(ERR_CHECK(NIWriteAnalogF64(var_thlkg->var_outask,
 						 1,
 						 0,
 						 10.0,
@@ -279,7 +282,7 @@ static void* thlkg_async_start(void* obj)
     ERR_CHECK(NIWriteAnalogF64(var_thlkg->var_outask,
 			       0,
 			       10.0,
-			       0.0,
+			       st_fan_val,
 			       NULL));
 #else
     ERR_CHECK(NIWriteAnalogF64(var_thlkg->var_outask,

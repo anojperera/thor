@@ -2,6 +2,7 @@
  * Sat May 14 14:47:30 BST 2011 */
 
 #include "thgsens.h"
+#include "thornifix.h"
 #include <string.h>
 
 #define THGSENS_MIN_VOLT 0.0			/* min voltage of sensor */

@@ -10,11 +10,11 @@
 #define NIClearTask DAQmxClearTask
 #define NIStartTask DAQmxStartTask
 #define NIStopTask DAQmxStopTask
-#define NIWriteAnalogF64 DAQmxWriteAnalogF64
+#define NIWriteAnalogF64 DAQmxWriteAnalogScalarF64
 #define NIReadAnalogF64 DAQmxReadAnalogF64
 #define NICreateTask DAQmxCreateTask
 #define NICreateAOVoltageChan DAQmxCreateAOVoltageChan
-#define NICreateAIVoltageChan DAQmxBaseCreateAIVoltageChan
+#define NICreateAIVoltageChan DAQmxCreateAIVoltageChan
 #else
 #include <NIDAQmxBase.h>
 #define NIGetErrorString DAQmxBaseGetExtendedErrorInfo

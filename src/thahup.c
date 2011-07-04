@@ -48,12 +48,12 @@ static pthread_mutex_t mutex;
 /* start test flag */
 static int start_test = 0;
 
-static inline int ERR_CHECK(int32 err)
+static inline int ERR_CHECK(int32 err_code)
 {
     /* get error message */
-    if(err)
+    if(err_code)
 	{
-#if defined (WIN32) || defined (_WIN32)      
+#if defined (WIN32) || defined (_WIN32)   
 	    NIGetErrorString(err_code, err_msg, THAHUP_BUFF_SZ);
 #else
 	    NIGetErrorString(err_msg, THAHUP_BUFF_SZ);
@@ -170,9 +170,10 @@ void* thahup_async_start(void* obj)
 	return NULL;
 
     float64 var_act_st_val = 0.0;	/* actuator stop val */
-    int32 spl_read = 0;		/* number of samples read */
+    int32 spl_read = 0;			/* number of samples read */
+#if !defined (WIN32) || !defined(_WIN32)
     int32 spl_write = 0;		/* number of samples written */
-
+#endif
     /* output to screen */
     printf("Counter\tDP1\tDP2\tDP3\tDP4\tV\tVol\tTmp\n");
 
@@ -248,20 +249,21 @@ void* thahup_async_start(void* obj)
     if(ERR_CHECK(NIWriteAnalogF64(var_thahup->var_outask,
 				  0,
 				  10.0,
-				  0.0,
+				  var_act_st_val,
 				  NULL)))
+	printf("%s\n","actuator not stopped");
 #else
-	if(ERR_CHECK(NIWriteAnalogF64(var_thahup->var_outask,
-				      1,
-				      0,
-				      10.0,
-				      DAQmx_Val_GroupByChannel,
-				      &var_act_st_val,
-				      &spl_write,
-				      NULL)))
+    if(ERR_CHECK(NIWriteAnalogF64(var_thahup->var_outask,
+				  1,
+				  0,
+				  10.0,
+				  DAQmx_Val_GroupByChannel,
+				  &var_act_st_val,
+				  &spl_write,
+				  NULL)))
+	printf("%s\n","actuator not stopped");
 #endif
 
-	    printf("\n");
 
     /* stop task */
     ERR_CHECK(NIStopTask(var_thahup->var_outask));
