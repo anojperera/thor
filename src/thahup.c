@@ -131,7 +131,7 @@ static inline void thahup_set_values()
 
     /* get velocity */
     var_thahup->var_velocity_val =
-	thvelsen_get_velocity(var_thahup->var_velocity);
+    	thvelsen_get_velocity(var_thahup->var_velocity);
 
     /* temperature */
     var_thahup->var_temp_val =
