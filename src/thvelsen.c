@@ -334,7 +334,7 @@ double thvelsen_get_velocity(thvelsen* obj)
 	    v += THVELSEN_VELOCITY(thgsens_get_value(obj->var_v4));
 	}
 
-    obj->var_ave_vel = (obj->var_sen_cnt? 
+    obj->var_ave_vel = (obj->var_sen_cnt>0? 
 			(v / (double) (obj->var_sen_cnt+1)) :
 			v);
 
@@ -372,7 +372,7 @@ int thvelsen_enable_sensor(thvelsen* obj,
 	    obj->var_v4->var_flg = 1;
 	}
 
-    /* decrement counter */
+    /* increment counter */
     if(obj->var_sen_cnt < 4)
 	obj->var_sen_cnt++;
 
