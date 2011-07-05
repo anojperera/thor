@@ -84,6 +84,9 @@ extern "C" {
     int thvelsen_disable_sensor(thvelsen* obj,
 				unsigned int ix);
 
+    /* enable sensor */
+    int thvelsen_enable_sensor(thvelsen* obj,
+			       unsigned int ix);
 
     double thvelsen_get_velocity(thvelsen* obj);
 

@@ -84,7 +84,7 @@ static inline int thgsens_init(thgsens* obj)
 	    return 0;
 	}
 
-
+    obj->var_flg = 1;
     return 1;
 }
 
@@ -121,6 +121,7 @@ int thgsens_new(thgsens** obj, const char* ch_name,
     (*obj)->var_intc = 0;
     (*obj)->var_okflg = 0;
     (*obj)->sobj_ptr = data;
+    (*obj)->var_flg = 0;
 
     printf("%s\n","sensor parameters assigned");
     thgsens_init(*obj);

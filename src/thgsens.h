@@ -35,6 +35,7 @@ struct _thgsens
     double var_intc;				/* intercept point */
     unsigned int var_okflg;			/* flag to indicate ranges has been set */
     void* sobj_ptr;				/* pointer to external object */
+    unsigned int var_flg;			/* flag to indicate enabled or disable state */
 };
 
 #ifdef __cplusplus
