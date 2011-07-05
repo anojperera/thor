@@ -335,7 +335,7 @@ double thvelsen_get_velocity(thvelsen* obj)
 	}
 
     obj->var_ave_vel = (obj->var_sen_cnt? 
-			(v / (double) obj->var_sen_cnt) :
+			(v / (double) (obj->var_sen_cnt+1)) :
 			v);
 
     /* if the callback function pointer was assigned
