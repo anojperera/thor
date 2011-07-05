@@ -33,6 +33,9 @@ static thahup* var_thahup = NULL;			/* ahu test object */
 
 #define THAHUP_NUM_INPUT_CHANNELS 6			/* number of channels */
 
+#define THAHUP_CHECK_VSENSOR(obj) \
+    obj? obj->var_val : 0.0
+
 static char err_msg[THAHUP_BUFF_SZ];
 static unsigned int counter = 0;			/* counter */
 static unsigned int gcounter = 0;
@@ -95,14 +98,29 @@ static inline void thahup_set_values()
 	(val_buff[0]>0? val_buff[0] : 0.0);
     
     /* set values of velocity sensors */
-    var_thahup->var_velocity->var_v1->var_raw =
-	(val_buff[1]>0? val_buff[1] : 0.0);
-    var_thahup->var_velocity->var_v2->var_raw =
-	(val_buff[2]>0? val_buff[2] : 0.0);
-    var_thahup->var_velocity->var_v3->var_raw =
-	(val_buff[3]>0? val_buff[3] : 0.0);
-    var_thahup->var_velocity->var_v4->var_raw =
-	(val_buff[4]>0? val_buff[4] : 0.0);
+    if(var_thahup->var_velocity->var_v1)
+	{
+	    var_thahup->var_velocity->var_v1->var_raw =
+		(val_buff[1]>0? val_buff[1] : 0.0);
+	}
+
+    if(var_thahup->var_velocity->var_v2)
+	{
+	    var_thahup->var_velocity->var_v2->var_raw =
+		(val_buff[2]>0? val_buff[2] : 0.0);
+	}
+
+    if(var_thahup->var_velocity->var_v3)
+	{
+	    var_thahup->var_velocity->var_v3->var_raw =
+		(val_buff[3]>0? val_buff[3] : 0.0);
+	}
+
+    if(var_thahup->var_velocity->var_v4)
+	{
+	    var_thahup->var_velocity->var_v4->var_raw =
+		(val_buff[4]>0? val_buff[4] : 0.0);
+	}
 
     var_thahup->var_stsensor->var_raw =
 	(val_buff[5]>0? val_buff[5] : 0.0);
@@ -136,10 +154,10 @@ static inline void thahup_write_results()
     if(var_thahup->var_fp)
 	{
 	    fprintf(var_thahup->var_fp, "%f,%f,%f,%f,%f,%f,%f\n",
-		    var_thahup->var_velocity->var_v1->var_val,
-		    var_thahup->var_velocity->var_v2->var_val,
-		    var_thahup->var_velocity->var_v3->var_val,
-		    var_thahup->var_velocity->var_v4->var_val,
+		    THAHUP_CHECK_VSENSOR(var_thahup->var_velocity->var_v1),
+		    THAHUP_CHECK_VSENSOR(var_thahup->var_velocity->var_v2),
+		    THAHUP_CHECK_VSENSOR(var_thahup->var_velocity->var_v3),
+		    THAHUP_CHECK_VSENSOR(var_thahup->var_velocity->var_v4),
 		    var_thahup->var_velocity_val,
 		    var_thahup->var_volflow_val,
 		    var_thahup->var_temp_val);
@@ -148,10 +166,10 @@ static inline void thahup_write_results()
     /* update screen */
     printf("%i\t%7.2f\t%7.2f\t%7.2f\t%7.2f\t%7.2f\t%7.2f\t%7.2f\n",
 	   gcounter,
-	   var_thahup->var_velocity->var_v1->var_val,
-	   var_thahup->var_velocity->var_v2->var_val,
-	   var_thahup->var_velocity->var_v3->var_val,
-	   var_thahup->var_velocity->var_v4->var_val,
+	   THAHUP_CHECK_VSENSOR(var_thahup->var_velocity->var_v1),
+	   THAHUP_CHECK_VSENSOR(var_thahup->var_velocity->var_v2),
+	   THAHUP_CHECK_VSENSOR(var_thahup->var_velocity->var_v3),
+	   THAHUP_CHECK_VSENSOR(var_thahup->var_velocity->var_v4),
 	   var_thahup->var_velocity_val,
 	   var_thahup->var_volflow_val,
 	   var_thahup->var_temp_val);
