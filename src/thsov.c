@@ -252,7 +252,7 @@ static inline void thsov_set_values()
 	}
     /* unlock mutex */
     pthread_mutex_unlock(&mutex);
-    return 0;
+
 }
 
 /* Write values to console, update UI
@@ -284,9 +284,9 @@ static inline int thsov_write_values()
 	   thgsens_get_value(var_thsov->var_tmp_sensor));
 
     /* Call function pointers */
-    if(var_thsov->var_dmp_state)
+    if(var_thsov->var_state_update)
 	{
-	    var_thsov->var_dmp_state(var_thsov->var_sobj,
+	    var_thsov->var_state_update(var_thsov->var_sobj,
 				     var_thsov->var_dmp_state);
 	}
 
@@ -308,18 +308,17 @@ static void* thsov_async_start(void* obj)
 
     unsigned int v_counter = -1;
     unsigned int a_counter = 0;
-    int err_flg = 0;
-
+    /* int err_flg = 0; */
+    int32 spl_write = 0;
+    
     /* flag to indicate test in progress */
     start_test = 1;
 
     /* start both accuiring and writing tasks */
-    if(ERR_CHECK(NIStartTask(var_thlkg->var_outask)))
+    if(ERR_CHECK(NIStartTask(var_thsov->var_outask)))
 	return NULL;
-    if(ERR_CHECK(NIStartTask(var_thlkg->var_intask)))
+    if(ERR_CHECK(NIStartTask(var_thsov->var_intask)))
 	return NULL;
-
-
 
     /* Output to screen */
     printf("Item\tCycle\tState\tVoltage\tAngle\tTemp\n");
@@ -330,7 +329,7 @@ static void* thsov_async_start(void* obj)
 	    /* Increment counter */
 	    if(++v_counter >= THSOV_SUPPLY_PTS)
 		{
-		    v_counter == 0;
+		    v_counter = 0;
 		    if(++a_counter == THSOV_SOV_ANG_QUAD)
 			break;
 		}
@@ -350,7 +349,8 @@ static void* thsov_async_start(void* obj)
 						       0,		/* auto start */
 						       10.0,		/* time out */
 						       DAQmx_Val_GroupByScanNumber,
-						       (float64) var_thsov->var_write_array,
+						       (float64*) var_thsov->var_write_array,
+						       &spl_write,
 						       NULL)))
 			break;
 
@@ -393,8 +393,8 @@ static void* thsov_async_start(void* obj)
 	}
 
     /* stop task */
-    ERR_CHECK(NIStopTask(var_thlkg->var_outask));
-    ERR_CHECK(NIStopTask(var_thlkg->var_intask));
+    ERR_CHECK(NIStopTask(var_thsov->var_outask));
+    ERR_CHECK(NIStopTask(var_thsov->var_intask));
 
     /* indicate test stopped */
     start_test = 0;
@@ -422,7 +422,7 @@ int thsov_initialise(gthsen_fptr tmp_update,		/* update temperature */
 	return 1;
 
     /* Create in task */
-    if(ERR_CHECK(NICreateTask("", &var_thsov->var_var_intask)))
+    if(ERR_CHECK(NICreateTask("", &var_thsov->var_intask)))
 	return 1;
 
     /* Configure timing */
@@ -498,7 +498,7 @@ int thsov_initialise(gthsen_fptr tmp_update,		/* update temperature */
 				       "",
 				       DAQmx_Val_NRSE,
 				       THSOV_SWITCH_VOLT_MIN,
-				       THSOV_SWITHC_VOLT_MAX,
+				       THSOV_SWITCH_VOLT_MAX,
 				       DAQmx_Val_Volts,
 				       NULL)))
 	return 1;
@@ -509,7 +509,7 @@ int thsov_initialise(gthsen_fptr tmp_update,		/* update temperature */
 				       "",
 				       DAQmx_Val_NRSE,
 				       THSOV_SWITCH_VOLT_MIN,
-				       THSOV_SWITHC_VOLT_MAX,
+				       THSOV_SWITCH_VOLT_MAX,
 				       DAQmx_Val_Volts,
 				       NULL)))
 	return 1;
@@ -534,7 +534,7 @@ int thsov_initialise(gthsen_fptr tmp_update,		/* update temperature */
 
     var_thsov->var_dmp_state = thsov_dmp_close;
     var_thsov->var_cyc_cnt = 0;
-    var_thsov->var_dmp_state = dmp_update;
+    var_thsov->var_state_update = dmp_update;
     var_thsov->var_ang_update = sov_angle_update;
 
     var_thsov->var_sobj = sobj;
@@ -570,7 +570,7 @@ void thsov_delete(thsov** obj)
     printf("%s\n","clean up");
 
     /* set function pointers to NULL */
-    var_thsov->var_dmp_state = NULL;
+    var_thsov->var_state_update = NULL;
     var_thsov->var_ang_update = NULL;
 
     /* set file pointer to NULL */

@@ -51,7 +51,7 @@ struct _thsov
 
     /******* Function Pointers to update functions ********/
     /* damper state change pointer */
-    gthsov_dmp_state_fptr var_dmp_state;
+    gthsov_dmp_state_fptr var_state_update;
     gthsen_fptr var_ang_update;		/* SOV orientation angle update */
     /******************************************************/
     

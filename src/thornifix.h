@@ -18,6 +18,7 @@
 #define NICreateAIVoltageChan DAQmxCreateAIVoltageChan
 #define NIfgSampClkTiming DAQmxCfgSampClkTiming
 #define NIRegisterEveryNSamplesEvent DAQmxRegisterEveryNSamplesEvent
+#define NIRegisterDoneEvent DAQmxRegisterDoneEvent
 #else
 #include <NIDAQmxBase.h>
 #define NIGetErrorString DAQmxBaseGetExtendedErrorInfo
@@ -32,17 +33,19 @@
 #define NICreateAIVoltageChan DAQmxBaseCreateAIVoltageChan
 #endif
 
-
+#define THOR_BUFF_SZ 2048
 /* error check function */
 inline int ERR_CHECK(int32 err)
 {
+    static char err_msg[THOR_BUFF_SZ] = {'\0'};
+    
     /* get error message */
     if(err)
 	{
 #if defined (WIN32) || defined (_WIN32)
-	    NIGetErrorString (err, err_msg, THLKG_BUFF_SZ);
+	    NIGetErrorString (err, err_msg, THOR_BUFF_SZ);
 #else
-	    NIGetErrorString(err_msg, THLKG_BUFF_SZ);
+	    NIGetErrorString(err_msg, THOR_BUFF_SZ);
 #endif
 	    fprintf(stderr, "%s\n", err_msg);
 	    return 1;

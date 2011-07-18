@@ -36,7 +36,7 @@ static thahup* var_thahup = NULL;			/* ahu test object */
 #define THAHUP_CHECK_VSENSOR(obj) \
     obj? (obj->var_flg? obj->var_val : 0.0) : 0.0
 
-static char err_msg[THAHUP_BUFF_SZ];
+/* static char err_msg[THAHUP_BUFF_SZ]; */
 static unsigned int counter = 0;			/* counter */
 static unsigned int gcounter = 0;
 
