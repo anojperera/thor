@@ -59,6 +59,7 @@ struct _thsov
     unsigned int var_arr_init;		/* array initialised */
     unsigned int var_stflg;
     float var_milsec_wait;		/* Miliseconds to wait */
+    int var_thrid;
 };
 
 /* C functions */

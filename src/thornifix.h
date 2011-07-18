@@ -16,6 +16,8 @@
 #define NICreateTask DAQmxCreateTask
 #define NICreateAOVoltageChan DAQmxCreateAOVoltageChan
 #define NICreateAIVoltageChan DAQmxCreateAIVoltageChan
+#define NIfgSampClkTiming DAQmxCfgSampClkTiming
+#define NIRegisterEveryNSamplesEvent DAQmxRegisterEveryNSamplesEvent
 #else
 #include <NIDAQmxBase.h>
 #define NIGetErrorString DAQmxBaseGetExtendedErrorInfo

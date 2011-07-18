@@ -89,7 +89,15 @@ static int cycle_flag = 0;
 
 
 /* Private functions */
+/* Function declarations for continuous reading */
+int32 CVICALLBACK EveryNCallback(TaskHandle taskHandle,
+				 int32 everyNsamplesEventType,
+				 uInt32 nSamples,
+				 void *callbackData);
 
+int32 CVICALLBACK DoneCallback(TaskHandle taskHandle,
+			       int32 status,
+			       void *callbackData);
 /* Clears tasks */
 static inline void thsov_clear_tasks()
 {
@@ -213,6 +221,8 @@ static int thsov_create_supply_volt_array()
 /* Assigning values to sensors from buffer */
 static inline void thsov_set_values()
 {
+    /* Lock mutex */
+    pthread_mutex_lock(&mutex);
     var_thsov->var_tmp_sensor->var_raw =
 	(val_buff[0]>0? val_buff[0] : 0.0);
 
@@ -240,7 +250,8 @@ static inline void thsov_set_values()
 	    var_thsov->var_ang_update(var_thsov->var_sobj,
 				      &var_thsov->var_sov_ang_fd);
 	}
-    
+    /* unlock mutex */
+    pthread_mutex_unlock(&mutex);
     return 0;
 }
 
@@ -308,7 +319,7 @@ static void* thsov_async_start(void* obj)
     if(ERR_CHECK(NIStartTask(var_thlkg->var_intask)))
 	return NULL;
 
-    int32 spl_read = 0;		/* samples read */
+
 
     /* Output to screen */
     printf("Item\tCycle\tState\tVoltage\tAngle\tTemp\n");
@@ -331,7 +342,7 @@ static void* thsov_async_start(void* obj)
 		(float64) var_thsov->var_sov_sup_volt[v_counter];
 	    
 	    counter = 0;
-	    while(1)
+	    while(var_thsov->var_stflg)
 		{
 		    /* Write to channels */
 		    if(ERR_CHECK(NIWriteAnalogArrayF64(var_thsov->var_outask,
@@ -414,6 +425,39 @@ int thsov_initialise(gthsen_fptr tmp_update,		/* update temperature */
     if(ERR_CHECK(NICreateTask("", &var_thsov->var_var_intask)))
 	return 1;
 
+    /* Configure timing */
+    if(ERR_CHECK(NIfgSampClkTiming(var_thsov->var_intask,
+				   NULL,
+				   THSOV_NUM_INPUT_CHANNELS,
+				   DAQmx_Val_Rising,
+				   DAQmx_Val_ContSamps,
+				   THSOV_NUM_INPUT_CHANNELS * 2)))
+	{
+	    thsov_clear_tasks();
+	    return 1;
+	}
+
+    /* Register callbacks */
+    if(ERR_CHECK(NIRegisterEveryNSamplesEvent(var_thsov->var_intask,
+					      DAQmx_Val_Acquired_Into_Buffer,
+					      THSOV_NUM_INPUT_CHANNELS,
+					      0,
+					      EveryNCallback,
+					      NULL)))
+	{
+	    thsov_clear_tasks();
+	    return 1;
+	}
+    
+    if(ERR_CHECK(NIRegisterDoneEvent(var_thsov->var_intask,
+				     0,
+				     DoneCallback,
+				     NULL)))
+	{
+	    thsov_clear_tasks();
+	    return 1;
+	}
+    
     /* Create out channel for SOV orientation */
     if(ERR_CHECK(NICreateAOVoltageChan(var_thsov->var_outask,
 				       THSOV_SOV_ANG_CHANNEL,
@@ -461,13 +505,13 @@ int thsov_initialise(gthsen_fptr tmp_update,		/* update temperature */
 
     /* Close switch channel */
     if(ERR_CHECK(NICreateAIVoltageChan(var_thsov->var_intask,
-					  THSOV_ACT_CLOSE_CHANNEL,
-					  "",
-					  DAQmx_Val_NRSE,
-					  THSOV_SWITCH_VOLT_MIN,
-					  THSOV_SWITHC_VOLT_MAX,
-					  DAQmx_Val_Volts,
-					  NULL)))
+				       THSOV_ACT_CLOSE_CHANNEL,
+				       "",
+				       DAQmx_Val_NRSE,
+				       THSOV_SWITCH_VOLT_MIN,
+				       THSOV_SWITHC_VOLT_MAX,
+				       DAQmx_Val_Volts,
+				       NULL)))
 	return 1;
 
     /* Actuator orientation feedback channel */
@@ -497,6 +541,7 @@ int thsov_initialise(gthsen_fptr tmp_update,		/* update temperature */
     var_thsov->var_fp = fp;
     var_thsov->var_stflg = 0;
     var_thsov->var_milsec_wait = THSOV_DEF_WAIT_TIME;
+    var_thsov->var_thrid = 0;
     
     /* Call to create control voltages */
     thsov_create_angle_volt_array();
@@ -508,7 +553,7 @@ int thsov_initialise(gthsen_fptr tmp_update,		/* update temperature */
 
     /* Initialis mutex */
     pthread_mutex_init(&mutex, NULL);
-
+    
     return 0;
 }
 
@@ -579,4 +624,85 @@ inline int thsov_reset_values(thsov* obj)
     return 0;
 }
 
+/* Start test asynchronously */
+int thsov_start(thsov* obj)
+{
+    /* check temperature sensors */
+    if(!var_thsov->var_tmp_sensor->var_okflg)
+	{
+	    fprintf(stderr, "%s\n", "temperature sensor range not set");
+	    return 1;
+	}
 
+    var_thsov->var_stflg = 1;
+
+    /* initialise thread attributes */
+    pthread_attr_init(&attr);
+    pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+
+    var_thsov->var_thrid =
+	pthread_create(&thread, &attr, thsov_async_start, NULL);
+
+    return 0;
+    
+}
+
+/* Stop test */
+int thsov_stop(thsov* obj)
+{
+    pthread_mutex_lock(&mutex);
+    var_thsov->var_stflg = 0;
+    pthread_mutex_unlock(&mutex);
+
+    printf("%s\n","waiting for NI Tasks to finish..");
+    if(start_test)
+	pthread_join(thread, NULL);
+
+    start_test = 0;
+
+    /* Test stopped */
+    printf("%s\n","test stopped..");
+
+    pthread_attr_destroy(&attr);
+    return 0;
+    
+}
+
+/*=======================================================*/
+/* Implementation of Callback functions */
+int32 CVICALLBACK EveryNCallback(TaskHandle taskHandle,
+				 int32 everyNsamplesEventType,
+				 uInt32 nSamples,
+				 void *callbackData)
+{
+    int32 spl_read = 0;		/* samples read */
+    
+    /* Read data into buffer */
+    if(ERR_CHECK(NIReadAnalogF64(var_thsov->var_intask,
+				 THSOV_NUM_INPUT_CHANNELS,
+				 10.0,
+				 DAQmx_Val_GroupByChannel,
+				 val_buff,
+				 THSOV_NUM_INPUT_CHANNELS,
+				 &spl_read,
+				 NULL)))
+	return 1;
+
+    /* Call to set values */
+    thsov_set_values();
+    return 0;
+				 
+}
+
+/* DoneCallback */
+int32 CVICALLBACK DoneCallback(TaskHandle taskHandle,
+			       int32 status,
+			       void *callbackData)
+{
+    /* Check if data accquisition was stopped
+     * due to error */
+    if(ERR_CHECK(status))
+	return 0;
+
+    return 0;
+}
