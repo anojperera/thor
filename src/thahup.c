@@ -51,23 +51,6 @@ static pthread_mutex_t mutex;
 /* start test flag */
 static int start_test = 0;
 
-static inline int ERR_CHECK(int32 err_code)
-{
-    /* get error message */
-    if(err_code)
-	{
-#if defined (WIN32) || defined (_WIN32)   
-	    NIGetErrorString(err_code, err_msg, THAHUP_BUFF_SZ);
-#else
-	    NIGetErrorString(err_msg, THAHUP_BUFF_SZ);
-#endif
-	    fprintf(stderr, "%s\n", err_msg);
-	    return 1;
-	}
-    else
-	return 0;    
-}
-
 /* clear tasts */
 static inline void thahup_clear_tasks()
 {

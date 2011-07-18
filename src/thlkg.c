@@ -38,25 +38,6 @@ static int start_test = 0;
 
 /* private functions */
 
-/* error check function */
-static inline int ERR_CHECK(int32 err)
-{
-    /* get error message */
-    if(err)
-	{
-#if defined (WIN32) || defined (_WIN32)
-	    NIGetErrorString (err, err_msg, THLKG_BUFF_SZ);
-#else
-	    NIGetErrorString(err_msg, THLKG_BUFF_SZ);
-#endif
-	    fprintf(stderr, "%s\n", err_msg);
-	    return 1;
-	}
-    else
-	return 0;
-    
-}
-
 /* clears tasks */
 static inline void thlkg_clear_tasks()
 {

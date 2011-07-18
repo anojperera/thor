@@ -11,6 +11,7 @@
 #define NIStartTask DAQmxStartTask
 #define NIStopTask DAQmxStopTask
 #define NIWriteAnalogF64 DAQmxWriteAnalogScalarF64
+#define NIWriteAnalogArrayF64 DAQmxWriteAnalogF64
 #define NIReadAnalogF64 DAQmxReadAnalogF64
 #define NICreateTask DAQmxCreateTask
 #define NICreateAOVoltageChan DAQmxCreateAOVoltageChan
@@ -21,6 +22,7 @@
 #define NIClearTask DAQmxBaseClearTask
 #define NIStartTask DAQmxBaseStartTask
 #define NIWriteAnalogF64 DAQmxBaseWriteAnalogF64
+#define NIWriteAnalogArrayF64 DAQmxBaseWriteAnalogF64
 #define NIReadAnalogF64 DAQmxBaseReadAnalogF64
 #define NIStopTask DAQmxBaseStopTask
 #define NICreateTask DAQmxBaseCreateTask
@@ -28,5 +30,24 @@
 #define NICreateAIVoltageChan DAQmxBaseCreateAIVoltageChan
 #endif
 
+
+/* error check function */
+inline int ERR_CHECK(int32 err)
+{
+    /* get error message */
+    if(err)
+	{
+#if defined (WIN32) || defined (_WIN32)
+	    NIGetErrorString (err, err_msg, THLKG_BUFF_SZ);
+#else
+	    NIGetErrorString(err_msg, THLKG_BUFF_SZ);
+#endif
+	    fprintf(stderr, "%s\n", err_msg);
+	    return 1;
+	}
+    else
+	return 0;
+    
+}
 #endif /* _THORNIFIX_H_ */
 
