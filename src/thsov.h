@@ -53,6 +53,7 @@ struct _thsov
     /* damper state change pointer */
     gthsov_dmp_state_fptr var_state_update;
     gthsen_fptr var_ang_update;		/* SOV orientation angle update */
+    gthor_fptr var_cyc_update;		/* cycle count update */
     /******************************************************/
     
     void* var_sobj;			/* pointer to external object */
@@ -71,6 +72,7 @@ extern "C" {
     int thsov_initialise(gthsen_fptr tmp_update,		/* update temperature */
 			 gthsov_dmp_state_fptr dmp_update,	/* damper open and close */
 			 gthsen_fptr sov_angle_update,		/* SOV orientation update */
+			 gthor_fptr cyc_update,			/* Cycle update */
 			 double sov_suppy_start,		/* Supply start voltage */
 			 double sov_angle_start,		/* Starting angle */
 			 thsov** obj,				/* Optional - pointer to local object */

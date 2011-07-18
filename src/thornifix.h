@@ -34,6 +34,10 @@
 #endif
 
 #define THOR_BUFF_SZ 2048
+
+/* Generic callback function */
+typedef unsigned int (*gthor_fptr)(void*, void*);
+
 /* error check function */
 inline int ERR_CHECK(int32 err)
 {

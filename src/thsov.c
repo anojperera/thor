@@ -296,6 +296,12 @@ static inline int thsov_write_values()
 				      &var_thsov->var_sov_ang_fd);
 	}
 
+    if(var_thsov->var_cyc_update)
+	{
+	    var_thsov->var_cyc_update(var_thsov->var_sobj,
+				      (void*) &var_thsov->var_cyc_cnt);
+	}
+
     return 0;
 				 
 }
@@ -405,6 +411,7 @@ static void* thsov_async_start(void* obj)
 int thsov_initialise(gthsen_fptr tmp_update,		/* update temperature */
 		     gthsov_dmp_state_fptr dmp_update,	/* damper open and close */
 		     gthsen_fptr sov_angle_update,	/* SOV orientation update */
+		     gthor_fptr cyc_update,		/* Cycle update */
 		     double sov_suppy_start,		/* Supply start voltage */
 		     double sov_angle_start,		/* Starting angle */
 		     thsov** obj,			/* Optional - pointer to local object */
@@ -534,8 +541,12 @@ int thsov_initialise(gthsen_fptr tmp_update,		/* update temperature */
 
     var_thsov->var_dmp_state = thsov_dmp_close;
     var_thsov->var_cyc_cnt = 0;
+
+    /******* Function pointer assign ********/
     var_thsov->var_state_update = dmp_update;
     var_thsov->var_ang_update = sov_angle_update;
+    var_thsov->var_cyc_update = cyc_update;
+    /****************************************/
 
     var_thsov->var_sobj = sobj;
     var_thsov->var_fp = fp;
