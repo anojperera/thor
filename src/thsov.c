@@ -640,6 +640,7 @@ inline int thsov_set_wait_time(thsov* obj,
 			       double wait_time)
 {
 	var_thsov->var_milsec_wait = (float) wait_time;
+	return 0;
 }
 
 /* Reset sensors */
