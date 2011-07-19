@@ -39,7 +39,7 @@
 typedef unsigned int (*gthor_fptr)(void*, void*);
 
 /* error check function */
-inline int ERR_CHECK(int32 err)
+static inline int ERR_CHECK(int32 err)
 {
     static char err_msg[THOR_BUFF_SZ] = {'\0'};
     
@@ -58,5 +58,6 @@ inline int ERR_CHECK(int32 err)
 	return 0;
     
 }
+
 #endif /* _THORNIFIX_H_ */
 
