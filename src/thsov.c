@@ -312,8 +312,8 @@ static void* thsov_async_start(void* obj)
     gcounter = 0;		/* reset counter */
     counter = 0;		/* reset counter */
 
-    unsigned int v_counter = -1;
-    unsigned int a_counter = 0;
+    unsigned int v_counter = 0;
+    unsigned int a_counter = -1;
     /* int err_flg = 0; */
     int32 spl_write = 0;
     
@@ -333,10 +333,10 @@ static void* thsov_async_start(void* obj)
     while(var_thsov->var_stflg)
 	{
 	    /* Increment counter */
-	    if(++v_counter >= THSOV_SUPPLY_PTS)
+	    if(++a_counter >= THSOV_SOV_ANG_QUAD)
 		{
-		    v_counter = 0;
-		    if(++a_counter == THSOV_SOV_ANG_QUAD)
+		    a_counter = 0;
+		    if(++v_counter >= THSOV_SUPPLY_PTS)
 			break;
 		}
 
@@ -692,7 +692,7 @@ int32 CVICALLBACK EveryNCallback(TaskHandle taskHandle,
     if(ERR_CHECK(NIReadAnalogF64(var_thsov->var_intask,
 				 THSOV_NUM_INPUT_CHANNELS,
 				 10.0,
-				 DAQmx_Val_GroupByChannel,
+				 DAQmx_Val_GroupByScanNumber,
 				 val_buff,
 				 THSOV_NUM_INPUT_CHANNELS,
 				 &spl_read,
