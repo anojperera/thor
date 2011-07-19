@@ -75,6 +75,7 @@ extern "C" {
 			 gthor_fptr cyc_update,			/* Cycle update */
 			 double sov_suppy_start,		/* Supply start voltage */
 			 double sov_angle_start,		/* Starting angle */
+			 double sov_wait_time,			/* SOV wait time */
 			 thsov** obj,				/* Optional - pointer to local object */
 			 FILE* fp,				/* File pointer */
 			 void* sobj);				/* pointer to external object */
@@ -85,6 +86,10 @@ extern "C" {
     extern inline int thsov_set_voltage_and_angle(thsov* obj,		/* Pointer to object */
 						  double st_volt,	/* Starting voltage */
 						  double st_ang);	/* Starting angle */
+
+    /* Set wait time before damper open/close */
+    extern inline int thsov_set_wait_time(thsov* obj,
+					  double wait_time);
 
     /* Reset internal variable values */
     extern inline int thsov_reset_values(thsov* obj);

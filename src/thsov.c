@@ -414,6 +414,7 @@ int thsov_initialise(gthsen_fptr tmp_update,		/* update temperature */
 		     gthor_fptr cyc_update,		/* Cycle update */
 		     double sov_suppy_start,		/* Supply start voltage */
 		     double sov_angle_start,		/* Starting angle */
+		     double sov_wait_time,		/* Wait time */
 		     thsov** obj,			/* Optional - pointer to local object */
 		     FILE* fp,				/* Optional file pointer */
 		     void* sobj)			/* pointer to external object */
@@ -551,7 +552,12 @@ int thsov_initialise(gthsen_fptr tmp_update,		/* update temperature */
     var_thsov->var_sobj = sobj;
     var_thsov->var_fp = fp;
     var_thsov->var_stflg = 0;
-    var_thsov->var_milsec_wait = THSOV_DEF_WAIT_TIME;
+    
+    if(sov_wait_time <= 0)
+	var_thsov->var_milsec_wait = THSOV_DEF_WAIT_TIME;
+    else
+	var_thsov->var_milsec_wait = (float) sov_wait_time;
+    
     var_thsov->var_thrid = 0;
     
     /* Call to create control voltages */
@@ -627,6 +633,13 @@ inline int thsov_set_voltage_and_angle(thsov* obj,	/* Pointer to object */
     thsov_create_angle_volt_array();
     thsov_create_supply_volt_array();
     return 0;
+}
+
+/* Set wait time */
+inline int thsov_set_wait_time(thsov* obj,
+			       double wait_time)
+{
+	var_thsov->var_milsec_wait = (float) wait_time;
 }
 
 /* Reset sensors */
