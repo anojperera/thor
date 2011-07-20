@@ -17,15 +17,15 @@ static thsov* var_thsov = NULL;
 
 
 /* Define write channels */
-#define THSOV_SOV_ANG_CHANNEL "dev/ao0"
-#define THSOV_SOV_SUP_CHANNEL "dev/ao1"
+#define THSOV_SOV_ANG_CHANNEL "dev1/ao0"
+#define THSOV_SOV_SUP_CHANNEL "dev1/ao1"
 
 
 /* Define read channels */
-#define THSOV_TMP_CHANNEL "dev/ai0"
-#define THSOV_ACT_OPEN_CHANNEL "dev/ai1"
-#define THSOV_ACT_CLOSE_CHANNEL "dev/ai2"
-#define THSOV_SOV_ANG_FEEDBACK_CHANNEL "dev/ai3"
+#define THSOV_TMP_CHANNEL "dev1/ai0"
+#define THSOV_ACT_OPEN_CHANNEL "dev1/ai1"
+#define THSOV_ACT_CLOSE_CHANNEL "dev1/ai2"
+#define THSOV_SOV_ANG_FEEDBACK_CHANNEL "dev1/ai3"
 
 /* Default wait time 4s */
 #define THSOV_DEF_WAIT_TIME 4000
@@ -433,38 +433,38 @@ int thsov_initialise(gthsen_fptr tmp_update,		/* update temperature */
     if(ERR_CHECK(NICreateTask("", &var_thsov->var_intask)))
 	return 1;
 
-    /* Configure timing */
-    if(ERR_CHECK(NIfgSampClkTiming(var_thsov->var_intask,
-				   NULL,
-				   THSOV_NUM_INPUT_CHANNELS,
-				   DAQmx_Val_Rising,
-				   DAQmx_Val_ContSamps,
-				   THSOV_NUM_INPUT_CHANNELS * 2)))
-	{
-	    thsov_clear_tasks();
-	    return 1;
-	}
+    /* /\* Configure timing *\/ */
+    /* if(ERR_CHECK(NIfgSampClkTiming(var_thsov->var_intask, */
+    /* 				   "", */
+    /* 				   THSOV_NUM_INPUT_CHANNELS, */
+    /* 				   DAQmx_Val_Rising, */
+    /* 				   DAQmx_Val_ContSamps, */
+    /* 				   THSOV_NUM_INPUT_CHANNELS * 2))) */
+    /* 	{ */
+    /* 	    thsov_clear_tasks(); */
+    /* 	    return 1; */
+    /* 	} */
 
-    /* Register callbacks */
-    if(ERR_CHECK(NIRegisterEveryNSamplesEvent(var_thsov->var_intask,
-					      DAQmx_Val_Acquired_Into_Buffer,
-					      THSOV_NUM_INPUT_CHANNELS,
-					      0,
-					      EveryNCallback,
-					      NULL)))
-	{
-	    thsov_clear_tasks();
-	    return 1;
-	}
+    /* /\* Register callbacks *\/ */
+    /* if(ERR_CHECK(NIRegisterEveryNSamplesEvent(var_thsov->var_intask, */
+    /* 					      DAQmx_Val_Acquired_Into_Buffer, */
+    /* 					      THSOV_NUM_INPUT_CHANNELS, */
+    /* 					      0, */
+    /* 					      EveryNCallback, */
+    /* 					      NULL))) */
+    /* 	{ */
+    /* 	    thsov_clear_tasks(); */
+    /* 	    return 1; */
+    /* 	} */
     
-    if(ERR_CHECK(NIRegisterDoneEvent(var_thsov->var_intask,
-				     0,
-				     DoneCallback,
-				     NULL)))
-	{
-	    thsov_clear_tasks();
-	    return 1;
-	}
+    /* if(ERR_CHECK(NIRegisterDoneEvent(var_thsov->var_intask, */
+    /* 				     0, */
+    /* 				     DoneCallback, */
+    /* 				     NULL))) */
+    /* 	{ */
+    /* 	    thsov_clear_tasks(); */
+    /* 	    return 1; */
+    /* 	} */
     
     /* Create out channel for SOV orientation */
     if(ERR_CHECK(NICreateAOVoltageChan(var_thsov->var_outask,
@@ -570,6 +570,7 @@ int thsov_initialise(gthsen_fptr tmp_update,		/* update temperature */
 
     /* Initialis mutex */
     pthread_mutex_init(&mutex, NULL);
+    printf("%s\n","Initialisation complete");
     
     return 0;
 }
