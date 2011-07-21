@@ -13,10 +13,10 @@
 
 static thlkg* var_thlkg = NULL;			/* leakage test object */
 
-#define THLKG_DP_CHANNEL "dev1/ai1"		/* differential pressure channel */
-#define THLKG_ST_CHANNEL "dev1/ai2"	       	/* static pressure channel */
-#define THLKG_TMP_CHANNEL "dev1/ai3"		/* temperature channel */
-#define THLKG_FAN_CHANNEL "dev1/ao0"		/* fan control channel */
+#define THLKG_DP_CHANNEL "Dev1/ai1"		/* differential pressure channel */
+#define THLKG_ST_CHANNEL "Dev1/ai2"	       	/* static pressure channel */
+#define THLKG_TMP_CHANNEL "Dev1/ai3"		/* temperature channel */
+#define THLKG_FAN_CHANNEL "Dev1/ao0"		/* fan control channel */
 #define THLKG_BUFF_SZ 2048
 #define THLKG_RATE 1000.0			/* rate of fan control */
 #define THLKG_NUM_CHANNELS 3			/* number of channels */

@@ -31,6 +31,8 @@
 #define NICreateTask DAQmxBaseCreateTask
 #define NICreateAOVoltageChan DAQmxBaseCreateAOVoltageChan
 #define NICreateAIVoltageChan DAQmxBaseCreateAIVoltageChan
+
+#define CVICALLBACK __cdecl
 #endif
 
 #define THOR_BUFF_SZ 2048

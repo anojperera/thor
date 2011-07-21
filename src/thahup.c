@@ -13,16 +13,16 @@
 /* object */
 static thahup* var_thahup = NULL;			/* ahu test object */
 
-#define THAHUP_ACT_CTRL_CHANNEL "dev1/ao0"
+#define THAHUP_ACT_CTRL_CHANNEL "Dev1/ao0"
 /* channel names for sensors */
-#define THAHUP_TMP_CHANNEL "dev1/ai0"			/* temperature sensor */
+#define THAHUP_TMP_CHANNEL "Dev1/ai0"			/* temperature sensor */
 
-#define THAHUP_VEL_DP1_CHANNEL "dev1/ai1"		/* differential pressure velocity */
-#define THAHUP_VEL_DP2_CHANNEL "dev1/ai2"		/* differential pressure velocity */
-#define THAHUP_VEL_DP3_CHANNEL "dev1/ai3"		/* differential pressure velocity */
-#define THAHUP_VEL_DP4_CHANNEL "dev1/ai4"		/* differential pressure velocity */
+#define THAHUP_VEL_DP1_CHANNEL "Dev1/ai1"		/* differential pressure velocity */
+#define THAHUP_VEL_DP2_CHANNEL "Dev1/ai2"		/* differential pressure velocity */
+#define THAHUP_VEL_DP3_CHANNEL "Dev1/ai3"		/* differential pressure velocity */
+#define THAHUP_VEL_DP4_CHANNEL "Dev1/ai4"		/* differential pressure velocity */
 
-#define THAHUP_ST_CHANNEL "dev1/ai5"			/* static pressure sensor */
+#define THAHUP_ST_CHANNEL "Dev1/ai5"			/* static pressure sensor */
 
 #define THAHUP_MIN_RNG 0.0				/* default minimum range for velocity sensors */
 #define THAHUP_MAX_RNG 500.0				/* default maximum range for velocity sensors */

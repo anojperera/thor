@@ -17,15 +17,15 @@ static thsov* var_thsov = NULL;
 
 
 /* Define write channels */
-#define THSOV_SOV_ANG_CHANNEL "dev1/ao0"
-#define THSOV_SOV_SUP_CHANNEL "dev1/ao1"
+#define THSOV_SOV_ANG_CHANNEL "Dev1/ao0"
+#define THSOV_SOV_SUP_CHANNEL "Dev1/ao1"
 
 
 /* Define read channels */
-#define THSOV_TMP_CHANNEL "dev1/ai0"
-#define THSOV_ACT_OPEN_CHANNEL "dev1/ai1"
-#define THSOV_ACT_CLOSE_CHANNEL "dev1/ai2"
-#define THSOV_SOV_ANG_FEEDBACK_CHANNEL "dev1/ai3"
+#define THSOV_TMP_CHANNEL "Dev1/ai0"
+#define THSOV_ACT_OPEN_CHANNEL "Dev1/ai1"
+#define THSOV_ACT_CLOSE_CHANNEL "Dev1/ai2"
+#define THSOV_SOV_ANG_FEEDBACK_CHANNEL "Dev1/ai3"
 
 /* Default wait time 4s */
 #define THSOV_DEF_WAIT_TIME 4000
@@ -565,7 +565,7 @@ int thsov_initialise(gthsen_fptr tmp_update,		/* update temperature */
     thsov_create_supply_volt_array();
 
     /* Set external pointer */
-    if(!obj)
+    if(obj)
 	*obj = var_thsov;
 
     /* Initialis mutex */
