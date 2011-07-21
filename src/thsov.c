@@ -58,6 +58,9 @@ static thsov* var_thsov = NULL;
 #define THSOV_SWITHC_VOLT_CHANGE 7.0
 /****************************************/
 
+#define THSOV_NUM_BUFF 4
+/****************************************/
+
 #define THSOV_NUM_INPUT_CHANNELS 4
 
 /* Angle conversion macros */
@@ -73,7 +76,7 @@ static int THSOV_SUPPLY_PTS = 0;
 static int THSOV_FACTOR = 1;
 
 /* read buffer */
-static float64 val_buff[THSOV_NUM_INPUT_CHANNELS];
+static float64 val_buff[THSOV_NUM_BUFF];
 
 static unsigned int counter = 0;		/* counter */
 static unsigned int gcounter = 0;
@@ -324,8 +327,6 @@ static void* thsov_async_start(void* obj)
     /* flag to indicate test in progress */
     start_test = 1;
 
-
-
     /* start both accuiring and writing tasks */
     if(ERR_CHECK(NIStartTask(var_thsov->var_outask)))
 	return NULL;
@@ -348,7 +349,6 @@ static void* thsov_async_start(void* obj)
 		    if(++v_counter >= THSOV_SUPPLY_PTS)
 			break;
 		}
-
 
 	    /* Set angle and supply voltage */
 	    var_thsov->var_write_array[0] =
@@ -411,6 +411,9 @@ static void* thsov_async_start(void* obj)
     /* stop task */
     ERR_CHECK(NIStopTask(var_thsov->var_outask));
     ERR_CHECK(NIStopTask(var_thsov->var_intask));
+
+    /* indicate test end */
+    printf("%s\n","Test End");
 
     /* indicate test stopped */
     start_test = 0;
@@ -551,32 +554,32 @@ int thsov_initialise(gthsen_fptr tmp_update,		/* update temperature */
     				   THSOV_NUM_INPUT_CHANNELS,
     				   DAQmx_Val_Rising,
     				   DAQmx_Val_ContSamps,
-    				   THSOV_NUM_INPUT_CHANNELS * 2)))
+    				   1)))
     	{
     	    thsov_clear_tasks();
     	    return 1;
     	}
 
-    /* /\* Register callbacks *\/ */
-    /* if(ERR_CHECK(NIRegisterEveryNSamplesEvent(var_thsov->var_intask, */
-    /* 					      DAQmx_Val_Acquired_Into_Buffer, */
-    /* 					      THSOV_NUM_INPUT_CHANNELS, */
-    /* 					      0, */
-    /* 					      EveryNCallback, */
-    /* 					      NULL))) */
-    /* 	{ */
-    /* 	    thsov_clear_tasks(); */
-    /* 	    return 1; */
-    /* 	} */
+    /* Register callbacks */
+    if(ERR_CHECK(NIRegisterEveryNSamplesEvent(var_thsov->var_intask,
+    					      DAQmx_Val_Acquired_Into_Buffer,
+    					      1,
+    					      0,
+    					      EveryNCallback,
+    					      NULL)))
+    	{
+    	    thsov_clear_tasks();
+    	    return 1;
+    	}
     
-    /* if(ERR_CHECK(NIRegisterDoneEvent(var_thsov->var_intask, */
-    /* 				     0, */
-    /* 				     DoneCallback, */
-    /* 				     NULL))) */
-    /* 	{ */
-    /* 	    thsov_clear_tasks(); */
-    /* 	    return 1; */
-    /* 	} */    
+    if(ERR_CHECK(NIRegisterDoneEvent(var_thsov->var_intask,
+    				     0,
+    				     DoneCallback,
+    				     NULL)))
+    	{
+    	    thsov_clear_tasks();
+    	    return 1;
+    	}
 
     /* Initialis mutex */
     pthread_mutex_init(&mutex, NULL);
@@ -715,7 +718,7 @@ int32 CVICALLBACK EveryNCallback(TaskHandle taskHandle,
     
     /* Read data into buffer */
     if(ERR_CHECK(NIReadAnalogF64(var_thsov->var_intask,
-				 THSOV_NUM_INPUT_CHANNELS,
+				 1,
 				 10.0,
 				 DAQmx_Val_GroupByScanNumber,
 				 val_buff,
