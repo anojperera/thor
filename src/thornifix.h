@@ -16,7 +16,7 @@
 #define NICreateTask DAQmxCreateTask
 #define NICreateAOVoltageChan DAQmxCreateAOVoltageChan
 #define NICreateAIVoltageChan DAQmxCreateAIVoltageChan
-#define NIfgSampClkTiming DAQmxCfgSampClkTiming
+#define NICfgSampClkTiming DAQmxCfgSampClkTiming
 #define NIRegisterEveryNSamplesEvent DAQmxRegisterEveryNSamplesEvent
 #define NIRegisterDoneEvent DAQmxRegisterDoneEvent
 #else
@@ -31,7 +31,7 @@
 #define NICreateTask DAQmxBaseCreateTask
 #define NICreateAOVoltageChan DAQmxBaseCreateAOVoltageChan
 #define NICreateAIVoltageChan DAQmxBaseCreateAIVoltageChan
-
+#define NICfgSampClkTiming DAQmxBaseCfgSampClkTiming
 #define CVICALLBACK __cdecl
 #endif
 
