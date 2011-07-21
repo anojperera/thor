@@ -324,6 +324,8 @@ static void* thsov_async_start(void* obj)
     /* flag to indicate test in progress */
     start_test = 1;
 
+
+
     /* start both accuiring and writing tasks */
     if(ERR_CHECK(NIStartTask(var_thsov->var_outask)))
 	return NULL;
@@ -440,39 +442,6 @@ int thsov_initialise(gthsen_fptr tmp_update,		/* update temperature */
     /* Create in task */
     if(ERR_CHECK(NICreateTask("", &var_thsov->var_intask)))
 	return 1;
-
-    /* Configure timing */
-    if(ERR_CHECK(NIfgSampClkTiming(var_thsov->var_intask,
-    				   "OnboardClock",
-    				   THSOV_NUM_INPUT_CHANNELS,
-    				   DAQmx_Val_Rising,
-    				   DAQmx_Val_ContSamps,
-    				   THSOV_NUM_INPUT_CHANNELS * 2)))
-    	{
-    	    thsov_clear_tasks();
-    	    return 1;
-    	}
-
-    /* /\* Register callbacks *\/ */
-    /* if(ERR_CHECK(NIRegisterEveryNSamplesEvent(var_thsov->var_intask, */
-    /* 					      DAQmx_Val_Acquired_Into_Buffer, */
-    /* 					      THSOV_NUM_INPUT_CHANNELS, */
-    /* 					      0, */
-    /* 					      EveryNCallback, */
-    /* 					      NULL))) */
-    /* 	{ */
-    /* 	    thsov_clear_tasks(); */
-    /* 	    return 1; */
-    /* 	} */
-    
-    /* if(ERR_CHECK(NIRegisterDoneEvent(var_thsov->var_intask, */
-    /* 				     0, */
-    /* 				     DoneCallback, */
-    /* 				     NULL))) */
-    /* 	{ */
-    /* 	    thsov_clear_tasks(); */
-    /* 	    return 1; */
-    /* 	} */
     
     /* Create out channel for SOV orientation */
     if(ERR_CHECK(NICreateAOVoltageChan(var_thsov->var_outask,
@@ -575,6 +544,39 @@ int thsov_initialise(gthsen_fptr tmp_update,		/* update temperature */
     /* Set external pointer */
     if(obj)
 	*obj = var_thsov;
+
+    /* Configure timing */
+    if(ERR_CHECK(NICfgSampClkTiming(var_thsov->var_intask,
+    				   "OnboardClock",
+    				   THSOV_NUM_INPUT_CHANNELS,
+    				   DAQmx_Val_Rising,
+    				   DAQmx_Val_ContSamps,
+    				   THSOV_NUM_INPUT_CHANNELS * 2)))
+    	{
+    	    thsov_clear_tasks();
+    	    return 1;
+    	}
+
+    /* /\* Register callbacks *\/ */
+    /* if(ERR_CHECK(NIRegisterEveryNSamplesEvent(var_thsov->var_intask, */
+    /* 					      DAQmx_Val_Acquired_Into_Buffer, */
+    /* 					      THSOV_NUM_INPUT_CHANNELS, */
+    /* 					      0, */
+    /* 					      EveryNCallback, */
+    /* 					      NULL))) */
+    /* 	{ */
+    /* 	    thsov_clear_tasks(); */
+    /* 	    return 1; */
+    /* 	} */
+    
+    /* if(ERR_CHECK(NIRegisterDoneEvent(var_thsov->var_intask, */
+    /* 				     0, */
+    /* 				     DoneCallback, */
+    /* 				     NULL))) */
+    /* 	{ */
+    /* 	    thsov_clear_tasks(); */
+    /* 	    return 1; */
+    /* 	} */    
 
     /* Initialis mutex */
     pthread_mutex_init(&mutex, NULL);
