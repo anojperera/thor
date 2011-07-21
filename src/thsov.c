@@ -11,6 +11,7 @@
 #include <unistd.h>
 #endif
 #include <pthread.h>
+#include <math.h>
 
 /* Test object declared static */
 static thsov* var_thsov = NULL;
@@ -69,6 +70,7 @@ static thsov* var_thsov = NULL;
 
 /* number of supply voltage points */
 static int THSOV_SUPPLY_PTS = 0;
+static int THSOV_FACTOR = 1;
 
 /* read buffer */
 static float64 val_buff[THSOV_NUM_INPUT_CHANNELS];
@@ -209,10 +211,12 @@ static int thsov_create_supply_volt_array()
     
     for(; i<THSOV_SUPPLY_PTS; i++)
 	{
+	    var_thsov->var_sov_sup_volt[i] = 0;			/* initialise */
+
 	    var_thsov->var_sov_sup_volt[i] =
 		var_thsov->var_sov_sup_volt_grad *
 		var_thsov->var_sov_supply_volt *
-		cos((1 - i/THSOV_SUPPLY_PTS) * M_PI / 2);
+		cos(((double) i/THSOV_SUPPLY_PTS) * M_PI / 2);
 	}
 
     return 0;
@@ -332,13 +336,17 @@ static void* thsov_async_start(void* obj)
     /* Use software timing */
     while(var_thsov->var_stflg)
 	{
+	    THSOV_FACTOR = 1;
+	    
 	    /* Increment counter */
 	    if(++a_counter >= THSOV_SOV_ANG_QUAD)
 		{
+		    THSOV_FACTOR = 3;
 		    a_counter = 0;
 		    if(++v_counter >= THSOV_SUPPLY_PTS)
 			break;
 		}
+
 
 	    /* Set angle and supply voltage */
 	    var_thsov->var_write_array[0] =
@@ -362,9 +370,9 @@ static void* thsov_async_start(void* obj)
 
 		    /* Delay N seconds */
 #if defined(WIN32) || defined(_WIN32)
-		    Sleep((int) var_thsov->var_milsec_wait);
+		    Sleep(THSOV_FACTOR * (int) var_thsov->var_milsec_wait);
 #else
-		    sleep((int) var_thsov->var_milsec_wait/1000);
+		    sleep(THSOV_FACTOR * (int) var_thsov->var_milsec_wait/1000);
 #endif
 		    /* Check damper state if loop in first pass */
 		    if(counter == 0)
