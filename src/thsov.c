@@ -441,17 +441,17 @@ int thsov_initialise(gthsen_fptr tmp_update,		/* update temperature */
     if(ERR_CHECK(NICreateTask("", &var_thsov->var_intask)))
 	return 1;
 
-    /* /\* Configure timing *\/ */
-    /* if(ERR_CHECK(NIfgSampClkTiming(var_thsov->var_intask, */
-    /* 				   "", */
-    /* 				   THSOV_NUM_INPUT_CHANNELS, */
-    /* 				   DAQmx_Val_Rising, */
-    /* 				   DAQmx_Val_ContSamps, */
-    /* 				   THSOV_NUM_INPUT_CHANNELS * 2))) */
-    /* 	{ */
-    /* 	    thsov_clear_tasks(); */
-    /* 	    return 1; */
-    /* 	} */
+    /* Configure timing */
+    if(ERR_CHECK(NIfgSampClkTiming(var_thsov->var_intask,
+    				   "OnboardClock",
+    				   THSOV_NUM_INPUT_CHANNELS,
+    				   DAQmx_Val_Rising,
+    				   DAQmx_Val_ContSamps,
+    				   THSOV_NUM_INPUT_CHANNELS * 2)))
+    	{
+    	    thsov_clear_tasks();
+    	    return 1;
+    	}
 
     /* /\* Register callbacks *\/ */
     /* if(ERR_CHECK(NIRegisterEveryNSamplesEvent(var_thsov->var_intask, */
