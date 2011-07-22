@@ -44,6 +44,7 @@ struct _thsov
 
     unsigned int var_cyc_cnt;		/* cycle counter */
     double var_sov_ang_fd;		/* angle feedback */
+    double var_sov_sup_fd;		/* supply feedback */
     
     float64 var_write_array[2];		/* write array to 2-channels */
 
@@ -54,6 +55,7 @@ struct _thsov
     gthsov_dmp_state_fptr var_state_update;
     gthsen_fptr var_ang_update;		/* SOV orientation angle update */
     gthor_fptr var_cyc_update;		/* cycle count update */
+    gthsen_fptr var_volt_update;		/* voltage update */
     /******************************************************/
     
     void* var_sobj;			/* pointer to external object */
@@ -73,6 +75,7 @@ extern "C" {
 			 gthsov_dmp_state_fptr dmp_update,	/* damper open and close */
 			 gthsen_fptr sov_angle_update,		/* SOV orientation update */
 			 gthor_fptr cyc_update,			/* Cycle update */
+			 gthsen_fptr volt_update,		/* Voltage update */
 			 double sov_suppy_start,		/* Supply start voltage */
 			 double sov_angle_start,		/* Starting angle */
 			 double sov_wait_time,			/* SOV wait time */
