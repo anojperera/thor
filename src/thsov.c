@@ -540,7 +540,7 @@ int thsov_initialise(gthsen_fptr tmp_update,		/* update temperature */
     if(ERR_CHECK(NICreateAIVoltageChan(var_thsov->var_intask,
 				       THSOV_SOV_ANG_FEEDBACK_CHANNEL,
 				       "",
-				       DAQmx_Val_NRSE,
+				       DAQmx_Val_Diff,
 				       THSOV_SOV_ANG_VOLT_MIN,
 				       THSOV_SOV_ANG_VOLT_MAX,
 				       DAQmx_Val_Volts,
