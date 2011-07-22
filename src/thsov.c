@@ -321,6 +321,12 @@ static void* thsov_async_start(void* obj)
 
     unsigned int v_counter = 0;
     unsigned int a_counter = -1;
+
+    int wait_flg = 0;		/* flag to indicate wait
+				 * until actuator returns to
+				 * origin */
+    unsigned int wait_count = 0;
+    
     /* int err_flg = 0; */
     int32 spl_write = 0;
     
@@ -340,11 +346,11 @@ static void* thsov_async_start(void* obj)
     while(var_thsov->var_stflg)
 	{
 	    THSOV_FACTOR = 1;
-	    
+	    wait_flg = 0;
 	    /* Increment counter */
 	    if(++a_counter >= THSOV_SOV_ANG_QUAD)
 		{
-		    THSOV_FACTOR = 3;
+		    wait_flg = 1;
 		    a_counter = 0;
 		    if(++v_counter >= THSOV_SUPPLY_PTS)
 			break;
@@ -376,6 +382,34 @@ static void* thsov_async_start(void* obj)
 #else
 		    sleep(THSOV_FACTOR * (int) var_thsov->var_milsec_wait/1000);
 #endif
+		    /* Add waiting loop here when orientation has been completed
+		     * one full cycle and is waiting for the actuator to come back
+		     * to origin */
+		    while(wait_flg > 0 && var_thsov->var_sov_ang_fd < 21)
+		    	{
+			    if(wait_count++ >= 2)
+				wait_count = 0;
+			    
+			    fflush(stdout);
+			    switch(wait_count)
+				{
+				case 0
+				    printf("%s\r","Waiting for actuator.");
+				    break;
+				case 1:
+				    printf("%s\r","Waiting for actuator..");
+				    break;
+				default:
+				    printf("%s\r","Waiting for actuator...");
+				}
+			    
+#if defined(WIN32) || defined(_WIN32)
+			    Sleep(250);
+#else
+			    sleep(0.25);
+#endif		    
+		    	}
+		    
 		    /* Check damper state if loop in first pass */
 		    if(counter == 0)
 			{
@@ -393,7 +427,7 @@ static void* thsov_async_start(void* obj)
 			{
 			    if(var_thsov->var_dmp_state == thsov_dmp_close &&
 			       cycle_flag == 1)
-				    var_thsov->var_cyc_cnt++;	/* Increment cycle count */
+				var_thsov->var_cyc_cnt++;	/* Increment cycle count */
 			    else
 				var_thsov->var_dmp_state = thsov_dmp_err;
 
