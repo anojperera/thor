@@ -109,6 +109,11 @@ int32 CVICALLBACK DoneCallback(TaskHandle taskHandle,
 static inline int thsov_write_values();
 static inline int thsov_write_raw_values();
 
+static char* thsov_wait1 = "Waiting for modulating actuator.";
+static char* thsov_wait2 = "Waiting for modulating actuator..";
+static char* thsov_wait3 = "Waiting for modulating actuator...";
+/*=======================================================================*/
+
 /* Clears tasks */
 static inline void thsov_clear_tasks()
 {
@@ -425,17 +430,23 @@ static void* thsov_async_start(void* obj)
 		    switch(wait_count)
 			{
 			case 0:
-			    printf("%s\r","Waiting for actuator.");
+			    if(var_thsov->var_indicate_wait)
+				var_indicate_wait(var_thsov->var_sobj, (void*) thsov_wait1);
+			    printf("%s\r", thsov_wait1);
 			    break;
 			case 1:
-			    printf("%s\r","Waiting for actuator..");
+			    if(var_thsov->var_indicate_wait)
+				var_indicate_wait(var_thsov->var_sobj, (void*) thsov_wait2);
+			    printf("%s\r", thsov_wait2);
 			    break;
 			default:
-			    printf("%s\r","Waiting for actuator...");
+			    if(var_thsov->var_indicate_wait)
+				var_indicate_wait(var_thsov->var_sobj, (void*) thsov_wait3);
+			    printf("%s\r", thsov_wait3);
 			}
 			    
 #if defined(WIN32) || defined(_WIN32)
-		    Sleep(1000);
+		    Sleep(500);
 #else
 		    sleep(1);
 #endif
@@ -465,9 +476,9 @@ static void* thsov_async_start(void* obj)
 
 		    /* Delay N seconds until sensors record response */
 #if defined(WIN32) || defined(_WIN32)
-		    Sleep(THSOV_DEF_WAIT_TIME);
+		    Sleep((DWORD) var_thsov->var_milsec_wait);
 #else
-		    sleep(THSOV_DEF_WAIT_TIME/1000);
+		    sleep((int) var_thsov->var_milsec_wait/1000);
 #endif
 
 		    /* Check damper state if loop in first pass */
@@ -533,6 +544,7 @@ int thsov_initialise(gthsen_fptr tmp_update,		/* update temperature */
 		     gthsen_fptr sov_angle_update,	/* SOV orientation update */
 		     gthor_fptr cyc_update,		/* Cycle update */
 		     gthsen_fptr volt_update,		/* Voltage update */
+		     gthor_fptr wait_update,		/* Wait update */
 		     double sov_suppy_start,		/* Supply start voltage */
 		     double sov_angle_start,		/* Starting angle */
 		     double sov_wait_time,		/* Wait time */
@@ -636,6 +648,7 @@ int thsov_initialise(gthsen_fptr tmp_update,		/* update temperature */
     var_thsov->var_ang_update = sov_angle_update;
     var_thsov->var_cyc_update = cyc_update;
     var_thsov->var_volt_update = volt_update;
+    var_thsov->var_indicate_wait = wait_update;
     /****************************************/
 
     var_thsov->var_sobj = sobj;
@@ -646,7 +659,7 @@ int thsov_initialise(gthsen_fptr tmp_update,		/* update temperature */
     if(sov_wait_time <= 0)
 	var_thsov->var_milsec_wait = THSOV_DEF_WAIT_TIME;
     else
-	var_thsov->var_milsec_wait = (float) sov_wait_time;
+	var_thsov->var_milsec_wait = sov_wait_time;
     
     var_thsov->var_thrid = 0;
     

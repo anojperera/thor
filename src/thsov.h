@@ -55,13 +55,16 @@ struct _thsov
     gthsov_dmp_state_fptr var_state_update;
     gthsen_fptr var_ang_update;		/* SOV orientation angle update */
     gthor_fptr var_cyc_update;		/* cycle count update */
-    gthsen_fptr var_volt_update;		/* voltage update */
+    gthsen_fptr var_volt_update;	/* voltage update */
+    gthor_fptr var_indicate_wait;	/* function pointer to indicate
+					 * waiting for SOV orientation
+					 * to wait */
     /******************************************************/
     
     void* var_sobj;			/* pointer to external object */
     unsigned int var_arr_init;		/* array initialised */
     unsigned int var_stflg;
-    float var_milsec_wait;		/* Miliseconds to wait */
+    double var_milsec_wait;		/* Miliseconds to wait */
     int var_thrid;
 };
 
@@ -76,6 +79,7 @@ extern "C" {
 			 gthsen_fptr sov_angle_update,		/* SOV orientation update */
 			 gthor_fptr cyc_update,			/* Cycle update */
 			 gthsen_fptr volt_update,		/* Voltage update */
+			 gthor_fptr wait_update,		/* Wait update */
 			 double sov_suppy_start,		/* Supply start voltage */
 			 double sov_angle_start,		/* Starting angle */
 			 double sov_wait_time,			/* SOV wait time */
