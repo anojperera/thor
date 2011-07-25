@@ -61,5 +61,23 @@ static inline int ERR_CHECK(int32 err)
     
 }
 
+static inline double Round(double val, unsigned int places)	/* rounds a number */
+{
+    double off = pow(10, places);
+	
+    double x = val * off;
+    double b = 0;
+    double i_part = 0;
+	
+	
+    if(modf(x, &i_part) >= 0.5)
+	b = (x>=i_part? ceil(x) : floor(x));
+    else
+	b = (x<i_part? ceil(x) : floor(x));
+
+    return b/off;
+
+}
+
 #endif /* _THORNIFIX_H_ */
 

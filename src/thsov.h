@@ -29,7 +29,7 @@ struct _thsov
     TaskHandle var_outask;		/* analog output task */
     TaskHandle var_intask;		/* analog input task */
 
-    FILE* var_fp;			/* file pointer */
+    FILE** var_fp;			/* file pointer */
 
     double* var_sov_ang_volt;		/* control voltage array */
     double* var_sov_sup_volt;		/* sov supply voltage array */
@@ -84,7 +84,7 @@ extern "C" {
 			 double sov_angle_start,		/* Starting angle */
 			 double sov_wait_time,			/* SOV wait time */
 			 thsov** obj,				/* Optional - pointer to local object */
-			 FILE* fp,				/* File pointer */
+			 FILE** fp,				/* File pointer */
 			 void* sobj);				/* pointer to external object */
 
     /* Destructor */

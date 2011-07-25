@@ -55,7 +55,7 @@ static thsov* var_thsov = NULL;
 /****************************************/
 #define THSOV_SWITCH_VOLT_MIN 0.0
 #define THSOV_SWITCH_VOLT_MAX 10.0
-#define THSOV_SWITCH_VOLT_CHANGE 7
+#define THSOV_SWITCH_VOLT_CHANGE 9.7
 /****************************************/
 
 #define THSOV_NUM_BUFF 4
@@ -257,22 +257,39 @@ static inline void thsov_set_values()
 {
     /* Lock mutex */
     pthread_mutex_lock(&mutex);
+    
     var_thsov->var_tmp_sensor->var_raw =
 	(val_buff[0]>0? val_buff[0] : 0.0);
-
-    /* Set switch state */
-    if((val_buff[1]>0? val_buff[1] : 0.0) >= THSOV_SWITCH_VOLT_CHANGE)
+    /* If waiting for modulating actuator do not
+       gather data switch data */
+    if(act_wait_flag == 0)
 	{
-	    var_thsov->var_dmp_state = thsov_dmp_open;
-	    cycle_flag = 1;
+	    /* Set switch state */
+	    if(Round((double) (val_buff[1]>0? val_buff[1] : 0.0),1) >=
+	       THSOV_SWITCH_VOLT_CHANGE)
+		{
+		    var_thsov->var_dmp_state = thsov_dmp_open;
+		    cycle_flag = 1;
+		    if(var_thsov->var_state_update)
+			{
+			    var_thsov->var_state_update(var_thsov->var_sobj,
+							var_thsov->var_dmp_state);
+			}
+		}
+	    else if(Round((val_buff[2]>0? val_buff[2] : 0.0),1) >=
+		    THSOV_SWITCH_VOLT_CHANGE)
+		{
+		    var_thsov->var_dmp_state = thsov_dmp_close;
+		    if(var_thsov->var_state_update)
+			{
+			    var_thsov->var_state_update(var_thsov->var_sobj,
+							var_thsov->var_dmp_state);
+			}	    
+		}
+	    else
+		var_thsov->var_dmp_state = thsov_dmp_err;
+	    
 	}
-    else if((val_buff[2]>0? val_buff[2] : 0.0) >= THSOV_SWITCH_VOLT_CHANGE)
-	{
-	    var_thsov->var_dmp_state = thsov_dmp_close;
-	}
-    else
-	var_thsov->var_dmp_state = thsov_dmp_err;
-
     /* Set angle */
     thsov_convert_volt_ang((val_buff[3]>0? val_buff[3] : 0.0));
 
@@ -285,7 +302,7 @@ static inline void thsov_set_values()
 	}
 
     /* if(act_wait_flag == 0) */
-    /* 	thsov_write_raw_values(); */
+    thsov_write_raw_values();
 
     /* unlock mutex */
     pthread_mutex_unlock(&mutex);
@@ -312,11 +329,11 @@ inline int thsov_write_values()
     /* Check file pointer and update */
     /* Format -
      * Item, Cycle, State, Voltage, Angle, Temperature */
-    if(var_thsov->var_fp)
+    if(*var_thsov->var_fp)
 	{
-	    fprintf(var_thsov->var_fp,
+	    fprintf(*var_thsov->var_fp,
 		    "%i,%s,%.2f, %.2f, %.2f\n",
-		    counter,
+		    var_thsov->var_cyc_cnt,
 		    (var_thsov->var_dmp_state == thsov_dmp_open?
 		     "Open" : "Close"),
 		    var_thsov->var_sov_sup_fd,
@@ -329,17 +346,11 @@ inline int thsov_write_values()
 	   counter,
 	   (var_thsov->var_dmp_state == thsov_dmp_open?
 	    "Open" : "Close"),
-	   var_thsov->var_write_array[1],
+	   var_thsov->var_sov_ang_fd,
 	   var_thsov->var_sov_sup_fd,
 	   thgsens_get_value(var_thsov->var_tmp_sensor));
 
     /* Call function pointers */
-    if(var_thsov->var_state_update)
-	{
-	    var_thsov->var_state_update(var_thsov->var_sobj,
-				     var_thsov->var_dmp_state);
-	}
-
     if(var_thsov->var_cyc_update)
 	{
 	    var_thsov->var_cyc_update(var_thsov->var_sobj,
@@ -382,6 +393,11 @@ static void* thsov_async_start(void* obj)
 
     /* Output to screen */
     printf("Cycle\tState\tVoltage\tAngle\tTemp\n");
+    if(*var_thsov->var_fp)
+	{
+	    fprintf(*var_thsov->var_fp,
+		    "Cycle,State,Voltage,Angle,Temp\n");
+	}
 
     /* Use software timing */
     while(var_thsov->var_stflg)
@@ -390,6 +406,7 @@ static void* thsov_async_start(void* obj)
 	    /* Increment counter */
 	    if(++a_counter >= THSOV_SOV_ANG_QUAD)
 		{
+		    printf("%s\n","Actuator reset");
 		    reset_flg = 1;
 		    a_counter = 0;
 		    if(++v_counter >= THSOV_SUPPLY_PTS)
@@ -413,17 +430,20 @@ static void* thsov_async_start(void* obj)
 		break;
 
 	    /* Wait until actuator returns to position */
-	    while((val_buff[3] < var_thsov->var_write_array[0]*0.9 ||
-		   val_buff[3] > var_thsov->var_write_array[0]*1.1) &&
+	    while((val_buff[3] < var_thsov->var_write_array[0]*0.99 ||
+		   val_buff[3] > var_thsov->var_write_array[0]*1.01) &&
 		  (var_thsov->var_write_array[0] > 0 || reset_flg > 0))
 		{
 		    if(var_thsov->var_stflg == 0)
-			{
-			    var_thsov->var_dmp_state = thsov_dmp_err;
-			    break;
-			}
+			break;
+
+		    /* break from idle loop until actuator is being reset */
+		    if(reset_flg >0 && val_buff[3] <= 2.1)
+			break;
+
+		    act_wait_flag = 1;
 		    /* act_wait_flag = 1; */
-		    if(++wait_count >= 2)
+		    if(++wait_count > 2)
 			wait_count = 0;
 
 		    fflush(stdout);
@@ -431,17 +451,17 @@ static void* thsov_async_start(void* obj)
 			{
 			case 0:
 			    if(var_thsov->var_indicate_wait)
-				var_indicate_wait(var_thsov->var_sobj, (void*) thsov_wait1);
+				var_thsov->var_indicate_wait(var_thsov->var_sobj, (void*) thsov_wait1);
 			    printf("%s\r", thsov_wait1);
 			    break;
 			case 1:
 			    if(var_thsov->var_indicate_wait)
-				var_indicate_wait(var_thsov->var_sobj, (void*) thsov_wait2);
+				var_thsov->var_indicate_wait(var_thsov->var_sobj, (void*) thsov_wait2);
 			    printf("%s\r", thsov_wait2);
 			    break;
 			default:
 			    if(var_thsov->var_indicate_wait)
-				var_indicate_wait(var_thsov->var_sobj, (void*) thsov_wait3);
+				var_thsov->var_indicate_wait(var_thsov->var_sobj, (void*) thsov_wait3);
 			    printf("%s\r", thsov_wait3);
 			}
 			    
@@ -451,10 +471,10 @@ static void* thsov_async_start(void* obj)
 		    sleep(1);
 #endif
 		}
-
+	    act_wait_flag = 0;
 	    /* If stopped button pressed exit loop */
-	    if(var_thsov->var_dmp_state == thsov_dmp_err)
-		break;
+	    if(var_thsov->var_stflg == 0)
+		break;	    
 	    
 	    /* Solenoid supply voltage */
 	    var_thsov->var_write_array[1] =
@@ -476,7 +496,8 @@ static void* thsov_async_start(void* obj)
 
 		    /* Delay N seconds until sensors record response */
 #if defined(WIN32) || defined(_WIN32)
-		    Sleep((DWORD) var_thsov->var_milsec_wait);
+		    Sleep((DWORD) (var_thsov->var_milsec_wait *
+				   ((reset_flg>0 && counter==0)? 2 : 1)));
 #else
 		    sleep((int) var_thsov->var_milsec_wait/1000);
 #endif
@@ -549,7 +570,7 @@ int thsov_initialise(gthsen_fptr tmp_update,		/* update temperature */
 		     double sov_angle_start,		/* Starting angle */
 		     double sov_wait_time,		/* Wait time */
 		     thsov** obj,			/* Optional - pointer to local object */
-		     FILE* fp,				/* Optional file pointer */
+		     FILE** fp,				/* Optional file pointer */
 		     void* sobj)			/* pointer to external object */
 {
     /* Create object struct */
@@ -604,7 +625,7 @@ int thsov_initialise(gthsen_fptr tmp_update,		/* update temperature */
     if(ERR_CHECK(NICreateAIVoltageChan(var_thsov->var_intask,
 				       THSOV_ACT_OPEN_CHANNEL,
 				       "",
-				       DAQmx_Val_Diff,
+				       DAQmx_Val_NRSE,
 				       THSOV_SWITCH_VOLT_MIN,
 				       THSOV_SWITCH_VOLT_MAX,
 				       DAQmx_Val_Volts,
@@ -660,6 +681,8 @@ int thsov_initialise(gthsen_fptr tmp_update,		/* update temperature */
 	var_thsov->var_milsec_wait = THSOV_DEF_WAIT_TIME;
     else
 	var_thsov->var_milsec_wait = sov_wait_time;
+
+    printf("%s %f\n", "sov wait time", var_thsov->var_milsec_wait);
     
     var_thsov->var_thrid = 0;
     
