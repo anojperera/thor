@@ -113,7 +113,7 @@ extern "C" {
     extern inline int thsov_set_cont_flg(thsov* obj,
 					 unsigned int val);
 
-    extern inline int thsov_set_raw_channel_output_flg(thsov* obj,
+     extern inline int thsov_set_raw_channel_output_flg(thsov* obj,
 						       unsigned int val);
 
     /* Start function - starts tests in another thread.
