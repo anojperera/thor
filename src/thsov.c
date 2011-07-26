@@ -522,7 +522,8 @@ static void* thsov_async_start(void* obj)
 			    if(var_thsov->var_dmp_state == thsov_dmp_close &&
 			       cycle_flag == 1)
 				var_thsov->var_cyc_cnt++;	/* Increment cycle count */
-			    else if(var_thsov->var_cont_flg == 0)
+			    else if(var_thsov->var_cont_flg == 0 ||
+				    a_counter == THSOV_SOV_ANG_QUAD - 1)
 				var_thsov->var_dmp_state = thsov_dmp_err;
 
 			    thsov_write_values();
