@@ -328,7 +328,7 @@ inline int thsov_write_values()
 {
     /* Check file pointer and update */
     /* Format -
-     * Item, Cycle, State, Voltage, Angle, Temperature */
+     * Item, Cycle, State, Angle, Voltage, Temperature */
     if(*var_thsov->var_fp)
 	{
 	    fprintf(*var_thsov->var_fp,
@@ -336,8 +336,8 @@ inline int thsov_write_values()
 		    var_thsov->var_cyc_cnt,
 		    (var_thsov->var_dmp_state == thsov_dmp_open?
 		     "Open" : "Close"),
-		    var_thsov->var_sov_sup_fd,
 		    var_thsov->var_sov_ang_fd,
+		    var_thsov->var_sov_sup_fd,
 		    thgsens_get_value(var_thsov->var_tmp_sensor));
 	}
 
@@ -392,11 +392,11 @@ static void* thsov_async_start(void* obj)
 	return NULL;
 
     /* Output to screen */
-    printf("Cycle\tState\tVoltage\tAngle\tTemp\n");
+    printf("Cycle\tState\tAngle\tVoltage\tTemp\n");
     if(*var_thsov->var_fp)
 	{
 	    fprintf(*var_thsov->var_fp,
-		    "Cycle,State,Voltage,Angle,Temp\n");
+		    "Cycle,State,Angle,Voltage,Temp\n");
 	}
 
     /* Use software timing */
