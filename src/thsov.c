@@ -29,7 +29,7 @@ static thsov* var_thsov = NULL;
 #define THSOV_SOV_ANG_FEEDBACK_CHANNEL "Dev1/ai3"
 
 /* Default wait time 4s */
-#define THSOV_DEF_WAIT_TIME 15000
+#define THSOV_DEF_WAIT_TIME 10000
 
 /****************************************/
 /* Max and minimum solenoid orientation */
@@ -43,7 +43,7 @@ static thsov* var_thsov = NULL;
 /* Max and minimum solenoid orientation voltage */
 #define THSOV_SOV_ANG_VOLT_MIN 0.0
 #define THSOV_SOV_ANG_VOLT_MAX 10.0
-
+#define THSOV_SOV_MIN_FEEDBACK 2.1
 /****************************************/
 /* Minimum and maximum supply voltage */
 #define THSOV_SOV_SUP_MIN 0.0
@@ -266,7 +266,7 @@ static inline void thsov_set_values()
 	{
 	    /* Set switch state */
 	    if(Round((double) (val_buff[1]>0? val_buff[1] : 0.0),1) >=
-	       THSOV_SWITCH_VOLT_CHANGE)
+	       var_thsov->var_switching_vlt)
 		{
 		    var_thsov->var_dmp_state = thsov_dmp_open;
 		    cycle_flag = 1;
@@ -277,7 +277,7 @@ static inline void thsov_set_values()
 			}
 		}
 	    else if(Round((val_buff[2]>0? val_buff[2] : 0.0),1) >=
-		    THSOV_SWITCH_VOLT_CHANGE)
+		    var_thsov->var_switching_vlt)
 		{
 		    var_thsov->var_dmp_state = thsov_dmp_close;
 		    if(var_thsov->var_state_update)
@@ -301,8 +301,8 @@ static inline void thsov_set_values()
 				      &var_thsov->var_sov_ang_fd);
 	}
 
-    /* if(act_wait_flag == 0) */
-    thsov_write_raw_values();
+    if(var_thsov->var_raw_chnl_flg > 0)
+	thsov_write_raw_values();
 
     /* unlock mutex */
     pthread_mutex_unlock(&mutex);
@@ -438,7 +438,7 @@ static void* thsov_async_start(void* obj)
 			break;
 
 		    /* break from idle loop until actuator is being reset */
-		    if(reset_flg >0 && val_buff[3] <= 2.1)
+		    if(reset_flg >0 && val_buff[3] <= var_thsov->var_min_feedbak_vlt)
 			break;
 
 		    act_wait_flag = 1;
@@ -507,7 +507,8 @@ static void* thsov_async_start(void* obj)
 			{
 			    thsov_convert_volt_sup(var_thsov->var_write_array[1]);
 			    /* Check damper state */
-			    if(var_thsov->var_dmp_state != thsov_dmp_open)
+			    if(var_thsov->var_dmp_state != thsov_dmp_open &&
+			       var_thsov->var_cont_flg == 0)
 				{
 				    var_thsov->var_dmp_state = thsov_dmp_err;
 				    break;
@@ -521,7 +522,7 @@ static void* thsov_async_start(void* obj)
 			    if(var_thsov->var_dmp_state == thsov_dmp_close &&
 			       cycle_flag == 1)
 				var_thsov->var_cyc_cnt++;	/* Increment cycle count */
-			    else
+			    else if(var_thsov->var_cont_flg == 0)
 				var_thsov->var_dmp_state = thsov_dmp_err;
 
 			    thsov_write_values();
@@ -663,6 +664,10 @@ int thsov_initialise(gthsen_fptr tmp_update,		/* update temperature */
 
     var_thsov->var_dmp_state = thsov_dmp_close;
     var_thsov->var_cyc_cnt = 0;
+    var_thsov->var_switching_vlt = THSOV_SWITCH_VOLT_CHANGE;
+    var_thsov->var_min_feedbak_vlt = THSOV_SOV_MIN_FEEDBACK;
+    var_thsov->var_cont_flg = 0;
+    var_thsov->var_raw_chnl_flg = 0;
 
     /******* Function pointer assign ********/
     var_thsov->var_state_update = dmp_update;
@@ -707,6 +712,7 @@ int thsov_initialise(gthsen_fptr tmp_update,		/* update temperature */
     	}
 
     /* Register callbacks */
+#if defined(WIN32) || defined(_WIN32)    
     if(ERR_CHECK(NIRegisterEveryNSamplesEvent(var_thsov->var_intask,
     					      DAQmx_Val_Acquired_Into_Buffer,
     					      1,
@@ -726,7 +732,8 @@ int thsov_initialise(gthsen_fptr tmp_update,		/* update temperature */
     	    thsov_clear_tasks();
     	    return 1;
     	}
-
+#endif
+    
     /* Initialis mutex */
     pthread_mutex_init(&mutex, NULL);
     printf("%s\n","Initialisation complete");
@@ -889,5 +896,37 @@ int32 CVICALLBACK DoneCallback(TaskHandle taskHandle,
     if(ERR_CHECK(status))
 	return 0;
 
+    return 0;
+}
+
+/* set minimum feedback voltage */
+inline int thsov_set_minimum_feedback_voltage(thsov* obj,
+					      double val)
+{
+    if(!obj)
+	return 1;
+
+    obj->var_min_feedbak_vlt = val;
+    return 0;
+}
+
+/* set continue full cycle flag */
+inline int thsov_set_cont_flg(thsov* obj,
+			      unsigned int val)
+{
+    if(!obj)
+	return 1;
+
+    obj->var_cont_flg = val;
+    return 0;
+}
+
+inline int thsov_set_raw_channel_output_flg(thsov* obj,
+					    unsigned int val)
+{
+    if(!obj)
+	return 1;
+
+    obj->var_raw_chnl_flg = val;
     return 0;
 }
