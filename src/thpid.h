@@ -20,6 +20,10 @@ struct thpid
 
     double var_lim_min;		/* minimum */
     double var_lim_max;		/* maximum */
+
+    int var_raw_flg;		/* flag to indicate feedback
+				 * is raw static value instead of
+				 * voltage */
 };
 
 #ifdef __cplusplus

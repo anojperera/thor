@@ -34,6 +34,8 @@ int thpid_init(struct thpid* obj)
     obj->var_lim_min = THPID_MIN;
     obj->var_lim_max = THPID_MAX;
 
+    obj->var_raw_flg = 1;
+
     return 1;
 }
 
@@ -52,7 +54,14 @@ inline int thpid_pid_control(struct thpid* obj,		/* object */
 			     double* out)		/* ouput */
 {
     static double y_out = 0.0;				/* converted output */
-    y_out = (res - obj->var_c) / obj->var_m;
+    
+    if(!obj)
+	return 1;
+
+    if(obj->var_raw_flg > 0)
+	y_out = res;
+    else
+	y_out = (res - obj->var_c) / obj->var_m;
 
     obj->var_err = set - y_out;				/* error */
 

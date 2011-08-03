@@ -280,7 +280,7 @@ void* thahup_async_start(void* obj)
 		    /* call PID controller set the volate output */
 		    thpid_pid_control(&var_thpid,
 				      var_thahup->var_stopval,
-				      var_thahup->var_act_fd_val,
+				      var_thahup->var_static_val,
 				      &var_thahup->var_actsignal);
 				      
 		}
