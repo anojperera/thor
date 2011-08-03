@@ -54,12 +54,16 @@ struct _thahup
     double var_velocity_val;		/* velocity */
     double var_static_val;		/* static pressure */
     double var_temp_val;		/* temperature value */
+    double var_act_fd_val;		/* actuator feedback */
+
+    double var_act_fd_minval;		/* minimum val */
     
     float64 var_smplerate;		/* sample rate */
 
     int var_thrid;			/* thread id */
     unsigned int var_stflg;		/* start flag */
     unsigned int var_idlflg;		/* idle flag */
+    unsigned int var_calflg;		/* calibration flag */
 
     void* var_sobj;			/* object to pass to callback
 					 * function */

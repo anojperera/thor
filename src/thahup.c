@@ -9,7 +9,9 @@
 
 #include <pthread.h>
 #include <math.h>
-
+#include <semaphore.h>
+#include "thlinreg.h"
+#include "thpid.h"
 /* object */
 static thahup* var_thahup = NULL;			/* ahu test object */
 
@@ -23,6 +25,7 @@ static thahup* var_thahup = NULL;			/* ahu test object */
 #define THAHUP_VEL_DP4_CHANNEL "Dev1/ai4"		/* differential pressure velocity */
 
 #define THAHUP_ST_CHANNEL "Dev1/ai5"			/* static pressure sensor */
+#define THAHUP_ACT_FD_CHANNEL "Dev1/ai6"		/* actuator feedback channel */
 
 #define THAHUP_MIN_RNG 0.0				/* default minimum range for velocity sensors */
 #define THAHUP_MAX_RNG 500.0				/* default maximum range for velocity sensors */
@@ -31,7 +34,9 @@ static thahup* var_thahup = NULL;			/* ahu test object */
 #define THAHUP_BUFF_SZ 2048				/* message buffer */
 #define THAHUP_RATE 1000.0				/* actuator rate control */
 
-#define THAHUP_NUM_INPUT_CHANNELS 6			/* number of channels */
+#define THAHUP_NUM_INPUT_CHANNELS 7			/* number of channels */
+
+#define THAHUP_MIN_FEEDBACK_VOLT 2.1			/* minimum feedback voltage */
 
 #define THAHUP_CHECK_VSENSOR(obj) \
     obj? (obj->var_flg? obj->var_val : 0.0) : 0.0
@@ -50,6 +55,58 @@ static pthread_mutex_t mutex;
 
 /* start test flag */
 static int start_test = 0;
+
+/* semaphore to control calibration */
+static sem_t var_sem;
+
+static struct thxy* var_thxy = NULL;
+static theq* var_theq = NULL;
+static struct thpid var_thpid = {NULL};
+
+/* Function declarations for continuous reading */
+int32 CVICALLBACK EveryNCallback(TaskHandle taskHandle,
+				 int32 everyNsamplesEventType,
+				 uInt32 nSamples,
+				 void *callbackData);
+
+int32 CVICALLBACK DoneCallback(TaskHandle taskHandle,
+			       int32 status,
+			       void *callbackData);
+
+/* initialise calibration */
+static inline void thahup_linreg()
+{
+    /* Create new object */
+    if(var_thahup->var_calflg == 0 &&
+       (var_thxy == NULL || var_theq == NULL))
+	{
+	    if(thlinreg_new(&var_theq, &var_thxy))
+		return;
+	}
+    else
+	{
+	    /* calculate gradient and intercept */
+	    thlinreg_calc_equation(var_theq,
+				   &thpid.var_m,
+				   &thpid.var_c,
+				   NULL);
+	}
+}
+
+/* add static pressure and feedback voltage to list for
+ * calculating the gradient and intercept of the line */
+static inline void thahup_add_xy_to_list()
+{
+    if(!var_thxy || !var_theq)
+	return;
+
+    var_thxy->x = var_thahup->var_static_val;
+    var_thxy->y = var_thahup->var_act_fd_val;
+    var_thxy->x2 = var_thxy->x * var_thxy->x;
+    var_thxy->xy = var_thxy->x * var_thxy->y;
+
+    aList_Add(&var_theq->var_list, (void*) var_thxy, sizeof(struct thxy));
+}
 
 /* clear tasts */
 static inline void thahup_clear_tasks()
@@ -76,6 +133,7 @@ static inline void thahup_actout_signals()
 /* function for assigning values to sensors */
 static inline void thahup_set_values()
 {
+    pthread_mutex_lock(&mutex);
     /* set values temperature */
     var_thahup->var_tmpsensor->var_raw =
 	(val_buff[0]>0? val_buff[0] : 0.0);
@@ -108,6 +166,10 @@ static inline void thahup_set_values()
     var_thahup->var_stsensor->var_raw =
 	(val_buff[5]>0? val_buff[5] : 0.0);
 
+    /* actuator feedback */
+    var_thahup->var_act_fd_val =
+	(val_buff[6]>0? val_buff[6] : 0.0);
+    
     /* static pressure */
     var_thahup->var_static_val =
 	thgsens_get_value(var_thahup->var_stsensor);
@@ -127,6 +189,20 @@ static inline void thahup_set_values()
 
     if(var_thahup->var_volupdate)
 	var_thahup->var_volupdate(var_thahup->var_sobj, &var_thahup->var_volflow_val);
+
+    /* record calibration results on zero counter and
+     * calibration flag false */
+    if(gcounter == 0 & var_thahup->var_calflg == 0)
+	{
+	    thahup_add_xy_to_list();
+	    if(var_thahup->var_act_fd_val > 9.9)
+		{
+		    var_thahup->var_calflg = 1;
+		    sem_post(&var_sem);
+		}
+	}
+
+    pthread_mutex_unlock(&mutex);
 
 }
 
@@ -179,19 +255,17 @@ void* thahup_async_start(void* obj)
 #if !defined (WIN32) || !defined(_WIN32)
     int32 spl_write = 0;		/* number of samples written */
 #endif
+
     /* output to screen */
     printf("Counter\tDP1\tDP2\tDP3\tDP4\tV\tVol\tTmp\n");
 
     /* use software timing */
     while(var_thahup->var_stflg)
 	{
-#if defined(WIN32) || defined(_WIN32)
-	    Sleep(500);
-#else
-	    sleep(1);
-#endif
 	    /* check control option */
-	    if(var_thahup->var_stctrl == thahup_auto)
+	    if(var_thahup->var_calflg == 0)
+		var_thahup->var_actsignal = 10.0;
+	    else if(var_thahup->var_stctrl == thahup_auto)
 		{
 		    var_thahup->var_actsignal =
 			var_thahup->var_actout[counter];
@@ -202,42 +276,39 @@ void* thahup_async_start(void* obj)
 			    if(++counter >= THAHUP_RATE)
 				counter = 0;
 			}
+
+		    /* call PID controller set the volate output */
+		    thpid_pid_control(&var_thpid,
+				      var_thahup->var_stopval,
+				      var_thahup->var_act_fd_val,
+				      &var_thahup->var_actsignal);
+				      
 		}
 
 	    /* write to out channel */
-#if defined (WIN32) || defined (_WIN32)
-	    if(ERR_CHECK(NIWriteAnalogF64(var_thahup->var_outask,
-					  0,
-					  10.0,
-					  (float64) var_thahup->var_actsignal,
-					  NULL)))
+	    if(ERR_CHECK(NIWriteAnalogArrayF64(var_thahup->var_outask,
+					       1,
+					       0,
+					       10.0,
+					       DAQmx_Val_GroupByChannel,
+					       (float64*) &var_thahup->var_actsignal,
+					       &spl_write,
+					       NULL)))
 		break;
+
+	    /* wait for semaphore */
+	    if(var_thahup->var_calflg == 0)
+		{
+		    sem_wait(var_sem);
+		    thahup_linreg();
+		}
+
+#if defined(WIN32) || defined(_WIN32)
+	    Sleep(500);
 #else
-	    if(ERR_CHECK(NIWriteAnalogF64(var_thahup->var_outask,
-					  1,
-					  0,
-					  10.0,
-					  DAQmx_Val_GroupByChannel,
-					  (float64*) &var_thahup->var_actsignal,
-					  &spl_write,
-					  NULL)))
-		break;
+	    sleep(1);
 #endif
-
-	    /* read channel values */
-	    if(ERR_CHECK(NIReadAnalogF64(var_thahup->var_intask,
-					 1,
-					 10.0,
-					 DAQmx_Val_GroupByScanNumber,
-					 val_buff,
-					 THAHUP_NUM_INPUT_CHANNELS,
-					 &spl_read,
-					 NULL)))
-		break;
-
-	    /* call function to assign values to sensors */
-	    thahup_set_values();
-
+	    
 	    /* check control mode - if automatic, set test to
 	       idle when static pressure reach desired */
 	    if(var_thahup->var_stctrl == thahup_auto &&
@@ -250,25 +321,15 @@ void* thahup_async_start(void* obj)
 	}
 
     /* stop actuator */
-#if defined (WIN32) || defined (_WIN32)
-    if(ERR_CHECK(NIWriteAnalogF64(var_thahup->var_outask,
-				  0,
-				  10.0,
-				  var_act_st_val,
-				  NULL)))
+    if(ERR_CHECK(NIWriteAnalogArrayF64(var_thahup->var_outask,
+				       1,
+				       0,
+				       10.0,
+				       DAQmx_Val_GroupByChannel,
+				       &var_act_st_val,
+				       &spl_write,
+				       NULL)))
 	printf("%s\n","actuator not stopped");
-#else
-    if(ERR_CHECK(NIWriteAnalogF64(var_thahup->var_outask,
-				  1,
-				  0,
-				  10.0,
-				  DAQmx_Val_GroupByChannel,
-				  &var_act_st_val,
-				  &spl_write,
-				  NULL)))
-	printf("%s\n","actuator not stopped");
-#endif
-
 
     /* stop task */
     ERR_CHECK(NIStopTask(var_thahup->var_outask));
@@ -366,6 +427,17 @@ int thahup_initialise(thahup_stopctrl ctrl_st,		/* start control */
 	    return 1;
 	}
 
+    /* input voltage channel for actuator feedback */
+    if(ERR_CHECK(NICreateAIVoltageChan(var_thahup->var_intask,
+				       THAHUP_ACT_FD_CHANNEL,
+				       "",
+				       DAQmx_Val_NRSE,
+				       0.0,
+				       10.0,
+				       DAQmx_Val_Volts,
+				       NULL)))
+	return 1;
+
     /* set attributes */
     var_thahup->var_volupdate = update_vol;
     var_thahup->var_velupdate = update_vel;
@@ -386,8 +458,13 @@ int thahup_initialise(thahup_stopctrl ctrl_st,		/* start control */
     var_thahup->var_stflg = 0;
     var_thahup->var_idlflg = 0;
 
+    var_thahup->var_act_fd_val = 0;
+    var_thahup->var_act_fd_minval =
+	THAHUP_MIN_FEEDBACK_VOLT;
+
     var_thahup->var_sobj = sobj;
     var_thahup->var_stctrl = ctrl_st;
+    var_thahup->var_calflg = 0;
 
     printf("%s\n","configuring velocity sensors..");
     /* configure velocity sensors */
@@ -419,17 +496,61 @@ int thahup_initialise(thahup_stopctrl ctrl_st,		/* start control */
     			   THAHUP_MIN_RNG,
     			   THAHUP_MAX_RNG);
 
+    /* Configure timing */
+    if(ERR_CHECK(NICfgSampClkTiming(var_thahup->var_intask,
+    				   "OnboardClock",
+    				   THAHUP_NUM_INPUT_CHANNELS,
+    				   DAQmx_Val_Rising,
+    				   DAQmx_Val_ContSamps,
+    				   1)))
+    	{
+    	    thahup_clear_tasks();
+    	    return 1;
+    	}
+
+    /* Register callbacks */
+#if defined(WIN32) || defined(_WIN32)    
+    if(ERR_CHECK(NIRegisterEveryNSamplesEvent(var_thahup->var_intask,
+    					      DAQmx_Val_Acquired_Into_Buffer,
+    					      1,
+    					      0,
+    					      EveryNCallback,
+    					      NULL)))
+    	{
+    	    thahup_clear_tasks();
+    	    return 1;
+    	}
+    
+    if(ERR_CHECK(NIRegisterDoneEvent(var_thahup->var_intask,
+    				     0,
+    				     DoneCallback,
+    				     NULL)))
+    	{
+    	    thahup_clear_tasks();
+    	    return 1;
+    	}
+#endif
+
     /* initialistation complete */
     printf("%s\n","initialisation complete..");
 
     /* actuator control signals */
     thahup_actout_signals();
 
+    /* initialise structs for linear regression */
+    thahup_linreg();
+
+    /* initialise PID control struct */
+    thpid_init(&var_thpid);
+
     if(obj)
         *obj = var_thahup;
 
     /* initialise mutex */
     pthread_mutex_init(&mutex, NULL);
+
+    /* initialise semaphore */
+    sem_init(&var_sem, 0, 0);
 
     return 0;
 }
@@ -460,12 +581,18 @@ void thahup_delete()
     /* remote object pointer set to NULL */
     var_thahup->var_sobj = NULL;
 
+    thlinreg_delete(&var_theq);
+    free(var_thxy);
+
+    thpid_delete(&var_thpid);
+
     /* clear tasks */
     printf("%s\n","clear NIDAQmx tasks");
     
     thahup_clear_tasks();
 
     pthread_mutex_destroy(&mutex);
+    sem_destroy(&var_sem);
 
     printf("%s\n","delete thor..");
     free(var_thahup);
@@ -528,6 +655,10 @@ int thahup_stop(thahup* obj)
     /* lock mutex */
     pthread_mutex_lock(&mutex);
     var_thahup->var_stflg = 0;
+    /* if process waiting on semaphore post to
+     * exit */
+    if(gcounter == 0 && var_thahup->var_calflg == 0)
+	sem_post(&var_sem);
     pthread_mutex_unlock(&mutex);
 
     /* wait until thread finishes if test in progress */
@@ -564,6 +695,7 @@ int thahup_set_actctrl_volt(double percen)
 int thahup_reset_sensors(thahup* obj)
 {
     var_thahup->var_actsignal = 0.0;
+    var_thahup->var_act_fd_val = 0.0;
 
     thgsens_reset_value(var_thahup->var_velocity->var_v1);
     thgsens_reset_value(var_thahup->var_velocity->var_v2);
@@ -572,6 +704,44 @@ int thahup_reset_sensors(thahup* obj)
     
     thgsens_reset_all(var_thahup->var_stsensor);
     thgsens_reset_all(var_thahup->var_tmpsensor);
+
+    return 0;
+}
+
+/*=======================================================*/
+/* Every N sample callback */
+int32 CVICALLBACK EveryNCallback(TaskHandle taskHandle,
+				 int32 everyNsamplesEventType,
+				 uInt32 nSamples,
+				 void *callbackData)
+{
+    int32 spl_read = 0;		/* samples read */
+    
+    /* Read data into buffer */
+    if(ERR_CHECK(NIReadAnalogF64(var_thahup->var_intask,
+				 1,
+				 10.0,
+				 DAQmx_Val_GroupByScanNumber,
+				 val_buff,
+				 THAHUP_NUM_INPUT_CHANNELS,
+				 &spl_read,
+				 NULL)))
+	return 1;
+
+    /* Call to set values */
+    thahup_set_values();
+    return 0;
+}
+
+/* DoneCallback */
+int32 CVICALLBACK DoneCallback(TaskHandle taskHandle,
+			       int32 status,
+			       void *callbackData)
+{
+    /* Check if data accquisition was stopped
+     * due to error */
+    if(ERR_CHECK(status))
+	return 0;
 
     return 0;
 }
