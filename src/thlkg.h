@@ -55,7 +55,7 @@ struct _thlkg
     float64 var_smplerate;		/* sample rate */
     double* var_fanout;			/* array of fan control signals */
     double var_leakage;			/* leakage per damper */
-    double var_fansignal;		/* fan signal */
+    double var_fansignal[2];		/* fan signal array controls fan and relay */
     int var_thrid;			/* thread id */
 
     unsigned int var_stflg;		/* start flag */

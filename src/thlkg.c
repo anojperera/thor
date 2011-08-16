@@ -24,6 +24,8 @@ static thlkg* var_thlkg = NULL;			/* leakage test object */
 #define THLKG_SAMPLES_PERSECOND 4		/* samples per second per
 						   channel */
 
+#define THLKG_START_RELAY1_VOLTAGE 0.93		/* relay starting voltage */
+
 
 static char err_msg[THLKG_BUFF_SZ];
 static unsigned int counter = 0;		/* counter */
@@ -86,6 +88,9 @@ int thlkg_reset_sensors(thlkg* obj)
 /* function assigning values to sensors from buffer */
 static inline void thlkg_set_values()
 {
+    /* Lock mutex */
+    pthread_mutex_lock(&mutex);
+    
     /* set value of dp */
     var_thlkg->var_dpsensor->var_raw =
 	(val_buff[0]>0? val_buff[0] : 0.0);
@@ -125,6 +130,9 @@ static inline void thlkg_set_values()
 	    break;
 	}
 
+    /* unlock mutex */
+    pthread_mutex_unlock(&mutex);
+    
     /* call function pointer to update external ui if assigned */
     if(var_thlkg->var_lkgupdate)
 	var_thlkg->var_lkgupdate(var_thlkg->sobj_ptr, &var_thlkg->var_leakage);
@@ -182,9 +190,10 @@ static void* thlkg_async_start(void* obj)
 	return NULL;
 
     int32 spl_read = 0;			/* number of samples read */
-
     int32 spl_write = 0;		/* number of samples written */
 
+    var_thlkg->var_fansignal[0] = 0.0;
+    var_thlkg->var_fansignal[1] = 0.0;
     
     /* use software timing for now */
     while(var_thlkg->var_stflg)
@@ -196,10 +205,13 @@ static void* thlkg_async_start(void* obj)
 	    sleep(1);
 #endif
 
+	    if(gcounter == 1)
+		var_thlkg->var_fansignal[0] = THLKG_START_RELAY1_VOLTAGE;
+
 	    if(var_thlkg->var_stoptype == thlkg_lkg ||
 	       var_thlkg->var_stoptype == thlkg_pr)
 		{
-		    var_thlkg->var_fansignal =
+		    var_thlkg->var_fansignal[1] =
 			var_thlkg->var_fanout[counter];
 
 		    /* reset counter if exceed limit */
@@ -212,40 +224,17 @@ static void* thlkg_async_start(void* obj)
 
 	    
 	    /* write to out channel */
-#if defined (WIN32) || defined (_WIN32)	    
-	    if(ERR_CHECK(NIWriteAnalogF64(var_thlkg->var_outask,
-						0,
-						10.0,
-						(float64) var_thlkg->var_fansignal,
-						NULL)))
+	    if(ERR_CHECK(NIWriteAnalogArrayF64(var_thlkg->var_outask,
+					       1,
+					       0,
+					       10.0,
+					       DAQmx_Val_GroupByChannel,
+					       (float64*) var_thlkg->var_fansignal,
+					       &spl_write,
+					       NULL)))
 		break;
-#else
-	    if(ERR_CHECK(NIWriteAnalogF64(var_thlkg->var_outask,
-						 1,
-						 0,
-						 10.0,
-						 DAQmx_Val_GroupByChannel,
-						 (float64*) &var_thlkg->var_fansignal,
-						 &spl_write,
-						 NULL)))
-		break;
-#endif
 
 	    
-	    /* read settings */
-	    if(ERR_CHECK(NIReadAnalogF64(var_thlkg->var_intask,
-					 1,
-					 10.0,
-					 DAQmx_Val_GroupByScanNumber,
-					 val_buff,
-					 THLKG_NUM_CHANNELS,
-					 &spl_read,
-					 NULL)))
-		break;
-
-	    /* call function to assign values to sensors */
-	    thlkg_set_values();
-
 	    /* check control mode - if static pressure based or dp based.
 	     * if the value exceed stop value set to idle and continue test
 	     * until stopped */
@@ -269,24 +258,20 @@ static void* thlkg_async_start(void* obj)
 	    thlkg_write_results();
 	    gcounter++;
 	}
+
+    /* Stop fan */
+    var_thlkg->var_fansignal[0] = 0.0;
     
     /* stop fan */
-#if defined (WIN32) || defined (_WIN32)
-    ERR_CHECK(NIWriteAnalogF64(var_thlkg->var_outask,
-			       0,
-			       10.0,
-			       st_fan_val,
-			       NULL));
-#else
-    ERR_CHECK(NIWriteAnalogF64(var_thlkg->var_outask,
-			       1,
-			       0,
-			       10.0,
-			       DAQmx_Val_GroupByChannel,
-			       &st_fan_val,
-			       &spl_write,
-			       NULL));
-#endif
+    ERR_CHECK(NIWriteAnalogArrayF64(var_thlkg->var_outask,
+				    1,
+				    0,
+				    10.0,
+				    DAQmx_Val_GroupByChannel,
+				    &var_thlkg->var_fansignal,
+				    &spl_write,
+				    NULL));
+
     printf("\n");
     
     /* stop task */
