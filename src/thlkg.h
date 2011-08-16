@@ -61,6 +61,8 @@ struct _thlkg
     unsigned int var_stflg;		/* start flag */
     unsigned int var_idlflg;		/* idle flag */
     void* sobj_ptr;			/* object to pass to callback functions */
+    unsigned int var_calflg;		/* Calibration Flag */
+    
 };
 
 #ifdef __cplusplus

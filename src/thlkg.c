@@ -10,17 +10,20 @@
 #endif
 
 #include <pthread.h>
+#include "thlinreg.h"
+#include "thpid.h"
 
 static thlkg* var_thlkg = NULL;			/* leakage test object */
 
+#define THLKG_TMP_CHANNEL "Dev1/ai0"		/* temperature channel */
 #define THLKG_DP_CHANNEL "Dev1/ai1"		/* differential pressure channel */
 #define THLKG_ST_CHANNEL "Dev1/ai2"	       	/* static pressure channel */
-#define THLKG_TMP_CHANNEL "Dev1/ai3"		/* temperature channel */
+#define THLKG_FANFEEDBACK_CHANNEL "Dev1/ai3"	/* Fan control feedback */
 #define THLKG_FANST_CHANNEL "Dev1/ao0"		/* Fan start stop control */
 #define THLKG_FAN_CHANNEL "Dev1/ao1"		/* fan control channel */
 #define THLKG_BUFF_SZ 2048
 #define THLKG_RATE 1000.0			/* rate of fan control */
-#define THLKG_NUM_CHANNELS 3			/* number of channels */
+#define THLKG_NUM_CHANNELS 4			/* number of channels */
 #define THLKG_SAMPLES_PERSECOND 4		/* samples per second per
 						   channel */
 
@@ -41,6 +44,11 @@ static pthread_mutex_t mutex;
 
 static int start_test = 0;
 
+/* PID Control Objects */
+static struct thxy* var_thxy = NULL;
+static theq* var_theq = NULL;
+static struct thpid var_thpid = {NULL};
+
 /* private functions */
 /* Function declarations for continuous reading */
 int32 CVICALLBACK EveryNCallback(TaskHandle taskHandle,
@@ -51,6 +59,48 @@ int32 CVICALLBACK EveryNCallback(TaskHandle taskHandle,
 int32 CVICALLBACK DoneCallback(TaskHandle taskHandle,
 			       int32 status,
 			       void *callbackData);
+
+/* Initialise calibration */
+static inline void thlkg_linreg()
+{
+    /* create new object */
+    if(var_thlkg->var_calflg == 0 &&
+       (var_thxy == NULL || var_theq == NULL))
+	{
+	    if(thlinreg_new(&var_theq, &var_thxy))
+		return;
+	}
+    else
+	{
+	    /* calculate the gradient and intercept */
+	    thlinreg_calc_equation(var_theq,
+				   &var_thpid.var_m,
+				   &var_thpid.var_c,
+				   NULL);
+	}
+
+}
+
+/* Add fanfeedback and control point value */
+static inline void thlkg_add_xy_to_list()
+{
+    if(var_thxy || !var_theq)
+	return;
+
+    var_thxy->x = val_buff[3];		/* Fan Speed
+					 * feedback */
+    if(var_thlkg->var_stoptype == thlkg_lkg)
+	var_thxy->y = var_thlkg->var_leakage;
+    else
+	var_thxy->y = thgsens_get_value(var_thlkg->var_stsensor);
+
+    var_thxy->x2 = var_thxy->x * var_thxy->x;
+    var_thxy->xy = var_thxy->x * var_thxy->y;
+
+    /* Add to list */
+    aList_Add(&var_theq->var_list, (void*) var_thxy, sizeof(struct thxy));
+    
+}
 
 /* clears tasks */
 static inline void thlkg_clear_tasks()
@@ -412,6 +462,20 @@ int thlkg_initialise(thlkg_stopctrl ctrl_st,		/* start control */
 	    return 0;
 	}
 
+    /* create channel to monitor fan feedback */
+    if(ERR_CHECK(NICreateAIVoltageChan(var_thlkg->var_intask,
+				       THLKG_FANFEEDBACK_CHANNEL,
+				       "",
+				       DAQmx_Val_Diff,
+				       0.0,
+				       10.0,
+				       DAQmx_Val_Volts,
+				       NULL)))
+	{
+	    thlkg_clear_tasks();
+	    return 0;
+	}
+
     var_thlkg->var_lkgupdate = update_lkg;
 
     var_thlkg->var_stopval = 0.0;
@@ -427,6 +491,12 @@ int thlkg_initialise(thlkg_stopctrl ctrl_st,		/* start control */
 
     /* call to create signal array for fan control */
     thlkg_fanout_signals();
+
+    /* initialise structs for linear regression */
+    thlkg_linreg();
+
+    /* initialise PID control struct */
+    thpid_init(&var_thpid);
 
     if(obj)
 	*obj = var_thlkg;
@@ -501,6 +571,12 @@ extern void thlkg_delete()
     pthread_mutex_destroy(&mutex);
 
     printf("%s\n","delete thor..");
+
+    thlinreg_delete(&var_theq);
+    free(var_thxy);
+    thpid_delete(&var_thpid);
+
+    
     /* free object */
     free(var_thlkg);
     var_thlkg = NULL;

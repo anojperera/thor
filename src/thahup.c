@@ -87,8 +87,8 @@ static inline void thahup_linreg()
 	{
 	    /* calculate gradient and intercept */
 	    thlinreg_calc_equation(var_theq,
-				   &thpid.var_m,
-				   &thpid.var_c,
+				   &var_thpid.var_m,
+				   &var_thpid.var_c,
 				   NULL);
 	}
 }
