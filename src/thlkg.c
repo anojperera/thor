@@ -180,6 +180,22 @@ static inline void thlkg_set_values()
 	    break;
 	}
 
+    /* calibrate */
+    if (var_thlkg->var_calflg == 0 &&
+	(var_thlkg->var_stoptype == thlkg_lkg ||
+	 var_thlkg->var_stoptype == thlkg_pr))
+	{
+	    thlkg_add_xy_to_list();
+
+	    /* If idl flag is true,
+	       don't add calibration points */
+	    if(var_thlkg->var_idlflg)
+		{
+		    var_thlkg->var_calflg = 1;
+		    thlkg_linreg();
+		}
+	}
+
     /* unlock mutex */
     pthread_mutex_unlock(&mutex);
     
@@ -230,6 +246,10 @@ static void* thlkg_async_start(void* obj)
     /* flag to indicate if test started */
     start_test = 1;
 
+    /* clear PID likned list */
+    aList_Clear(&var_theq->var_list);
+    var_theq->var_list = NULL;
+    
     /* output to screen */
     printf("Counter\tFan\t\tDP\t\tST\t\tLkg\t\tTmp\n");
     
@@ -250,7 +270,7 @@ static void* thlkg_async_start(void* obj)
 	{
 	    /* Delay for 500ms */
 #if defined(WIN32) || defined(_WIN32)
-	    Sleep(500);
+	    Sleep(250);
 #else
 	    sleep(1);
 #endif
@@ -269,6 +289,24 @@ static void* thlkg_async_start(void* obj)
 			{
 			    if(++counter >= THLKG_RATE)
 				counter = 0;
+			}
+		    else if(var_thlkg->var_idlflg && var_thlkg->var_calflg)
+			{
+			    /* set fan output based on PID control */
+			    if(var_thlkg->var_stoptype == thlkg_lkg)
+				{
+				    thpid_pid_control(&var_thpid,
+						      var_thlkg->var_stopval,
+						      var_thlkg->var_leakage,
+						      &var_thlkg->var_fansignal[1]);
+				}
+			    else
+				{
+				    thpid_pid_control(&var_thpid,
+						      var_thlkg->var_stopval,
+						      thgsens_get_value(var_thlkg->var_stsensor),
+						      &var_thlkg->var_fansignal[1]);
+				}
 			}
 		}
 
@@ -488,6 +526,7 @@ int thlkg_initialise(thlkg_stopctrl ctrl_st,		/* start control */
     var_thlkg->var_leakage = 0.0;
     var_thlkg->var_idlflg = 0;
     var_thlkg->sobj_ptr = sobj;
+    var_thlkg->var_calflg = 0;
 
     /* call to create signal array for fan control */
     thlkg_fanout_signals();
