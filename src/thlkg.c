@@ -16,10 +16,13 @@ static thlkg* var_thlkg = NULL;			/* leakage test object */
 #define THLKG_DP_CHANNEL "Dev1/ai1"		/* differential pressure channel */
 #define THLKG_ST_CHANNEL "Dev1/ai2"	       	/* static pressure channel */
 #define THLKG_TMP_CHANNEL "Dev1/ai3"		/* temperature channel */
+#define THLKG_FANST_CHANNEL "Dev1/ao0"		/* Fan start stop control */
 #define THLKG_FAN_CHANNEL "Dev1/ao1"		/* fan control channel */
 #define THLKG_BUFF_SZ 2048
 #define THLKG_RATE 1000.0			/* rate of fan control */
 #define THLKG_NUM_CHANNELS 3			/* number of channels */
+#define THLKG_SAMPLES_PERSECOND 4		/* samples per second per
+						   channel */
 
 
 static char err_msg[THLKG_BUFF_SZ];
@@ -37,6 +40,15 @@ static pthread_mutex_t mutex;
 static int start_test = 0;
 
 /* private functions */
+/* Function declarations for continuous reading */
+int32 CVICALLBACK EveryNCallback(TaskHandle taskHandle,
+				 int32 everyNsamplesEventType,
+				 uInt32 nSamples,
+				 void *callbackData);
+
+int32 CVICALLBACK DoneCallback(TaskHandle taskHandle,
+			       int32 status,
+			       void *callbackData);
 
 /* clears tasks */
 static inline void thlkg_clear_tasks()
@@ -160,6 +172,9 @@ static void* thlkg_async_start(void* obj)
     /* flag to indicate if test started */
     start_test = 1;
 
+    /* output to screen */
+    printf("Counter\tFan\t\tDP\t\tST\t\tLkg\t\tTmp\n");
+    
     /* start both acquiring and writing tasks */
     if(ERR_CHECK(NIStartTask(var_thlkg->var_outask)))
 	return NULL;
@@ -167,12 +182,9 @@ static void* thlkg_async_start(void* obj)
 	return NULL;
 
     int32 spl_read = 0;			/* number of samples read */
-#if !defined(WIN32) || !defined(_WIN32)    
+
     int32 spl_write = 0;		/* number of samples written */
-#endif
-    
-    /* output to screen */
-    printf("Counter\tFan\t\tDP\t\tST\t\tLkg\t\tTmp\n");
+
     
     /* use software timing for now */
     while(var_thlkg->var_stflg)
@@ -337,6 +349,19 @@ int thlkg_initialise(thlkg_stopctrl ctrl_st,		/* start control */
 	    return 0;
 	}
 
+    /* Create Fan Start Channel */
+    if(ERR_CHECK(NICreateAOVoltageChan(var_thlkg->var_outask,
+				       THLKG_FANST_CHANNEL,
+				       "",
+				       0.0,
+				       10.0,
+				       DAQmx_Val_Volts,
+				       NULL)))
+	{
+	    thlkg_clear_tasks();
+	    return 0;
+	}
+
     /* create out channel for fan control */
     err_code = NICreateAOVoltageChan(var_thlkg->var_outask,
 				     THLKG_FAN_CHANNEL,
@@ -357,7 +382,7 @@ int thlkg_initialise(thlkg_stopctrl ctrl_st,		/* start control */
 
 	    thlkg_clear_tasks();
 	    return 0;
-	}    
+	}
 
     /* create differential pressure switch */
     if(!thgsens_new(&var_thlkg->var_dpsensor,
@@ -420,6 +445,42 @@ int thlkg_initialise(thlkg_stopctrl ctrl_st,		/* start control */
 
     if(obj)
 	*obj = var_thlkg;
+
+    /* configure timing */
+    if(ERR_CHECK(NICfgSampClkTiming(var_thlkg->var_intask,
+    				   "OnboardClock",
+    				   THLKG_SAMPLES_PERSECOND,
+    				   DAQmx_Val_Rising,
+    				   DAQmx_Val_ContSamps,
+    				   1)))
+	{
+	    thlkg_clear_tasks();
+	    return 0;
+	}
+
+    /* Register callbacks */
+#if defined(WIN32) || defined(_WIN32)
+    if(ERR_CHECK(NIRegisterEveryNSamplesEvent(var_thlkg->var_intask,
+    					      DAQmx_Val_Acquired_Into_Buffer,
+    					      1,
+    					      0,
+    					      EveryNCallback,
+    					      NULL)))
+	{
+	    thlkg_clear_tasks();
+	    return 0;
+	}
+
+    if(ERR_CHECK(NIRegisterDoneEvent(var_thlkg->var_intask,
+    				     0,
+    				     DoneCallback,
+    				     NULL)))
+	{
+	    thlkg_clear_tasks();
+	    return 0;
+	}
+#endif
+    
 
     /* initialise mutex */
     pthread_mutex_init(&mutex, NULL);
@@ -538,4 +599,43 @@ int thlkg_set_fanctrl_volt(double percen)
     pthread_mutex_unlock(&mutex);    
 
     return 1;
+}
+
+/*=======================================================*/
+/* Implementation of Callback functions */
+int32 CVICALLBACK EveryNCallback(TaskHandle taskHandle,
+				 int32 everyNsamplesEventType,
+				 uInt32 nSamples,
+				 void *callbackData)
+{
+    int32 spl_read = 0;		/* samples read */
+    
+    /* Read data into buffer */
+    if(ERR_CHECK(NIReadAnalogF64(var_thlkg->var_intask,
+				 1,
+				 10.0,
+				 DAQmx_Val_GroupByScanNumber,
+				 val_buff,
+				 THLKG_NUM_CHANNELS,
+				 &spl_read,
+				 NULL)))
+	return 1;
+
+    /* Call to set values */
+    thlkg_set_values()
+    return 0;
+				 
+}
+
+/* DoneCallback */
+int32 CVICALLBACK DoneCallback(TaskHandle taskHandle,
+			       int32 status,
+			       void *callbackData)
+{
+    /* Check if data accquisition was stopped
+     * due to error */
+    if(ERR_CHECK(status))
+	return 0;
+
+    return 0;
 }
