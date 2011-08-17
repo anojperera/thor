@@ -47,16 +47,16 @@ static int start_test = 0;
 /* PID Control Objects */
 static struct thxy* var_thxy = NULL;
 static theq* var_theq = NULL;
-static struct thpid var_thpid = {NULL};
+static struct thpid var_thpid;
 
 /* private functions */
 /* Function declarations for continuous reading */
-int32 CVICALLBACK EveryNCallback(TaskHandle taskHandle,
+static int32 CVICALLBACK EveryNCallback(TaskHandle taskHandle,
 				 int32 everyNsamplesEventType,
 				 uInt32 nSamples,
 				 void *callbackData);
 
-int32 CVICALLBACK DoneCallback(TaskHandle taskHandle,
+static int32 CVICALLBACK DoneCallback(TaskHandle taskHandle,
 			       int32 status,
 			       void *callbackData);
 
@@ -127,7 +127,9 @@ static inline void thlkg_fanout_signals()
 /* reset sensor values */
 int thlkg_reset_sensors(thlkg* obj)    
 {
-    var_thlkg->var_fansignal = 0.0;
+    var_thlkg->var_fansignal[0] = 0.0;
+    var_thlkg->var_fansignal[1] = 0.0;
+    
     thgsens_reset_all(var_thlkg->var_dpsensor);
     thgsens_reset_all(var_thlkg->var_stsensor);
     thgsens_reset_all(var_thlkg->var_tmpsensor);
@@ -225,7 +227,7 @@ static inline void thlkg_write_results()
     fflush(stdout);
     printf("%i\t%f\t%f\t%f\t%f\t%f\r",
 	   gcounter,
-	   var_thlkg->var_fansignal,
+	   var_thlkg->var_fansignal[1],
 	   thgsens_get_value(var_thlkg->var_dpsensor),
 	   thgsens_get_value(var_thlkg->var_stsensor),
 	   var_thlkg->var_leakage,
@@ -240,8 +242,6 @@ static void* thlkg_async_start(void* obj)
 {
     counter = 0;			/* reset counter */
     gcounter = 0;			/* reset counter */
-    float64 st_fan_val = 0.0;
-
     
     /* flag to indicate if test started */
     start_test = 1;
@@ -259,7 +259,7 @@ static void* thlkg_async_start(void* obj)
     if(ERR_CHECK(NIStartTask(var_thlkg->var_intask)))
 	return NULL;
 
-    int32 spl_read = 0;			/* number of samples read */
+
     int32 spl_write = 0;		/* number of samples written */
 
     var_thlkg->var_fansignal[0] = 0.0;
@@ -316,7 +316,7 @@ static void* thlkg_async_start(void* obj)
 					       1,
 					       0,
 					       10.0,
-					       DAQmx_Val_GroupByChannel,
+					       DAQmx_Val_GroupByScanNumber,
 					       (float64*) var_thlkg->var_fansignal,
 					       &spl_write,
 					       NULL)))
@@ -349,14 +349,15 @@ static void* thlkg_async_start(void* obj)
 
     /* Stop fan */
     var_thlkg->var_fansignal[0] = 0.0;
+    var_thlkg->var_fansignal[1] = 0.0;
     
     /* stop fan */
     ERR_CHECK(NIWriteAnalogArrayF64(var_thlkg->var_outask,
 				    1,
 				    0,
 				    10.0,
-				    DAQmx_Val_GroupByChannel,
-				    &var_thlkg->var_fansignal,
+				    DAQmx_Val_GroupByScanNumber,
+				    var_thlkg->var_fansignal,
 				    &spl_write,
 				    NULL));
 
@@ -521,7 +522,8 @@ int thlkg_initialise(thlkg_stopctrl ctrl_st,		/* start control */
     var_thlkg->var_dia_orf = dia;
     var_thlkg->var_fp = fp;
     var_thlkg->var_smplerate = THLKG_RATE;
-    var_thlkg->var_fansignal = 0.0;
+    var_thlkg->var_fansignal[0] = 0.0;
+    var_thlkg->var_fansignal[1] = 0.0;
     var_thlkg->var_stflg = 1;
     var_thlkg->var_leakage = 0.0;
     var_thlkg->var_idlflg = 0;
@@ -695,7 +697,7 @@ int thlkg_set_fanctrl_volt(double percen)
     /* lock mutex */
     printf("\n%s\n", "setting voltage");
     pthread_mutex_lock(&mutex);
-    var_thlkg->var_fansignal = 9.95 * percen / 100;
+    var_thlkg->var_fansignal[1] = 9.95 * percen / 100;
     pthread_mutex_unlock(&mutex);    
 
     return 1;
@@ -722,9 +724,9 @@ int32 CVICALLBACK EveryNCallback(TaskHandle taskHandle,
 	return 1;
 
     /* Call to set values */
-    thlkg_set_values()
+    thlkg_set_values();
     return 0;
-				 
+    
 }
 
 /* DoneCallback */

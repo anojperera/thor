@@ -36,7 +36,7 @@ int thpid_init(struct thpid* obj)
 
     obj->var_raw_flg = 1;
 
-    return 1;
+    return 0;
 }
 
 /* delete struct */
@@ -44,7 +44,7 @@ void thpid_delete(struct thpid* obj)
 {
     free(obj);
     obj = NULL;
-    return 0;
+    return;
 }
 
 /* PID control */

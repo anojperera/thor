@@ -4,6 +4,7 @@
 #define __THPID_H__
 
 #include <stdlib.h>
+#include <stdio.h>
 #include <math.h>
 
 struct thpid

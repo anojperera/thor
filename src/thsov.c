@@ -97,12 +97,12 @@ static int act_wait_flag = 0;
 
 /* Private functions */
 /* Function declarations for continuous reading */
-int32 CVICALLBACK EveryNCallback(TaskHandle taskHandle,
+static int32 CVICALLBACK EveryNCallback(TaskHandle taskHandle,
 				 int32 everyNsamplesEventType,
 				 uInt32 nSamples,
 				 void *callbackData);
 
-int32 CVICALLBACK DoneCallback(TaskHandle taskHandle,
+static int32 CVICALLBACK DoneCallback(TaskHandle taskHandle,
 			       int32 status,
 			       void *callbackData);
 

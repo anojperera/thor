@@ -61,15 +61,15 @@ static sem_t var_sem;
 
 static struct thxy* var_thxy = NULL;
 static theq* var_theq = NULL;
-static struct thpid var_thpid = {NULL};
+static struct thpid var_thpid;
 
 /* Function declarations for continuous reading */
-int32 CVICALLBACK EveryNCallback(TaskHandle taskHandle,
+static int32 CVICALLBACK EveryNCallback(TaskHandle taskHandle,
 				 int32 everyNsamplesEventType,
 				 uInt32 nSamples,
 				 void *callbackData);
 
-int32 CVICALLBACK DoneCallback(TaskHandle taskHandle,
+static int32 CVICALLBACK DoneCallback(TaskHandle taskHandle,
 			       int32 status,
 			       void *callbackData);
 
@@ -192,7 +192,7 @@ static inline void thahup_set_values()
 
     /* record calibration results on zero counter and
      * calibration flag false */
-    if(gcounter == 0 & var_thahup->var_calflg == 0)
+    if(gcounter == 0 && var_thahup->var_calflg == 0)
 	{
 	    thahup_add_xy_to_list();
 	    if(var_thahup->var_act_fd_val > 9.9)
@@ -251,10 +251,9 @@ void* thahup_async_start(void* obj)
 	return NULL;
 
     float64 var_act_st_val = 0.0;	/* actuator stop val */
-    int32 spl_read = 0;			/* number of samples read */
-#if !defined (WIN32) || !defined(_WIN32)
+
     int32 spl_write = 0;		/* number of samples written */
-#endif
+
 
     /* output to screen */
     printf("Counter\tDP1\tDP2\tDP3\tDP4\tV\tVol\tTmp\n");
@@ -299,7 +298,7 @@ void* thahup_async_start(void* obj)
 	    /* wait for semaphore */
 	    if(var_thahup->var_calflg == 0)
 		{
-		    sem_wait(var_sem);
+		    sem_wait(&var_sem);
 		    thahup_linreg();
 		}
 

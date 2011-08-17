@@ -20,7 +20,7 @@ int thlinreg_callback_foreach(void* udata,
 			       unsigned int ix)
 {
     if(!data)
-	return;
+	return 1;
 
     sum_x += ((struct thxy*) data)->x;
     sum_y += ((struct thxy*) data)->y;
@@ -28,6 +28,8 @@ int thlinreg_callback_foreach(void* udata,
     sum_y2 += ((struct thxy*) data)->y * ((struct thxy*) data)->y;
     sum_xy += ((struct thxy*) data)->xy;
     count++;
+
+    return 0;
 }
 
 
@@ -103,7 +105,7 @@ int thlinreg_calc_equation(theq* eq_obj, double* m, double* c, double* r)
 
     /* initialise variables */
     sum_x = 0.0;
-    sumn_y = 0.0;
+    sum_y = 0.0;
     sum_x2 = 0.0;
     sum_xy = 0.0;
     count = 1;
@@ -112,7 +114,7 @@ int thlinreg_calc_equation(theq* eq_obj, double* m, double* c, double* r)
     eq_obj->var_m = ((double) count * sum_xy - sum_x * sum_y) /
 	((double) count * sum_x2 - sum_x * sum_x);
 
-    eq_obj->var_c = (sum_y * sum_x2 - sum_x * sun_xy) /
+    eq_obj->var_c = (sum_y * sum_x2 - sum_x * sum_xy) /
 	((double) count * sum_x2 - sum_x * sum_x);
 
     eq_obj->var_r = (sum_xy - sum_x * sum_y / (double) count) /
