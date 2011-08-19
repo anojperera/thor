@@ -20,6 +20,11 @@
 /* Equation struct */
 typedef struct _theq theq;
 
+typedef enum {
+    theq_linear,
+    theq_log
+} theq_type;
+
 /* main xy struct */
 struct thxy
 {
@@ -35,6 +40,7 @@ struct _theq
     double var_m;
     double var_c;
     double var_r;
+    theq_type var_eqtype;		/* equation type */
 };
 
 #ifdef __cplusplus
@@ -52,6 +58,9 @@ extern "C" {
      * Optionally pass gradient and intercept of equation to be returned with
      * values */
     int thlinreg_calc_equation(theq* eq_obj, double* m, double* c, double* r);
+
+    /* readonly get equation type */
+    theq_type thlinreg_get_equation_type(theq* eq_obj);
     
 #ifdef __cplusplus
 }
