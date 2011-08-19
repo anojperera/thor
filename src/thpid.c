@@ -4,7 +4,7 @@
 
 #define THPID_MIN 0.0			/* Minimum and maximum */
 #define THPID_MAX 10.0
-
+#define THPID_DIFF_MAX 1.0
 /* initialise function */
 int thpid_init(struct thpid* obj)
 {
@@ -30,6 +30,7 @@ int thpid_init(struct thpid* obj)
     obj->var_err = 0;
     obj->var_m = 0;
     obj->var_c = 0;
+    obj->var_diff_max = THPID_DIFF_MAX;
 
     obj->var_lim_min = THPID_MIN;
     obj->var_lim_max = THPID_MAX;
@@ -77,6 +78,59 @@ inline int thpid_pid_control(struct thpid* obj,		/* object */
 
     if(out)
 	*out += obj->var_out;
+
+    return 0;
+}
+
+/* PID Control 2 */
+inline int thpid_pid_control2(struct thpid* obj,	/* object */
+			      double set,		/* set point */
+			      double res,		/* response */
+			      double out_prev,		/* output previous */
+			      double** out,		/* array */
+			      unsigned int* sz)		/* array size */
+{
+    double tmp_val = 0.0;				/* temporary value */
+    unsigned int i = 0;
+    
+    if(thpid_pid_control(obj, set, res, &tmp_val))
+	{
+	    printf("thpid_pid_control2: %s\n","Error calculating PID");
+	    return 1;
+	}
+
+    *sz = (unsigned int) fabs(out_prev - tmp_val);
+    if(*sz <= 0)
+	*sz = 1;
+    
+    /* check if out buffer pointer was allocated before
+     * and delete */
+    if(*out != NULL)
+	free(*out);
+
+    /* create out buffer */
+    *out = (double*)
+	calloc(*sz, sizeof(double));
+
+    if(*out == NULL)
+	{
+	    printf("thpid_pid_control2: %s\n", "Unable to create array");
+	    return 1;
+	}
+    
+    /* compare output from previous and now */
+    if(*sz > obj->var_diff_max)
+	{
+	    for(i = 0;
+		i < *sz;
+		i++)
+		{
+		    (*out)[i] = out_prev + (out_prev - tmp_val) *
+			sin(M_PI * (double) i / (2 * (double) *sz));
+		}
+	}
+    else
+	(*out)[i] = out_prev;
 
     return 0;
 }

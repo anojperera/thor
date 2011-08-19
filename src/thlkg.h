@@ -62,7 +62,7 @@ struct _thlkg
     unsigned int var_idlflg;		/* idle flag */
     void* sobj_ptr;			/* object to pass to callback functions */
     unsigned int var_calflg;		/* Calibration Flag */
-    
+    unsigned int var_pidflg;		/* Flag to indicate PID flag */
 };
 
 #ifdef __cplusplus

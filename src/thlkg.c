@@ -11,6 +11,7 @@
 
 #include <pthread.h>
 #include <semaphore.h>
+#include <math.h>
 #include "thlinreg.h"
 #include "thpid.h"
 
@@ -34,6 +35,7 @@ static thlkg* var_thlkg = NULL;			/* leakage test object */
 static char err_msg[THLKG_BUFF_SZ];
 static unsigned int counter = 0;		/* counter */
 static unsigned int gcounter = 0;
+static unsigned int pcounter = 0;		/* counter for PID */
 
 /* buffer to hold input values */
 static float64 val_buff[THLKG_NUM_CHANNELS];
@@ -140,6 +142,7 @@ int thlkg_reset_sensors(thlkg* obj)
     thgsens_reset_all(var_thlkg->var_tmpsensor);
 
     var_thlkg->var_calflg = 0;
+    var_thlkg->var_pidflg = 0;
 
     return 1;
 }
@@ -251,6 +254,7 @@ static void* thlkg_async_start(void* obj)
 {
     counter = 0;			/* reset counter */
     gcounter = 0;			/* reset counter */
+    pcounter = 0;			/* reset counter */
     
     /* flag to indicate if test started */
     start_test = 1;
@@ -280,9 +284,9 @@ static void* thlkg_async_start(void* obj)
 	    /* Delay for 500ms */
 #if defined(WIN32) || defined(_WIN32)
 	    if(var_thlkg->var_idlflg > 0)
-		Sleep(250);
+		Sleep(500);
 	    else
-		Sleep(250);
+		Sleep(200);
 #else
 	    sleep(1);
 #endif
@@ -291,7 +295,8 @@ static void* thlkg_async_start(void* obj)
 		var_thlkg->var_fansignal[0] = THLKG_START_RELAY1_VOLTAGE;
 
 	    if(var_thlkg->var_stoptype == thlkg_lkg ||
-	       var_thlkg->var_stoptype == thlkg_pr)
+	       var_thlkg->var_stoptype == thlkg_pr ||
+	       var_thlkg->var_pidflg > 0)
 		{
 		    var_thlkg->var_fansignal[1] =
 			var_thlkg->var_fanout[counter];
@@ -299,25 +304,35 @@ static void* thlkg_async_start(void* obj)
 		    /* reset counter if exceed limit */
 		    if(var_thlkg->var_idlflg == 0)
 			{
-			    if(++counter >= THLKG_RATE)
-				counter = 0;
+			    if(++counter >= (var_thlkg->var_pidflg>0?
+					     pcounter : THLKG_RATE))
+				{
+				    counter = 0;
+				    var_thlkg->var_pidflg = 0;
+				}
 			}
-		    else if(var_thlkg->var_idlflg && var_thlkg->var_calflg)
+		    else if(var_thlkg->var_idlflg &&
+			    var_thlkg->var_calflg &&
+			    var_thlkg->var_pidflg == 0)
 			{
 			    /* set fan output based on PID control */
 			    if(var_thlkg->var_stoptype == thlkg_lkg)
 				{
-				    thpid_pid_control(&var_thpid,
-						      var_thlkg->var_stopval,
-						      var_thlkg->var_leakage,
-						      &var_thlkg->var_fansignal[1]);
+				    thpid_pid_control2(&var_thpid,
+						       var_thlkg->var_stopval,
+						       var_thlkg->var_leakage,
+						       &var_thlkg->var_fanout,
+						       &pcounter);
+				    var_thlkg->var_pidflg = 1;
 				}
-			    else
+			    else if(var_thlkg->var_stoptype == thlkg_pr)
 				{
-				    thpid_pid_control(&var_thpid,
-						      var_thlkg->var_stopval,
-						      thgsens_get_value(var_thlkg->var_stsensor),
-						      &var_thlkg->var_fansignal[1]);
+				    thpid_pid_control2(&var_thpid,
+						       var_thlkg->var_stopval,
+						       thgsens_get_value(var_thlkg->var_stsensor),
+						       &var_thlkg->var_fanout,
+						       &pcounter);
+				    var_thlkg->var_pidflg = 1;
 				}
 			}
 		}
@@ -555,6 +570,7 @@ int thlkg_initialise(thlkg_stopctrl ctrl_st,		/* start control */
     var_thlkg->var_idlflg = 0;
     var_thlkg->sobj_ptr = sobj;
     var_thlkg->var_calflg = 0;
+    var_thlkg->var_pidflg = 0;
 
     /* call to create signal array for fan control */
     thlkg_fanout_signals();
@@ -726,11 +742,52 @@ int thlkg_set_fanctrl_volt(double percen)
 {
     if(percen < 0 || percen > 100 || !var_thlkg)
 	return 0;
-    
+
+    unsigned int i = 0;
     /* lock mutex */
     printf("\n%s\n", "setting voltage");
     pthread_mutex_lock(&mutex);
-    var_thlkg->var_fansignal[1] = 9.95 * percen / 100;
+
+    if(var_thlkg->var_pidflg > 0)
+	{
+	    pthread_mutex_unlock(&mutex);
+	    return 0;
+	}
+    
+    if(((9.95 * percen / 100) -
+	var_thlkg->var_fansignal[1]) < 0 &&
+       fabs((9.95 * percen / 100) -
+	    var_thlkg->var_fansignal[1]) > 1)
+	{
+	    pcounter = (unsigned int)
+		fabs((9.95 * percen / 100) -
+		     var_thlkg->var_fansignal[1]);
+
+	    if(var_thlkg->var_fanout)
+		free(var_thlkg->var_fanout);
+
+	    var_thlkg->var_fanout =
+		(double*) calloc(pcounter, sizeof(double));
+	    
+	    if(!var_thlkg->var_fanout)
+		{
+		    pthread_mutex_unlock(&mutex);
+		    return 0;
+		}
+	    
+	    for(i = 0; i < pcounter; i++)
+		{
+		    var_thlkg->var_fanout[i] =
+			var_thlkg->var_fansignal[1] +
+			((9.95 * percen / 100) -
+			 var_thlkg->var_fansignal[1]) * sin(M_PI * i / (2 * pcounter));
+		    
+		}
+	    var_thlkg->var_pidflg = 1;
+	}
+    else
+	var_thlkg->var_fansignal[1] = 9.95 * percen / 100;
+    
     pthread_mutex_unlock(&mutex);    
 
     return 1;

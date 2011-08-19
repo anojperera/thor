@@ -18,6 +18,7 @@ struct thpid
     double var_err;		/* error */
     double var_m;		/* gradient */
     double var_c;		/* y intercept */
+    double var_diff_max;	/* max difference */
 
     double var_lim_min;		/* minimum */
     double var_lim_max;		/* maximum */
@@ -42,6 +43,12 @@ extern "C" {
 					double set,			/* set point */
 					double res,			/* response */
 					double* out);			/* ouput */
+
+    extern inline int thpid_pid_control2(struct thpid* obj,		/* object */
+					 double set,			/* set point */
+					 double res,			/* response */
+					 double** out,			/* array */
+					 unsigned int sz);		/* array size */
 
 #ifdef __cplusplus
 }
