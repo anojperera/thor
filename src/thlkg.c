@@ -283,8 +283,8 @@ static void* thlkg_async_start(void* obj)
 	{
 	    /* Delay for 500ms */
 #if defined(WIN32) || defined(_WIN32)
-	    if(var_thlkg->var_idlflg > 0)
-		Sleep(500);
+	    if(var_thlkg->var_idlflg > 0 || var_thlkg->var_pidflg > 0)
+		Sleep(1500);
 	    else
 		Sleep(200);
 #else
@@ -302,7 +302,8 @@ static void* thlkg_async_start(void* obj)
 			var_thlkg->var_fanout[counter];
 
 		    /* reset counter if exceed limit */
-		    if(var_thlkg->var_idlflg == 0)
+		    if(var_thlkg->var_idlflg == 0 ||
+		       var_thlkg->var_pidflg > 0)
 			{
 			    if(++counter >= (var_thlkg->var_pidflg>0?
 					     pcounter : THLKG_RATE))
@@ -321,18 +322,22 @@ static void* thlkg_async_start(void* obj)
 				    thpid_pid_control2(&var_thpid,
 						       var_thlkg->var_stopval,
 						       var_thlkg->var_leakage,
+						       var_thlkg->var_fansignal[1],
 						       &var_thlkg->var_fanout,
 						       &pcounter);
 				    var_thlkg->var_pidflg = 1;
+				    counter = 0;
 				}
 			    else if(var_thlkg->var_stoptype == thlkg_pr)
 				{
 				    thpid_pid_control2(&var_thpid,
 						       var_thlkg->var_stopval,
 						       thgsens_get_value(var_thlkg->var_stsensor),
+						       var_thlkg->var_fansignal[1],
 						       &var_thlkg->var_fanout,
 						       &pcounter);
 				    var_thlkg->var_pidflg = 1;
+				    counter = 0;
 				}
 			}
 		}
@@ -753,15 +758,15 @@ int thlkg_set_fanctrl_volt(double percen)
 	    pthread_mutex_unlock(&mutex);
 	    return 0;
 	}
-    
+
     if(((9.95 * percen / 100) -
 	var_thlkg->var_fansignal[1]) < 0 &&
        fabs((9.95 * percen / 100) -
-	    var_thlkg->var_fansignal[1]) > 1)
+	    var_thlkg->var_fansignal[1]) > 0.1)
 	{
-	    pcounter = (unsigned int)
-		fabs((9.95 * percen / 100) -
-		     var_thlkg->var_fansignal[1]);
+	    pcounter = 10 * (unsigned int)
+		ceil(fabs((9.95 * percen / 100) -
+			  var_thlkg->var_fansignal[1]));
 
 	    if(var_thlkg->var_fanout)
 		free(var_thlkg->var_fanout);
@@ -774,15 +779,16 @@ int thlkg_set_fanctrl_volt(double percen)
 		    pthread_mutex_unlock(&mutex);
 		    return 0;
 		}
-	    
+
 	    for(i = 0; i < pcounter; i++)
 		{
 		    var_thlkg->var_fanout[i] =
 			var_thlkg->var_fansignal[1] +
 			((9.95 * percen / 100) -
 			 var_thlkg->var_fansignal[1]) * sin(M_PI * i / (2 * pcounter));
-		    
+		    /* printf("fan control value %i %f\n",i, var_thlkg->var_fanout[i]); */
 		}
+	    counter = 0;
 	    var_thlkg->var_pidflg = 1;
 	}
     else

@@ -47,8 +47,9 @@ extern "C" {
     extern inline int thpid_pid_control2(struct thpid* obj,		/* object */
 					 double set,			/* set point */
 					 double res,			/* response */
+					 double out_prev,		/* previous out */
 					 double** out,			/* array */
-					 unsigned int sz);		/* array size */
+					 unsigned int* sz);		/* array size */
 
 #ifdef __cplusplus
 }
