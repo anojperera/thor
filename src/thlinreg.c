@@ -15,9 +15,9 @@ static unsigned int count = 1;
 /* Callback function for for each method */
 /* This method shall be used for calculating
  * method parameters */
-int thlinreg_callback_foreach(void* udata,
-			       void* data,
-			       unsigned int ix)
+static int thlinreg_callback_foreach(void* udata,
+				     void* data,
+				     unsigned int ix)
 {
     if(!data)
 	return 1;
@@ -109,13 +109,24 @@ int thlinreg_calc_equation(theq* eq_obj, double* m, double* c, double* r)
     sum_x2 = 0.0;
     sum_xy = 0.0;
     count = 1;
+
+    /* denominators */
+    double dev1=0.0, dev2=0.0;
     
     /* call for each function */
-    eq_obj->var_m = ((double) count * sum_xy - sum_x * sum_y) /
-	((double) count * sum_x2 - sum_x * sum_x);
+    aList_Display2(&eq_obj->var_list,
+		   0,
+		   thlinreg_callback_foreach,
+		   NULL);
 
+    /* check for overflow */
+    dev1 = ((double) count * sum_x2 - sum_x * sum_x);
+    eq_obj->var_m = ((double) count * sum_xy - sum_x * sum_y) /
+	(dev1>0.0? dev1 : 1);
+
+    dev2 = ((double) count * sum_x2 - sum_x * sum_x);
     eq_obj->var_c = (sum_y * sum_x2 - sum_x * sum_xy) /
-	((double) count * sum_x2 - sum_x * sum_x);
+	(dev2>0.0? dev2 : 1);
 
     eq_obj->var_r = (sum_xy - sum_x * sum_y / (double) count) /
 	sqrt((sum_x2 - sqrt(sum_x / (double) count)) *

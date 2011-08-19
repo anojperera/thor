@@ -10,6 +10,7 @@
 #endif
 
 #include <pthread.h>
+#include <semaphore.h>
 #include "thlinreg.h"
 #include "thpid.h"
 
@@ -49,6 +50,9 @@ static struct thxy* var_thxy = NULL;
 static theq* var_theq = NULL;
 static struct thpid var_thpid;
 
+/* semaphore to control calibration */
+static sem_t var_sem;
+
 /* private functions */
 /* Function declarations for continuous reading */
 static int32 CVICALLBACK EveryNCallback(TaskHandle taskHandle,
@@ -67,6 +71,7 @@ static inline void thlkg_linreg()
     if(var_thlkg->var_calflg == 0 &&
        (var_thxy == NULL || var_theq == NULL))
 	{
+	    printf("%s\n","initialised equation");
 	    if(thlinreg_new(&var_theq, &var_thxy))
 		return;
 	}
@@ -84,15 +89,15 @@ static inline void thlkg_linreg()
 /* Add fanfeedback and control point value */
 static inline void thlkg_add_xy_to_list()
 {
-    if(var_thxy || !var_theq)
+    if(!var_thxy || !var_theq)
 	return;
 
-    var_thxy->x = val_buff[3];		/* Fan Speed
+    var_thxy->y = val_buff[3];		/* Fan Speed
 					 * feedback */
     if(var_thlkg->var_stoptype == thlkg_lkg)
-	var_thxy->y = var_thlkg->var_leakage;
+	var_thxy->x = var_thlkg->var_leakage;
     else
-	var_thxy->y = thgsens_get_value(var_thlkg->var_stsensor);
+	var_thxy->x = thgsens_get_value(var_thlkg->var_stsensor);
 
     var_thxy->x2 = var_thxy->x * var_thxy->x;
     var_thxy->xy = var_thxy->x * var_thxy->y;
@@ -133,6 +138,8 @@ int thlkg_reset_sensors(thlkg* obj)
     thgsens_reset_all(var_thlkg->var_dpsensor);
     thgsens_reset_all(var_thlkg->var_stsensor);
     thgsens_reset_all(var_thlkg->var_tmpsensor);
+
+    var_thlkg->var_calflg = 0;
 
     return 1;
 }
@@ -182,6 +189,7 @@ static inline void thlkg_set_values()
 	    break;
 	}
 
+
     /* calibrate */
     if (var_thlkg->var_calflg == 0 &&
 	(var_thlkg->var_stoptype == thlkg_lkg ||
@@ -195,6 +203,7 @@ static inline void thlkg_set_values()
 		{
 		    var_thlkg->var_calflg = 1;
 		    thlkg_linreg();
+		    sem_post(&var_sem);
 		}
 	}
 
@@ -270,7 +279,10 @@ static void* thlkg_async_start(void* obj)
 	{
 	    /* Delay for 500ms */
 #if defined(WIN32) || defined(_WIN32)
-	    Sleep(250);
+	    if(var_thlkg->var_idlflg > 0)
+		Sleep(250);
+	    else
+		Sleep(250);
 #else
 	    sleep(1);
 #endif
@@ -330,12 +342,26 @@ static void* thlkg_async_start(void* obj)
 		{
 		case thlkg_lkg:
 		    if(var_thlkg->var_leakage >= var_thlkg->var_stopval)
-			var_thlkg->var_idlflg = 1;
+			{
+			    if(var_thlkg->var_idlflg == 0)
+				{
+				    var_thlkg->var_idlflg = 1;
+				    sem_wait(&var_sem);
+				}
+			    var_thlkg->var_idlflg = 1;
+			}
 		    break;
 		case thlkg_pr:
 		    if(thgsens_get_value(var_thlkg->var_stsensor) >=
 		       var_thlkg->var_stopval)
-			var_thlkg->var_idlflg = 1;
+			{
+			    if(var_thlkg->var_idlflg == 0)
+				{
+				    var_thlkg->var_idlflg = 1;
+				    sem_wait(&var_sem);
+				}
+			    var_thlkg->var_idlflg = 1;
+			}
 		    break;
 		default:
 		    break;
@@ -538,6 +564,7 @@ int thlkg_initialise(thlkg_stopctrl ctrl_st,		/* start control */
 
     /* initialise PID control struct */
     thpid_init(&var_thpid);
+    var_thpid.var_raw_flg = 1;
 
     if(obj)
 	*obj = var_thlkg;
@@ -580,6 +607,9 @@ int thlkg_initialise(thlkg_stopctrl ctrl_st,		/* start control */
 
     /* initialise mutex */
     pthread_mutex_init(&mutex, NULL);
+
+    /* initialise semaphore */
+    sem_init(&var_sem, 0, 0);
     
     return 1;
 }
@@ -610,6 +640,9 @@ extern void thlkg_delete()
     thlkg_clear_tasks();
 
     pthread_mutex_destroy(&mutex);
+
+    /* Destroy semaphore */
+    sem_destroy(&var_sem);
 
     printf("%s\n","delete thor..");
 
@@ -667,7 +700,7 @@ int thlkg_start(thlkg* obj)
 int thlkg_stop(thlkg* obj)
 {
     /* set stop flag and join thread */
-
+    sem_post(&var_sem);
     /* lock mutex */
     pthread_mutex_lock(&mutex);
     var_thlkg->var_stflg = 0;

@@ -64,20 +64,19 @@ inline int thpid_pid_control(struct thpid* obj,		/* object */
 	y_out = (res - obj->var_c) / obj->var_m;
 
     obj->var_err = set - y_out;				/* error */
-
+    
     /* calculate output */
-    obj->var_out = (res + obj->var_err) * obj->var_m +
+    obj->var_out = obj->var_err * obj->var_m +
 	obj->var_c;
-
+    
     /* limit the output within limits */
     if(obj->var_out < THPID_MIN)
 	obj->var_out = THPID_MIN;
-
-    if(obj->var_out > THPID_MAX)
+    else if(obj->var_out > THPID_MAX)
 	obj->var_out = THPID_MAX;
 
     if(out)
-	*out = obj->var_out;
+	*out += obj->var_out;
 
     return 0;
 }
