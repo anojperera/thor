@@ -84,6 +84,10 @@ static inline void thlkg_linreg()
 				   &var_thpid.var_m,
 				   &var_thpid.var_c,
 				   NULL);
+	    
+	    /* set pid equation type */
+	    thpid_set_equation_type(&var_thpid,
+				    var_theq->var_eqtype);
 	}
 
 }

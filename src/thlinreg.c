@@ -148,6 +148,16 @@ int thlinreg_calc_equation(theq* eq_obj, double* m, double* c, double* r)
 	    eq_obj->var_m = ((double) count * sum_xy - sum_x * sum_y) /
 		(dev1>0.0? dev1 : 1);
 
+	    /* Adjutment for logarithmic functions */
+	    switch(c)
+		{
+		case 1:
+		    eq_obj->var_m = exp(eq_obj->var_m);
+		    break;
+		default:
+		    break;
+		}
+
 	    dev2 = ((double) count * sum_x2 - sum_x * sum_x);
 	    eq_obj->var_c = (sum_y * sum_x2 - sum_x * sum_xy) /
 		(dev2>0.0? dev2 : 1);
@@ -165,7 +175,13 @@ int thlinreg_calc_equation(theq* eq_obj, double* m, double* c, double* r)
 	    if(r)
 		*r = eq_obj->var_r;
 
+	    if(c == 0)
+		eq_obj->var_eqtype = theq_linear;
+	    else
+		eq_obj->var_eqtype = theq_log;
+	    
 	    c++;
+
 	    
 	    if(c > 1)
 		break;
@@ -177,4 +193,43 @@ int thlinreg_calc_equation(theq* eq_obj, double* m, double* c, double* r)
 	   eq_obj->var_r);
 
     return 0;
+}
+
+inline theq_type thlinreg_get_equation_type(theq* eq_obj)
+{
+    if(!eq_obj)
+	return theq_linear;
+    else
+	return eq_obj->var_eqtype;
+}
+
+
+inline int thlinreg_add_xy_element(theq* eq_obj, double x, double y)
+{
+    if(!eq_obj)
+	{
+	    printf("thlinreg_add_xy_element: %s\n", "eq object not set");
+	    return 1;
+	}
+    
+    struct thxy* var_obj = (struct thxy*)
+	malloc(sizeof(struct thxy));
+
+    if(!var_obj)
+	{
+	    printf("thlinreg_add_xy_element: %s\n","malloc failed");
+	    return 0;
+	}
+
+    var_obj->x = x;
+    var_obj->y = y;
+    var_obj->x2 = x * x;
+    var_obj->xy = x * y;
+
+    aList_Add(&eq_obj->var_list, &var_obj, sizeof(struct thxy));
+    
+    free(var_obj);
+
+    return 0;
+    
 }

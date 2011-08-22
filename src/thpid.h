@@ -7,6 +7,8 @@
 #include <stdio.h>
 #include <math.h>
 
+#include "thlinreg.h"
+
 struct thpid
 {
     double var_set;		/* set point */
@@ -26,6 +28,8 @@ struct thpid
     int var_raw_flg;		/* flag to indicate feedback
 				 * is raw static value instead of
 				 * voltage */
+    
+    theq_type var_eqtype;      /* equation type */
 };
 
 #ifdef __cplusplus
@@ -50,6 +54,9 @@ extern "C" {
 					 double out_prev,		/* previous out */
 					 double** out,			/* array */
 					 unsigned int* sz);		/* array size */
+
+    extern inline int thpid_set_equation_type(struct thpid* obj,
+					      theq_type var);
 
 #ifdef __cplusplus
 }

@@ -36,6 +36,8 @@ int thpid_init(struct thpid* obj)
     obj->var_lim_min = THPID_MIN;
     obj->var_lim_max = THPID_MAX;
 
+    obj->var_eqtype = theq_linear;
+
     obj->var_raw_flg = 1;
 
     return 0;
@@ -63,13 +65,33 @@ inline int thpid_pid_control(struct thpid* obj,		/* object */
     if(obj->var_raw_flg > 0)
 	y_out = res;
     else
-	y_out = (res - obj->var_c) / obj->var_m;
+	{
+	    switch(obj->var_eqtype)
+		{
+		case theq_linear:
+		    y_out = (res - obj->var_c) / obj->var_m;
+		    break;
+		case theq_log:
+		    y_out = exp((log(res) - log(obj->var_m)) /
+				obj->var_c);
+		    break;
+		}
+	}
 
     obj->var_err = set - y_out;				/* error */
     printf("PID Error%f\n", obj->var_err);
     /* calculate output */
-    obj->var_out = obj->var_err * obj->var_m +
-	obj->var_c;
+    switch(obj->var_eqtype)
+	{
+	case theq_linear:
+	    obj->var_out = obj->var_err * obj->var_m +
+		obj->var_c;
+	    break;
+	case theq_log:
+	    obj->var_out = obj->var_err *
+		pow(obj->var_m, obj->var_c);
+	    break;
+	}
 
     printf("Corrected Voltage %f\n",obj->var_out);
     /* limit the output within limits */
@@ -138,4 +160,14 @@ inline int thpid_pid_control2(struct thpid* obj,	/* object */
 	(*out)[i] = out_prev;
 
     return 0;
+}
+
+/* Set equation type */
+inline int thpid_set_equation_type(struct thpid* obj,
+				   theq_type var)
+{
+    if(!obj)
+	return 1;
+
+    obj->var_eqtype = var;
 }

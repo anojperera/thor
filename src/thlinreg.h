@@ -60,7 +60,10 @@ extern "C" {
     int thlinreg_calc_equation(theq* eq_obj, double* m, double* c, double* r);
 
     /* readonly get equation type */
-    theq_type thlinreg_get_equation_type(theq* eq_obj);
+    extern inline theq_type thlinreg_get_equation_type(theq* eq_obj);
+
+    /* Add xy element to the array */
+    extern inline int thlinreg_add_xy_element(theq* eq_obj, double x, double y);
     
 #ifdef __cplusplus
 }
