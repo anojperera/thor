@@ -28,6 +28,7 @@ static thlkg* var_thlkg = NULL;			/* leakage test object */
 #define THLKG_NUM_CHANNELS 4			/* number of channels */
 #define THLKG_SAMPLES_PERSECOND 4		/* samples per second per
 						   channel */
+#define THLKG_STATIC_PRESSURE_CHECK 4.5		/* static pressure check */
 
 #define THLKG_START_RELAY1_VOLTAGE 0.93		/* relay starting voltage */
 #define THLKG_STATIC_PRESSURE_ADJ 70.0		/* static pressure adjustment */
@@ -59,13 +60,13 @@ static sem_t var_sem;
 /* private functions */
 /* Function declarations for continuous reading */
 static int32 CVICALLBACK EveryNCallback(TaskHandle taskHandle,
-				 int32 everyNsamplesEventType,
-				 uInt32 nSamples,
-				 void *callbackData);
+					int32 everyNsamplesEventType,
+					uInt32 nSamples,
+					void *callbackData);
 
 static int32 CVICALLBACK DoneCallback(TaskHandle taskHandle,
-			       int32 status,
-			       void *callbackData);
+				      int32 status,
+				      void *callbackData);
 
 /* Initialise calibration */
 static inline void thlkg_linreg()
@@ -283,7 +284,14 @@ static void* thlkg_async_start(void* obj)
     if(ERR_CHECK(NIStartTask(var_thlkg->var_intask)))
 	return NULL;
 
-
+    /* wait until static pressure reaches below default */
+    while(1)
+	{
+	    if(thgsens_get_value(var_thlkg->var_stsensor) <
+	       THLKG_STATIC_PRESSURE_CHECK)
+		break;
+	}
+    
     int32 spl_write = 0;		/* number of samples written */
 
     var_thlkg->var_fansignal[0] = 0.0;
@@ -432,7 +440,6 @@ static void* thlkg_async_start(void* obj)
 }
 
 /**************************************************************************/
-
 /* constructor */
 int thlkg_initialise(thlkg_stopctrl ctrl_st,		/* start control */
 		     thlkg_orifice_plate dia,		/* orifice plate dia */
@@ -608,11 +615,11 @@ int thlkg_initialise(thlkg_stopctrl ctrl_st,		/* start control */
 
     /* configure timing */
     if(ERR_CHECK(NICfgSampClkTiming(var_thlkg->var_intask,
-    				   "OnboardClock",
-    				   THLKG_SAMPLES_PERSECOND,
-    				   DAQmx_Val_Rising,
-    				   DAQmx_Val_ContSamps,
-    				   1)))
+				    "OnboardClock",
+				    THLKG_SAMPLES_PERSECOND,
+				    DAQmx_Val_Rising,
+				    DAQmx_Val_ContSamps,
+				    1)))
 	{
 	    thlkg_clear_tasks();
 	    return 0;
@@ -621,20 +628,20 @@ int thlkg_initialise(thlkg_stopctrl ctrl_st,		/* start control */
     /* Register callbacks */
 #if defined(WIN32) || defined(_WIN32)
     if(ERR_CHECK(NIRegisterEveryNSamplesEvent(var_thlkg->var_intask,
-    					      DAQmx_Val_Acquired_Into_Buffer,
-    					      1,
-    					      0,
-    					      EveryNCallback,
-    					      NULL)))
+					      DAQmx_Val_Acquired_Into_Buffer,
+					      1,
+					      0,
+					      EveryNCallback,
+					      NULL)))
 	{
 	    thlkg_clear_tasks();
 	    return 0;
 	}
 
     if(ERR_CHECK(NIRegisterDoneEvent(var_thlkg->var_intask,
-    				     0,
-    				     DoneCallback,
-    				     NULL)))
+				     0,
+				     DoneCallback,
+				     NULL)))
 	{
 	    thlkg_clear_tasks();
 	    return 0;

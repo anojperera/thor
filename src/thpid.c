@@ -83,7 +83,7 @@ inline int thpid_pid_control(struct thpid* obj,		/* object */
 
     obj->var_err = set - x_out;				/* error */
     
-    /* printf("PID Error%f\n", obj->var_err); */
+    printf("PID Error%f\n", obj->var_err);
     /* calculate output */
     switch(obj->var_eqtype)
 	{
@@ -97,20 +97,20 @@ inline int thpid_pid_control(struct thpid* obj,		/* object */
 	    break;
 	}
 
-    /* printf("Corrected Voltage %f\n",obj->var_out); */
+    printf("Corrected Voltage %f\n",obj->var_out);
     
     /* limit the output within limits */
-    if(obj->var_out < THPID_MIN)
-	obj->var_out = THPID_MIN;
-    else if(obj->var_out > THPID_MAX)
-	obj->var_out = THPID_MAX;
+    /* if(obj->var_out < THPID_MIN) */
+    /* 	obj->var_out = THPID_MIN; */
+    if(obj->var_out > THPID_MAX)
+    	obj->var_out = THPID_MAX;
 
     if(out)
 	{
 	    if(obj->var_err < 0.0)
-		*out -= obj->var_out;
+	    	*out = obj->var_out * -1;
 	    else
-		*out += obj->var_out;
+	    	*out = obj->var_out;
 	}
     
     return 0;
@@ -124,9 +124,9 @@ inline int thpid_pid_control2(struct thpid* obj,	/* object */
 			      double** out,		/* array */
 			      unsigned int* sz)		/* array size */
 {
-    double tmp_val = 0.0;				/* temporary value */
+    static double tmp_val = 0.0;			/* temporary value */
     unsigned int i = 0;
-    const double fct = 0.1;
+    const double fct = 1;
     if(thpid_pid_control(obj, set, res, &tmp_val))
 	{
 	    printf("thpid_pid_control2: %s\n","Error calculating PID");

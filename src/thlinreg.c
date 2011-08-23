@@ -190,11 +190,7 @@ int thlinreg_calc_equation(theq* eq_obj, double* m, double* c, double* r)
 				   NULL);
 		    break;
 		}
-	    aList_Display2(&eq_obj->var_list,
-			   0,
-			   (i > 0? thlinreg_callback_foreach_ln :
-			    thlinreg_callback_foreach),
-			   NULL);
+
 
 	    /* check for overflow */
 	    dev1 = ((double) count * sum_x2 - sum_x * sum_x);
@@ -213,8 +209,11 @@ int thlinreg_calc_equation(theq* eq_obj, double* m, double* c, double* r)
 		    eq_obj->var_eqtype = theq_log;
 		    break;
 		case 2:
-		    eq_obj->var_m = sum_xy / sum_x2;
-		    eq_obj->var_c = 0.0;
+		    eq_obj->var_c = (sum_xy / sum_x2 - sum_y / sum_x) /
+			(sum_x / sum_x2 - count / sum_x);
+		    
+		    eq_obj->var_m = sum_y / sum_x -
+			count * eq_obj->var_c / sum_x;
 		    
 		    eq_obj->var_eqtype = theq_ln;
 		    break;
@@ -224,8 +223,8 @@ int thlinreg_calc_equation(theq* eq_obj, double* m, double* c, double* r)
 		}
 
 	    eq_obj->var_r = fabs((sum_xy - sum_x * sum_y / (double) count) /
-				 sqrt(fabs((sum_x2 - sqrt(sum_x / (double) count)) *
-					   (sum_y2 - sqrt(sum_y / (double) count)))));
+				 sqrt(fabs((sum_x2 - sqrt(fabs(sum_x / (double) count))) *
+					   (sum_y2 - sqrt(fabs(sum_y / (double) count))))));
 
 	    if(m)
 		*m = eq_obj->var_m;
@@ -248,10 +247,11 @@ int thlinreg_calc_equation(theq* eq_obj, double* m, double* c, double* r)
 		break;
 	}
 
-    printf("thlinreg_calc_equation : m=%f, c=%f, r=%f\n",
+    printf("thlinreg_calc_equation : m=%f, c=%f, r=%f, eq=%i\n",
 	   eq_obj->var_m,
 	   eq_obj->var_c,
-	   eq_obj->var_r);
+	   eq_obj->var_r,
+	   i-0);
 
     return 0;
 }
