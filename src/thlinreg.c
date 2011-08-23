@@ -271,5 +271,4 @@ inline int thlinreg_add_xy_element(theq* eq_obj, double x, double y)
     free(var_obj);
 
     return 0;
-    
 }

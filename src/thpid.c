@@ -57,40 +57,43 @@ inline int thpid_pid_control(struct thpid* obj,		/* object */
 			     double res,		/* response */
 			     double* out)		/* ouput */
 {
-    static double y_out = 0.0;				/* converted output */
+    static double x_out = 0.0;				/* converted output */
     
     if(!obj)
 	return 1;
 
     if(obj->var_raw_flg > 0)
-	y_out = res;
+	x_out = res;
     else
 	{
 	    switch(obj->var_eqtype)
 		{
 		case theq_linear:
-		    y_out = (res - obj->var_c) / obj->var_m;
+		    x_out = (res - obj->var_c) / obj->var_m;
 		    break;
 		case theq_log:
-		    y_out = exp((log(res) - log(obj->var_c)) /
+		    x_out = exp((log(res) - log(obj->var_c)) /
 				obj->var_m);
+		    break;
+		case theq_ln:
+		    x_out = exp(res / obj->var_m);
 		    break;
 		}
 	}
 
-    obj->var_err = set - y_out;				/* error */
+    obj->var_err = set - x_out;				/* error */
     
     /* printf("PID Error%f\n", obj->var_err); */
     /* calculate output */
     switch(obj->var_eqtype)
 	{
 	case theq_linear:
-	    obj->var_out = obj->var_err * obj->var_m +
-		obj->var_c;
+	    obj->var_out = obj->var_err * obj->var_m;
 	    break;
 	case theq_log:
-	    obj->var_out = obj->var_c *
-		pow(fabs(obj->var_err), obj->var_m);
+	case theq_ln:
+	    obj->var_out = obj->var_m *
+		(log(fabs(set)) - log(fabs(x_out)));
 	    break;
 	}
 
