@@ -123,6 +123,9 @@ static inline void thlkg_clear_tasks()
 /* create an array of output signals */
 static inline void thlkg_fanout_signals()
 {
+    if(var_thlkg->var_fanout)
+	free(var_thlkg->var_fanout);
+    
     var_thlkg->var_fanout = (double*)
 	calloc(THLKG_RATE, sizeof(double));
 
@@ -266,6 +269,9 @@ static void* thlkg_async_start(void* obj)
     /* clear PID likned list */
     aList_Clear(&var_theq->var_list);
     var_theq->var_list = NULL;
+
+    /* create fan out signal */
+    thlkg_fanout_signals();
     
     /* output to screen */
     printf("Counter\tFan\t\tDP\t\tST\t\tLkg\t\tTmp\n");
@@ -314,6 +320,8 @@ static void* thlkg_async_start(void* obj)
 				{
 				    counter = 0;
 				    var_thlkg->var_pidflg = 0;
+				    if(var_thlkg->var_disb_fptr)
+					var_thlkg->var_disb_fptr(var_thlkg->sobj_ptr, 1);
 				}
 			}
 		    else if(var_thlkg->var_idlflg &&
@@ -377,7 +385,7 @@ static void* thlkg_async_start(void* obj)
 		    break;
 		case thlkg_pr:
 		    if(thgsens_get_value(var_thlkg->var_stsensor) >=
-		       var_thlkg->var_stopval)
+		       (var_thlkg->var_stopval - 50.0))
 			{
 			    if(var_thlkg->var_idlflg == 0)
 				{
@@ -580,6 +588,8 @@ int thlkg_initialise(thlkg_stopctrl ctrl_st,		/* start control */
     var_thlkg->sobj_ptr = sobj;
     var_thlkg->var_calflg = 0;
     var_thlkg->var_pidflg = 0;
+    var_thlkg->var_disb_fptr = NULL;
+    var_thlkg->var_fanout = NULL;
 
     /* call to create signal array for fan control */
     thlkg_fanout_signals();
@@ -729,6 +739,8 @@ int thlkg_stop(thlkg* obj)
     /* lock mutex */
     pthread_mutex_lock(&mutex);
     var_thlkg->var_stflg = 0;
+    if(var_thlkg->var_disb_fptr)
+	var_thlkg->var_disb_fptr(var_thlkg->sobj_ptr, 1);
     pthread_mutex_unlock(&mutex);
 
     /* wait until thread finishes if test in progress */
@@ -794,12 +806,15 @@ int thlkg_set_fanctrl_volt(double percen)
 		}
 	    counter = 0;
 	    var_thlkg->var_pidflg = 1;
+	    if(var_thlkg->var_disb_fptr)
+		var_thlkg->var_disb_fptr(var_thlkg->sobj_ptr, 0);
 	}
     else
 	var_thlkg->var_fansignal[1] = 9.95 * percen / 100;
     
     pthread_mutex_unlock(&mutex);    
-
+    /* if(var_thlkg->var_disb_fptr) */
+    /* 	var_thlkg->var_disb_fptr(var_thlkg->sobj_ptr, 0); */
     return 1;
 }
 

@@ -39,6 +39,7 @@
 
 /* Generic callback function */
 typedef unsigned int (*gthor_fptr)(void*, void*);
+typedef unsigned int (*gthor_disb_fptr)(void*, int);
 
 /* error check function */
 static inline int ERR_CHECK(int32 err)

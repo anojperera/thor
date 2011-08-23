@@ -72,14 +72,15 @@ inline int thpid_pid_control(struct thpid* obj,		/* object */
 		    y_out = (res - obj->var_c) / obj->var_m;
 		    break;
 		case theq_log:
-		    y_out = exp((log(res) - log(obj->var_m)) /
-				obj->var_c);
+		    y_out = exp((log(res) - log(obj->var_c)) /
+				obj->var_m);
 		    break;
 		}
 	}
 
     obj->var_err = set - y_out;				/* error */
-    printf("PID Error%f\n", obj->var_err);
+    
+    /* printf("PID Error%f\n", obj->var_err); */
     /* calculate output */
     switch(obj->var_eqtype)
 	{
@@ -88,12 +89,13 @@ inline int thpid_pid_control(struct thpid* obj,		/* object */
 		obj->var_c;
 	    break;
 	case theq_log:
-	    obj->var_out = obj->var_err *
-		pow(obj->var_m, obj->var_c);
+	    obj->var_out = obj->var_c *
+		pow(fabs(obj->var_err), obj->var_m);
 	    break;
 	}
 
-    printf("Corrected Voltage %f\n",obj->var_out);
+    /* printf("Corrected Voltage %f\n",obj->var_out); */
+    
     /* limit the output within limits */
     if(obj->var_out < THPID_MIN)
 	obj->var_out = THPID_MIN;
@@ -101,8 +103,12 @@ inline int thpid_pid_control(struct thpid* obj,		/* object */
 	obj->var_out = THPID_MAX;
 
     if(out)
-	*out += obj->var_out;
-
+	{
+	    if(obj->var_err < 0.0)
+		*out -= obj->var_out;
+	    else
+		*out += obj->var_out;
+	}
     
     return 0;
 }
@@ -117,7 +123,7 @@ inline int thpid_pid_control2(struct thpid* obj,	/* object */
 {
     double tmp_val = 0.0;				/* temporary value */
     unsigned int i = 0;
-
+    const double fct = 0.1;
     if(thpid_pid_control(obj, set, res, &tmp_val))
 	{
 	    printf("thpid_pid_control2: %s\n","Error calculating PID");
@@ -125,7 +131,7 @@ inline int thpid_pid_control2(struct thpid* obj,	/* object */
 	}
 
     /* printf("previous and current %f %f\n",out_prev, tmp_val); */
-    *sz = 10 * (unsigned int) ceil(fabs(tmp_val));
+    *sz = 10 * (unsigned int) ceil(fabs(tmp_val * fct));
     if(*sz <= 0)
 	*sz = 1;
     
@@ -143,7 +149,7 @@ inline int thpid_pid_control2(struct thpid* obj,	/* object */
 	    printf("thpid_pid_control2: %s\n", "Unable to create array");
 	    return 1;
 	}
-    printf("size %i\n", *sz);
+    /* printf("size %i\n", *sz); */
     /* compare output from previous and now */
     if(*sz > obj->var_diff_max)
 	{
@@ -151,7 +157,7 @@ inline int thpid_pid_control2(struct thpid* obj,	/* object */
 		i < *sz;
 		i++)
 		{
-		    (*out)[i] = out_prev + tmp_val *
+		    (*out)[i] = out_prev + tmp_val * fct *
 			sin(M_PI * (double) i / (2 * (double) *sz));
 		    /* printf("PID %f\n",(*out)[i]); */
 		}
@@ -170,4 +176,5 @@ inline int thpid_set_equation_type(struct thpid* obj,
 	return 1;
 
     obj->var_eqtype = var;
+    return 0;
 }

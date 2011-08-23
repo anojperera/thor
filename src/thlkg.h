@@ -63,6 +63,7 @@ struct _thlkg
     void* sobj_ptr;			/* object to pass to callback functions */
     unsigned int var_calflg;		/* Calibration Flag */
     unsigned int var_pidflg;		/* Flag to indicate PID flag */
+    gthor_disb_fptr var_disb_fptr;	/* function pointer to call to disable */
 };
 
 #ifdef __cplusplus
