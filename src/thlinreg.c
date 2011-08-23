@@ -60,6 +60,28 @@ static int thlinreg_callback_foreach_ln(void* udata,
 
 }
 
+static int thlinreg_callback_foreach_ln2(void* udata,
+					 void* data,
+					 unsigned int ix)
+{
+    if(!data)
+	return 1;
+
+    sum_x += log(((struct thxy*) data)->x);
+    sum_y += ((struct thxy*) data)->y;
+
+    sum_x2 = log(((struct thxy*) data)->x) * log(((struct thxy*) data)->x);
+    sum_y2 = ((struct thxy*) data)->y * ((struct thxy*) data)->y;
+    sum_xy = log(((struct thxy*) data)->x) * ((struct thxy*) data)->y;
+
+    if(linreg)
+	fprintf(linreg, "%i,%f,%f\n", count, ((struct thxy*) data)->x, ((struct thxy*) data)->y);
+
+    count++;
+
+    return 0;
+}
+
 /* Constructor */
 inline int thlinreg_new(theq** eq_obj, struct thxy** xy_obj)
 {
@@ -133,7 +155,7 @@ int thlinreg_calc_equation(theq* eq_obj, double* m, double* c, double* r)
 	}
 
     /* initialise variables */
-    while(eq_obj->var_r < 0.6)
+    while(eq_obj->var_r < 0.8)
 	{
 	    sum_x = 0.0;
 	    sum_y = 0.0;
@@ -166,8 +188,17 @@ int thlinreg_calc_equation(theq* eq_obj, double* m, double* c, double* r)
 		{
 		case 1:
 		    eq_obj->var_c = exp(eq_obj->var_c);
+		    
+		    eq_obj->var_eqtype = theq_log;
+		    break;
+		case 2:
+		    eq_obj->var_m = sum_xy / sum_x2;
+		    eq_obj->var_c = 0.0;
+		    
+		    eq_obj->var_eqtype = theq_ln;
 		    break;
 		default:
+		    eq_obj->var_eqtype = theq_linear;
 		    break;
 		}
 
@@ -184,11 +215,6 @@ int thlinreg_calc_equation(theq* eq_obj, double* m, double* c, double* r)
 	    if(r)
 		*r = eq_obj->var_r;
 
-	    if(i == 0)
-		eq_obj->var_eqtype = theq_linear;
-	    else
-		eq_obj->var_eqtype = theq_log;
-	    
 	    i++;
 
 	    if(linreg)
@@ -197,7 +223,7 @@ int thlinreg_calc_equation(theq* eq_obj, double* m, double* c, double* r)
 		    linreg = NULL;
 		}
 
-	    if(i > 1)
+	    if(i > 2)
 		break;
 	}
 

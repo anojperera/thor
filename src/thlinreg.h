@@ -21,8 +21,9 @@
 typedef struct _theq theq;
 
 typedef enum {
-    theq_linear,
-    theq_log
+    theq_linear,	/* y = ax +c */
+    theq_log,		/* y = aX^c   */
+    theq_ln		/* y = aln(x) */
 } theq_type;
 
 /* main xy struct */
