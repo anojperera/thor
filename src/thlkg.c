@@ -30,6 +30,7 @@ static thlkg* var_thlkg = NULL;			/* leakage test object */
 						   channel */
 
 #define THLKG_START_RELAY1_VOLTAGE 0.93		/* relay starting voltage */
+#define THLKG_STATIC_PRESSURE_ADJ 70.0		/* static pressure adjustment */
 
 
 static char err_msg[THLKG_BUFF_SZ];
@@ -343,7 +344,7 @@ static void* thlkg_async_start(void* obj)
 			    else if(var_thlkg->var_stoptype == thlkg_pr)
 				{
 				    thpid_pid_control2(&var_thpid,
-						       var_thlkg->var_stopval,
+						       var_thlkg->var_stopval - var_thlkg->var_stop_static_adj,
 						       thgsens_get_value(var_thlkg->var_stsensor),
 						       var_thlkg->var_fansignal[1],
 						       &var_thlkg->var_fanout,
@@ -385,7 +386,7 @@ static void* thlkg_async_start(void* obj)
 		    break;
 		case thlkg_pr:
 		    if(thgsens_get_value(var_thlkg->var_stsensor) >=
-		       (var_thlkg->var_stopval - 50.0))
+		       (var_thlkg->var_stopval - var_thlkg->var_stop_static_adj))
 			{
 			    if(var_thlkg->var_idlflg == 0)
 				{
@@ -576,6 +577,7 @@ int thlkg_initialise(thlkg_stopctrl ctrl_st,		/* start control */
     var_thlkg->var_lkgupdate = update_lkg;
 
     var_thlkg->var_stopval = 0.0;
+    var_thlkg->var_stop_static_adj = THLKG_STATIC_PRESSURE_ADJ;
     var_thlkg->var_stoptype = ctrl_st;
     var_thlkg->var_dia_orf = dia;
     var_thlkg->var_fp = fp;

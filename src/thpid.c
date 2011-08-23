@@ -133,7 +133,7 @@ inline int thpid_pid_control2(struct thpid* obj,	/* object */
 	    return 1;
 	}
 
-    /* printf("previous and current %f %f\n",out_prev, tmp_val); */
+    printf("previous and current %f %f\n",out_prev, tmp_val);
     *sz = 10 * (unsigned int) ceil(fabs(tmp_val * fct));
     if(*sz <= 0)
 	*sz = 1;

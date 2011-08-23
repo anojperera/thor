@@ -48,6 +48,7 @@ struct _thlkg
     thgsens* var_tmpsensor;		/* temperature sensor */
     gthsen_fptr var_lkgupdate;		/* function pointer to update leakage */
     double var_stopval;			/* value to stop controlling fan */
+    double var_stop_static_adj;		/* static pressure adjustment */
     thlkg_stopctrl var_stoptype;	/* stop type to control fan, in ctrl
 					 * mode fan control is not attempted */
     FILE* var_fp;			/* file pointer */

@@ -169,6 +169,27 @@ int thlinreg_calc_equation(theq* eq_obj, double* m, double* c, double* r)
 	    
 	    /* call for each function */
 	    count = 1;
+	    switch(i)
+		{
+		case 0:
+		    aList_Display2(&eq_obj->var_list,
+				   0,
+				   thlinreg_callback_foreach,
+				   NULL);
+		    break;
+		case 1:
+		    aList_Display2(&eq_obj->var_list,
+				   0,
+				   thlinreg_callback_foreach_ln,
+				   NULL);
+		    break;
+		case 2:
+		    aList_Display2(&eq_obj->var_list,
+				   0,
+				   thlinreg_callback_foreach_ln2,
+				   NULL);
+		    break;
+		}
 	    aList_Display2(&eq_obj->var_list,
 			   0,
 			   (i > 0? thlinreg_callback_foreach_ln :
