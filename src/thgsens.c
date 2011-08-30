@@ -182,9 +182,19 @@ inline double thgsens_get_value(thgsens* obj)
 	     * value was set call the function pointer */
 	    if(obj->var_update)
 		obj->var_update(obj->sobj_ptr, &obj->var_val);
-
-
 	    
+	    return obj->var_val;
+	}
+}
+
+/* Return current value without calling callback function */
+inline double thgsens_get_value2(thgsens* obj)
+{
+    if(!obj)
+	return 0.0;
+    else
+	{
+	    thgsens_calc_value(&obj);
 	    return obj->var_val;
 	}
 }

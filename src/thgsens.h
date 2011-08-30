@@ -55,6 +55,10 @@ extern "C" {
     /* get current value */
     extern inline double thgsens_get_value(thgsens* obj);
 
+    /* get current value without calling callback
+     * function */
+    extern inline double thgsens_get_value2(thgsens* obj);
+
     /* reset all */
     extern inline int thgsens_reset_all(thgsens* obj);
 

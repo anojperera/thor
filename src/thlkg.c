@@ -177,27 +177,27 @@ static inline void thlkg_set_values()
 	{
 	case thlkg_ordia1:
 	    var_thlkg->var_leakage =
-		0.248456 * pow(thgsens_get_value(var_thlkg->var_dpsensor), 0.49954);
+		0.248456 * pow(thgsens_get_value2(var_thlkg->var_dpsensor), 0.49954);
 	    break;
 	case thlkg_ordia2:
 	    var_thlkg->var_leakage =
-		0.559366 * pow(thgsens_get_value(var_thlkg->var_dpsensor), 0.499551);
+		0.559366 * pow(thgsens_get_value2(var_thlkg->var_dpsensor), 0.499551);
 	    break;
 	case thlkg_ordia3:
 	    var_thlkg->var_leakage =
-		0.99558 * pow(thgsens_get_value(var_thlkg->var_dpsensor), 0.49668);
+		0.99558 * pow(thgsens_get_value2(var_thlkg->var_dpsensor), 0.49668);
 	    break;
 	case thlkg_ordia4:
 	    var_thlkg->var_leakage =
-		2.29643 * pow(thgsens_get_value(var_thlkg->var_dpsensor), 0.49539);
+		2.29643 * pow(thgsens_get_value2(var_thlkg->var_dpsensor), 0.49539);
 	    break;
 	case thlkg_ordia5:
 	    var_thlkg->var_leakage =
-		4.26362 * pow(thgsens_get_value(var_thlkg->var_dpsensor), 0.49446);
+		4.26362 * pow(thgsens_get_value2(var_thlkg->var_dpsensor), 0.49446);
 	    break;
 	default:
 	    var_thlkg->var_leakage =
-		7.22534 * pow(thgsens_get_value(var_thlkg->var_dpsensor), 0.49325);
+		7.22534 * pow(thgsens_get_value2(var_thlkg->var_dpsensor), 0.49325);
 	    break;
 	}
 
