@@ -17,6 +17,7 @@
 #include <pthread.h>
 
 #include "thgsens.h"
+#include "thbuff.h"
 
 /* start type */
 typedef enum

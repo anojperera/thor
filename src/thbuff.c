@@ -1,12 +1,16 @@
 /* Implementation of buffer */
+/* Tue Aug 30 15:20:50 GMTDT 2011 */
+
+#include <stdio.h>
+#include "thbuff.h"
 
 /* Internal buffer variable */
 static thbuff* var_thbuff = NULL;
 
-int thbuff_new(size_t num, thbuff** obj) 
+int thbuff_new(size_t num, thbuff** obj)
 {
     if(num <= 0)
-	NULL;
+	return 1;
 
     var_thbuff = (thbuff*) malloc(sizeof(thbuff));
 
@@ -88,7 +92,7 @@ inline double thbuff_add_new(thbuff* obj, double val)
 		}
 	}
 
-    var_thbuff->var_avg /= cnt;
+    var_thbuff->var_avg = var_thbuff->var_avg / cnt;
     
     return var_thbuff->var_avg;
 }

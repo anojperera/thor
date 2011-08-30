@@ -123,6 +123,8 @@ int thgsens_new(thgsens** obj, const char* ch_name,
     (*obj)->sobj_ptr = data;
     (*obj)->var_flg = 0;
 
+    thbuff_new(10, &(*obj)->var_buffval);
+
     printf("%s\n","sensor parameters assigned");
     thgsens_init(*obj);
 
@@ -145,6 +147,9 @@ void thgsens_delete(thgsens** obj)
     (*obj)->var_ch_name = NULL;
     (*obj)->var_task = NULL;
     (*obj)->var_update = NULL;
+
+    thbuff_delete((*obj)->var_buffval);
+    (*obj)->var_buffval = NULL;
 
     free(*obj);
     *obj = NULL;
@@ -222,5 +227,17 @@ inline int thgsens_reset_value(thgsens* obj)
 	return 0;
 
     obj->var_val = 0;
+    return 1;
+}
+
+inline int thgsens_add_value(thgsens* obj, float64 val)
+{
+    if(!obj)
+	return 0;
+
+    obj->var_raw = val;
+    /* thgsens_calc_value(&obj); */
+    /* obj->var_val = */
+    /* 	thbuff_add_new(NULL, obj->var_val); */
     return 1;
 }

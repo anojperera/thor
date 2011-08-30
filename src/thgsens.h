@@ -15,6 +15,7 @@
 #include <NIDAQmxBase.h>
 #endif
 #include "thornifix.h"
+#include "thbuff.h"
 
 typedef struct _thgsens thgsens;
 typedef unsigned int (*gthsen_fptr)(void*, double*);	/* generic function pointer */
@@ -23,6 +24,7 @@ struct _thgsens
 {
     char* var_ch_name;				/* channel name */
     TaskHandle* var_task;			/* pointer to task */
+    thbuff* var_buffval;			/* buffer value */
     double var_min;				/* minimum physical dimension */
     double var_max;				/* maximum physical dimension */
     double var_val;				/* sensor return value */
@@ -51,6 +53,9 @@ extern "C" {
 
     /* set range */
     extern inline int thgsens_set_range(thgsens* obj, double min, double max);
+
+    /* Add new raw value */
+    extern inline int thgsens_add_value(thgsens* obj, float64 val);
 
     /* get current value */
     extern inline double thgsens_get_value(thgsens* obj);

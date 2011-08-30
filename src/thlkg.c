@@ -31,7 +31,7 @@ static thlkg* var_thlkg = NULL;			/* leakage test object */
 #define THLKG_STATIC_PRESSURE_CHECK 4.5		/* static pressure check */
 
 #define THLKG_START_RELAY1_VOLTAGE 0.93		/* relay starting voltage */
-#define THLKG_STATIC_PRESSURE_ADJ 70.0		/* static pressure adjustment */
+#define THLKG_STATIC_PRESSURE_ADJ 30.0		/* static pressure adjustment */
 
 
 static char err_msg[THLKG_BUFF_SZ];
@@ -163,12 +163,12 @@ static inline void thlkg_set_values()
     pthread_mutex_lock(&mutex);
     
     /* set value of dp */
-    var_thlkg->var_dpsensor->var_raw =
-	(val_buff[0]>0? val_buff[0] : 0.0);
-    var_thlkg->var_stsensor->var_raw =
-	(val_buff[1]>0? val_buff[1] : 0.0);
-    var_thlkg->var_tmpsensor->var_raw =
-	(val_buff[2]>0? val_buff[2] : 0.0);
+    thgsens_add_value(var_thlkg->var_dpsensor,
+		      (val_buff[1]>0? val_buff[1] : 0.0));
+    thgsens_add_value(var_thlkg->var_stsensor,
+		      (val_buff[2]>0? val_buff[2] : 0.0));
+    thgsens_add_value(var_thlkg->var_tmpsensor,
+		      (val_buff[0]>0? val_buff[0] : 0.0));
 
     /* workout leakage here and
      * call to update external value if
