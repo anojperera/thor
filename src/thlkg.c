@@ -163,12 +163,12 @@ static inline void thlkg_set_values()
     pthread_mutex_lock(&mutex);
     
     /* set value of dp */
+    thgsens_add_value(var_thlkg->var_tmpsensor,
+		      (val_buff[0]>0? val_buff[0] : 0.0));
     thgsens_add_value(var_thlkg->var_dpsensor,
 		      (val_buff[1]>0? val_buff[1] : 0.0));
     thgsens_add_value(var_thlkg->var_stsensor,
 		      (val_buff[2]>0? val_buff[2] : 0.0));
-    thgsens_add_value(var_thlkg->var_tmpsensor,
-		      (val_buff[0]>0? val_buff[0] : 0.0));
 
     /* workout leakage here and
      * call to update external value if
