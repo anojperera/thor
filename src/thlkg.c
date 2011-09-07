@@ -352,7 +352,7 @@ static void* thlkg_async_start(void* obj)
 			    else if(var_thlkg->var_stoptype == thlkg_pr)
 				{
 				    thpid_pid_control2(&var_thpid,
-						       var_thlkg->var_stopval - var_thlkg->var_stop_static_adj,
+						       var_thlkg->var_stopval /* - var_thlkg->var_stop_static_adj */,
 						       thgsens_get_value(var_thlkg->var_stsensor),
 						       var_thlkg->var_fansignal[1],
 						       &var_thlkg->var_fanout,
