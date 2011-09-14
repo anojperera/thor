@@ -15,9 +15,8 @@
 #else
 #include <NIDAQmxBase.h>
 #endif
+#include "thgsens.h"
 
-#include <pthread.h>
-#include "thornifix.h"
 
 typedef struct _thactr thactr;
 
@@ -26,12 +25,24 @@ struct _thactr
     TaskHandle var_outask;		/* Out task */
     TaskHandle var_intask;		/* In task */
 
+    thgsens* var_tmp_sensor;		/* Temperature Sensor */
+    
     unsigned int var_cyc_cnt;		/* Cycle count */
-    double var_idle_time;		/* Idle time */
+    unsigned int var_idle_time;			/* Idle time */
+    double var_sw_volt;			/* switching voltage */
     unsigned int var_relay_ix;		/* relay index */
 
-    gthor_fptr var_update_fnc;		/* Update function */
+    unsigned var_opcl_flg;		/* Open close flag */
+
+    gthor_fptr var_cyc_fnc;		/* Update function */
+    gthsen_fptr var_tmp_fnc;		/* Temperature update */
     void* sobj_ptr;			/* object to pass to callback function */
+
+    FILE** var_fp;			/* File pointer */
+
+    unsigned int var_stflg;		/* stop flag */
+    int var_thrid;			/* thread ID */
+
 };
 
 #ifdef __cplusplus
@@ -39,11 +50,12 @@ extern "C" {
 #endif
 
     extern int thactr_initialise(gthor_fptr update_cycle,	/* Function pointer to update cycle */
+				 gthsen_fptr update_temp,	/* Function pointer to update temperature */
 				 FILE* fp,			/* FILE pointer */
 				 thactr** obj,			/* pointer to internal object */
 				 void* sobj);			/* object to pass to callback */
 
-    extern void thactr_delete();
+    extern void thactr_delete(thactr** obj);
 
     /* Start function - starts test in another thread.
      * and continues recording until stop function is called.
