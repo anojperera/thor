@@ -335,6 +335,9 @@ void thactr_delete(thactr** obj)
     if(obj)
 	*obj = NULL;
 
+    if(var_thactr == NULL)
+	return;
+
     /* Delete temperature sensor */
     thgsens_delete(&var_thactr->var_tmp_sensor);
 
@@ -395,6 +398,19 @@ int thactr_stop(thactr* obj)
     printf("%s\n","test_stopped..");
 
     pthread_attr_destroy(&attr);
+    return 0;
+}
+
+/* Reset values */
+inline int thactr_reset_all(thactr* obj)
+{
+    var_thactr->var_cyc_cnt = 0;
+    var_thactr->var_relay_ix = 0;
+    var_thactr->var_opcl_flg = 0;
+
+    var_thactr->var_stflg = 0;
+
+    thgsens_reset_all(var_thactr->var_tmp_sensor);
     return 0;
 }
 
