@@ -20,13 +20,17 @@ static thactr* var_thactr = NULL;		/* object pointer */
 #define THACTR_OPEN_CHANNEL "Dev1/ai1"
 #define THACTR_CLOSE_CHANNEL "Dev1/ai2"
 
+#define THACTR_OPEN_IX 1
+#define THACTR_CLOSE_IX 2
+
 /* Default wait time */
 #define THACTR_DEF_IDLE_TIME 3000
 
 /* Actuator switching voltage */
-#define THACTR_SWITCH_VOLT_CHANGE 9.7
+#define THACTR_SWITCH_VOLT_CHANGE 9.6
 
-#define THACTR_START_RELAY1_VOLTAGE 0.93
+#define THACTR_START_RELAY1_VOLTAGE 0.0
+#define THACTR_STOP_RELAY1_VOLTAGE 0.93
 
 /* Number of channels */
 #define THACTR_NUM_CHANNELS 3
@@ -73,10 +77,12 @@ static inline void thactr_set_values()
     var_thactr->var_tmp_sensor->var_raw =
 	(val_buff[0]>0? val_buff[0] : 0.0);
     
-    if(val_buff[1] >= var_thactr->var_sw_volt)
+    if(val_buff[THACTR_OPEN_IX] >= var_thactr->var_sw_volt)
 	var_thactr->var_opcl_flg = 1;
-    else if(val_buff[2] >= var_thactr->var_sw_volt)
+    else if(val_buff[THACTR_CLOSE_IX] >= var_thactr->var_sw_volt)
 	var_thactr->var_opcl_flg = 0;
+
+    printf("%i\t%f\t%f\n",gcounter,val_buff[THACTR_OPEN_IX], val_buff[THACTR_CLOSE_IX]);
 
     pthread_mutex_unlock(&mutex);
 }
@@ -123,6 +129,7 @@ static void* thactr_async_start(void* obj)
     printf("Cycle\tState\tTemp\n");
     
     out_buff[0] = THACTR_START_RELAY1_VOLTAGE;
+
     cyc_flg = 0;	/* set cycle flag */
     while(var_thactr->var_stflg)
 	{
@@ -132,7 +139,7 @@ static void* thactr_async_start(void* obj)
 					       0,		/* auto start */
 					       10.0,		/* time out */
 					       DAQmx_Val_GroupByScanNumber,
-					       val_buff,
+					       out_buff,
 					       &spl_write,
 					       NULL)))
 		break;
@@ -153,7 +160,7 @@ static void* thactr_async_start(void* obj)
 
 			    thactr_write_values();
 
-			    out_buff[0] = 0.0;
+			    out_buff[0] = THACTR_STOP_RELAY1_VOLTAGE;
 
 			    break;
 
@@ -187,13 +194,13 @@ static void* thactr_async_start(void* obj)
 	}
 
     /* Reset solenoid */
-    out_buff[0] = 0;
+    out_buff[0] = 0.0;
     if(ERR_CHECK(NIWriteAnalogArrayF64(var_thactr->var_outask,
 				       1,		/* samples per channel */
 				       0,		/* auto start */
 				       10.0,		/* time out */
 				       DAQmx_Val_GroupByScanNumber,
-				       val_buff,
+				       out_buff,
 				       &spl_write,
 				       NULL)));
 
