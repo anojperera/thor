@@ -29,8 +29,8 @@ static thactr* var_thactr = NULL;		/* object pointer */
 /* Actuator switching voltage */
 #define THACTR_SWITCH_VOLT_CHANGE 9.6
 
-#define THACTR_START_RELAY1_VOLTAGE 0.0
-#define THACTR_STOP_RELAY1_VOLTAGE 0.93
+#define THACTR_START_RELAY1_VOLTAGE 0.93
+#define THACTR_STOP_RELAY1_VOLTAGE 0.0
 
 /* Number of channels */
 #define THACTR_NUM_CHANNELS 3
@@ -156,7 +156,7 @@ static void* thactr_async_start(void* obj)
 			{
 			    cyc_flg = 1;
 			    if(var_thactr->var_cyc_fnc)
-				var_thactr->var_cyc_fnc(var_thactr->sobj_ptr, (void*) var_thactr->var_opcl_flg);
+				var_thactr->var_cyc_fnc(var_thactr->sobj_ptr, (void*) &var_thactr->var_cyc_cnt);
 
 			    thactr_write_values();
 
@@ -170,7 +170,7 @@ static void* thactr_async_start(void* obj)
 			    /* increment counter */
 			    var_thactr->var_cyc_cnt++;
 			    if(var_thactr->var_cyc_fnc)
-				var_thactr->var_cyc_fnc(var_thactr->sobj_ptr, (void*) var_thactr->var_opcl_flg);
+				var_thactr->var_cyc_fnc(var_thactr->sobj_ptr, (void*) &var_thactr->var_cyc_cnt);
 
 			    thactr_write_values();
 
