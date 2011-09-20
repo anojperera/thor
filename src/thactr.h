@@ -51,7 +51,7 @@ extern "C" {
 
     extern int thactr_initialise(gthor_fptr update_cycle,	/* Function pointer to update cycle */
 				 gthsen_fptr update_temp,	/* Function pointer to update temperature */
-				 FILE* fp,			/* FILE pointer */
+				 FILE** fp,			/* FILE pointer */
 				 thactr** obj,			/* pointer to internal object */
 				 void* sobj);			/* object to pass to callback */
 

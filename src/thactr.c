@@ -117,7 +117,7 @@ static void* thactr_async_start(void* obj)
 	return NULL;
 
     /* Output to screen */
-    if(*var_thactr->var_fp)
+    if(var_thactr->var_fp)
 	fprintf(*var_thactr->var_fp, "Cycle,State,Temp\n");
 
     printf("Cycle\tState\tTemp\n");
@@ -211,7 +211,7 @@ static void* thactr_async_start(void* obj)
 /* Constructor */
 int thactr_initialise(gthor_fptr update_cycle,	/* Function pointer to update cycle */
 		      gthsen_fptr update_temp,	/* Function pointer to update temperature */
-		      FILE* fp,			/* FILE pointer */
+		      FILE** fp,		/* FILE pointer */
 		      thactr** obj,		/* pointer to internal object */
 		      void* sobj)		/* object to pass to callback */
 {
@@ -270,7 +270,6 @@ int thactr_initialise(gthor_fptr update_cycle,	/* Function pointer to update cyc
 	}
 
     /* Close switch channel */
-    /* Close switch channel */
     if(ERR_CHECK(NICreateAIVoltageChan(var_thactr->var_intask,
 				       THACTR_CLOSE_CHANNEL,
 				       "",
@@ -293,10 +292,22 @@ int thactr_initialise(gthor_fptr update_cycle,	/* Function pointer to update cyc
 
     var_thactr->var_cyc_fnc = update_cycle;
     var_thactr->var_tmp_fnc = update_temp;
-
+    var_thactr->var_fp = fp;
     var_thactr->sobj_ptr = sobj;
 
     var_thactr->var_stflg = 0;			/* stop flag */
+
+    /* Configure timing */
+    if(ERR_CHECK(NICfgSampClkTiming(var_thactr->var_intask,
+				    "OnboardClock",
+				    THACTR_NUM_CHANNELS,
+				    DAQmx_Val_Rising,
+				    DAQmx_Val_ContSamps,
+				    1)))
+    	{
+    	    thactr_clear_tasks();
+    	    return 1;
+    	}    
 
     /* Register callbacks */
 #if defined(WIN32) || defined(_WIN32)    
@@ -319,7 +330,10 @@ int thactr_initialise(gthor_fptr update_cycle,	/* Function pointer to update cyc
     	    thactr_clear_tasks();
     	    return 1;
     	}
-#endif    
+#endif
+
+    if(obj)
+	*obj = var_thactr;
 
     /* initialis mutex */
     pthread_mutex_init(&mutex, NULL);
