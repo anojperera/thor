@@ -29,7 +29,7 @@ static thactr* var_thactr = NULL;		/* object pointer */
 /* Actuator switching voltage */
 #define THACTR_SWITCH_VOLT_CHANGE 9.6
 
-#define THACTR_START_RELAY1_VOLTAGE 0.93
+#define THACTR_START_RELAY1_VOLTAGE 4.0
 #define THACTR_STOP_RELAY1_VOLTAGE 0.0
 
 /* Number of channels */
