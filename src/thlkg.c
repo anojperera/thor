@@ -523,7 +523,22 @@ int thlkg_initialise(thlkg_stopctrl ctrl_st,		/* start control */
 	    thlkg_clear_tasks();
 	    return 0;
 	}
+    
+    /* create temperature sensor */
+    if(!thgsens_new(&var_thlkg->var_tmpsensor,
+		    THLKG_TMP_CHANNEL,
+		    &var_thlkg->var_intask,
+		    NULL,
+		    NULL))
+	{
+	    fprintf(stderr, "%s\n", "unable to create temperature sensor");
+	    thlkg_clear_tasks();
 
+	    thgsens_delete(&var_thlkg->var_dpsensor);
+	    thgsens_delete(&var_thlkg->var_stsensor);
+
+	    return 0;
+	}
     /* create differential pressure switch */
     if(!thgsens_new(&var_thlkg->var_dpsensor,
 		    THLKG_DP_CHANNEL,
@@ -548,22 +563,6 @@ int thlkg_initialise(thlkg_stopctrl ctrl_st,		/* start control */
 	    thlkg_clear_tasks();
 
 	    thgsens_delete(&var_thlkg->var_dpsensor);
-	    return 0;
-	}
-
-    /* create temperature sensor */
-    if(!thgsens_new(&var_thlkg->var_tmpsensor,
-		    THLKG_TMP_CHANNEL,
-		    &var_thlkg->var_intask,
-		    NULL,
-		    NULL))
-	{
-	    fprintf(stderr, "%s\n", "unable to create temperature sensor");
-	    thlkg_clear_tasks();
-
-	    thgsens_delete(&var_thlkg->var_dpsensor);
-	    thgsens_delete(&var_thlkg->var_stsensor);
-
 	    return 0;
 	}
 
