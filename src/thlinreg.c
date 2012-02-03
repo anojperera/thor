@@ -196,7 +196,6 @@ int thlinreg_calc_equation(theq* eq_obj, double* m, double* c, double* r)
 	    dev1 = ((double) count * sum_x2 - sum_x * sum_x);
 	    eq_obj->var_m = ((double) count * sum_xy - sum_x * sum_y) /
 		(dev1!=0.0? dev1 : 1);
-
 	    eq_obj->var_c = (sum_y * sum_x2 - sum_x * sum_xy) /
 		(dev1!=0.0? dev1 : 1);
 

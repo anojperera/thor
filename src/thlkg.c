@@ -102,6 +102,7 @@ static inline void thlkg_add_xy_to_list()
 
     var_thxy->y = val_buff[3];		/* Fan Speed
 					 * feedback */
+    
     if(var_thlkg->var_stoptype == thlkg_lkg)
 	var_thxy->x = var_thlkg->var_leakage;
     else
