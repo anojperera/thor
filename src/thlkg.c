@@ -6,11 +6,11 @@
 #if defined(WIN32) || defined(_WIN32)
 #include <windows.h>
 #else
+#include <pthread.h>
+#include <semaphore.h>
 #include <unistd.h>
 #endif
 
-#include <pthread.h>
-#include <semaphore.h>
 #include <math.h>
 #include "thlinreg.h"
 #include "thpid.h"
@@ -42,10 +42,17 @@ static unsigned int pcounter = 0;		/* counter for PID */
 /* buffer to hold input values */
 static float64 val_buff[THLKG_NUM_CHANNELS];
 
+#if defined(WIN32) || defined(_WIN32)
 /* create thread attribute object */
 static pthread_attr_t attr;
 static pthread_t thread;
 static pthread_mutex_t mutex;
+/* semaphore to control calibration */
+static sem_t var_sem;
+#else
+static HANDLE thread;
+static HANDLE mutex;
+#endif
 
 static int start_test = 0;
 
@@ -53,9 +60,6 @@ static int start_test = 0;
 static struct thxy* var_thxy = NULL;
 static theq* var_theq = NULL;
 static struct thpid var_thpid;
-
-/* semaphore to control calibration */
-static sem_t var_sem;
 
 /* private functions */
 /* Function declarations for continuous reading */
@@ -160,8 +164,14 @@ int thlkg_reset_sensors(thlkg* obj)
 static inline void thlkg_set_values()
 {
     /* Lock mutex */
+#if defined (WIN32) || defined (_WIN32)
+    DWORD mutex_state;
+    mutex_state = WaitForSingleObject(mutex, INFINITE);
+    if(mutex_state != WAIT_OBJECT_0)
+	return;
+#else
     pthread_mutex_lock(&mutex);
-    
+#endif
     /* set value of dp */
     thgsens_add_value(var_thlkg->var_tmpsensor,
 		      (val_buff[0]>0? val_buff[0] : 0.0));
@@ -220,7 +230,11 @@ static inline void thlkg_set_values()
 	}
 
     /* unlock mutex */
+#if defined (WIN32) || defined (_WIN32)
+    ReleaseMutex(mutex);
+#else
     pthread_mutex_unlock(&mutex);
+#endif
     
     /* call function pointer to update external ui if assigned */
     if(var_thlkg->var_lkgupdate)
@@ -259,7 +273,11 @@ static inline void thlkg_write_results()
 }
 
 /* thread function to initiate start of the test */
+#if defined (WIN32) || defined (_WIN32)
+DWORD WINAPI thlkg_async_start(LPVOID obj)
+#else    
 static void* thlkg_async_start(void* obj)
+#endif    
 {
     counter = 0;			/* reset counter */
     gcounter = 0;			/* reset counter */
@@ -649,11 +667,20 @@ int thlkg_initialise(thlkg_stopctrl ctrl_st,		/* start control */
 #endif
     
 
+
+#if defined (WIN32) || defined (_WIN32)
+    /* initialise mutex */
+    mutex = CreateMutex(NULL,			/* default security */
+			FALSE,			/* initially not owned */
+			NULL);			/* no name */
+    
+#else
     /* initialise mutex */
     pthread_mutex_init(&mutex, NULL);
 
     /* initialise semaphore */
     sem_init(&var_sem, 0, 0);
+#endif
     
     return 1;
 }
@@ -683,11 +710,16 @@ extern void thlkg_delete()
     /* clear tasks */
     thlkg_clear_tasks();
 
+#if defined (WIN32) || defined (_WIN32)
+    CloseHandle(mutex);
+#else
+    /* Destroy mutex */
     pthread_mutex_destroy(&mutex);
-
+    
     /* Destroy semaphore */
     sem_destroy(&var_sem);
-
+#endif
+    
     printf("%s\n","delete thor..");
 
     thlinreg_delete(&var_theq);
@@ -730,10 +762,19 @@ int thlkg_start(thlkg* obj)
     var_thlkg->var_idlflg = 0;		/* idle flag to off */
 
     /* initialise attribute */
+#if defined (WIN32) || defined (_WIN32)
+    thread = CreateThread(NULL,			/* default security attribute */
+    		     0,				/* use default stack size */
+    		     thlkg_async_start,		/* thread function */
+    		     NULL,			/* argument to thread function */
+    		     0,				/* default creation flag */
+    		     &var_thlkg->var_thrid);	/* thread id */
+#endif    
     pthread_attr_init(&attr);
     pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
     var_thlkg->var_thrid =
 	pthread_create(&thread, &attr, thlkg_async_start, NULL);
+#endif
 
     return 1;
     
@@ -745,25 +786,40 @@ int thlkg_stop(thlkg* obj)
 {
     /* set stop flag and join thread */
     sem_post(&var_sem);
+    
     /* lock mutex */
+#if defined (WIN32) || defined (_WIN32)
+    WaitForSingleObject(mutex, INFINITE);
+#else
     pthread_mutex_lock(&mutex);
+#endif
+    
     var_thlkg->var_stflg = 0;
     if(var_thlkg->var_disb_fptr)
 	var_thlkg->var_disb_fptr(var_thlkg->sobj_ptr, 1);
+#if defined (WIN32) || defined (_WIN32)
+    ReleaseMutex(mutex);
+#else    
     pthread_mutex_unlock(&mutex);
+#endif
 
     /* wait until thread finishes if test in progress */
+#if defined (WIN32) || defined (_WIN32)
+    if(start_test)
+	CloseHandle(thread);
+#elseif
     if(start_test)
 	pthread_join(thread, NULL);
-
+#endif
     /* function stop notify */
     printf("%s\n","test stopped");    
 
     /* stopped complete */
     printf("%s\n","complete..");
 
+#if !defined (WIN32) || !defined (_WIN32)
     pthread_attr_destroy(&attr);
-    
+#endif    
     return 1;
 }
 
@@ -776,7 +832,11 @@ int thlkg_set_fanctrl_volt(double percen)
     unsigned int i = 0;
     /* lock mutex */
     printf("\n%s\n", "setting voltage");
+#if defined (WIN32) || defined (_WIN32)
+    WaitForSingleObject(mutex, INFINITE);
+#else
     pthread_mutex_lock(&mutex);
+#endif
 
     if(var_thlkg->var_pidflg > 0)
 	{
@@ -801,7 +861,11 @@ int thlkg_set_fanctrl_volt(double percen)
 	    
 	    if(!var_thlkg->var_fanout)
 		{
-		    pthread_mutex_unlock(&mutex);
+#if defined (WIN32) || defined (_WIN32)
+		    WaitForSingleObject(mutex, INFINITE);
+#else
+		    pthread_mutex_lock(&mutex);
+#endif
 		    return 0;
 		}
 
@@ -820,8 +884,12 @@ int thlkg_set_fanctrl_volt(double percen)
 	}
     else
 	var_thlkg->var_fansignal[1] = 9.95 * percen / 100;
-    
-    pthread_mutex_unlock(&mutex);    
+
+#if defined (WIN32) || defined (_WIN32)
+    ReleaseMutex(mutex);
+#else
+    pthread_mutex_unlock(&mutex);
+#endif
     /* if(var_thlkg->var_disb_fptr) */
     /* 	var_thlkg->var_disb_fptr(var_thlkg->sobj_ptr, 0); */
     return 1;

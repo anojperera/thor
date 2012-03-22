@@ -14,7 +14,6 @@
 #else
 #include <NIDAQmxBase.h>
 #endif
-#include <pthread.h>
 
 #include "thgsens.h"
 #include "thbuff.h"
@@ -58,8 +57,11 @@ struct _thlkg
     double* var_fanout;			/* array of fan control signals */
     double var_leakage;			/* leakage per damper */
     double var_fansignal[2];		/* fan signal array controls fan and relay */
+#if defined (WIN32) || defined (_WIN32)
+    DWORD var_thrid;			/* thread id */    
+#ese
     int var_thrid;			/* thread id */
-
+#endif
     unsigned int var_stflg;		/* start flag */
     unsigned int var_idlflg;		/* idle flag */
     void* sobj_ptr;			/* object to pass to callback functions */
