@@ -52,6 +52,7 @@ static sem_t var_sem;
 #else
 static HANDLE thread;
 static HANDLE mutex;
+static HANDLE var_sem;
 #endif
 
 static int start_test = 0;
@@ -226,7 +227,11 @@ static inline void thlkg_set_values()
 		{
 		    var_thlkg->var_calflg = 1;
 		    thlkg_linreg();
+#if defined(WIN32) || defined(_WIN32)
+		    ReleaseSemaphore(var_sem, 1, NULL);
+#else
 		    sem_post(&var_sem);
+#endif
 		}
 	}
 
@@ -406,7 +411,11 @@ static void* thlkg_async_start(void* obj)
 			    if(var_thlkg->var_idlflg == 0)
 				{
 				    var_thlkg->var_idlflg = 1;
+#if defined(WIN32) || defined(_WIN32)
+				    WaitForSingleObject(var_sem, INFINITE);
+#else
 				    sem_wait(&var_sem);
+#endif
 				}
 			    var_thlkg->var_idlflg = 1;
 			}
@@ -418,7 +427,11 @@ static void* thlkg_async_start(void* obj)
 			    if(var_thlkg->var_idlflg == 0)
 				{
 				    var_thlkg->var_idlflg = 1;
+#if defined(WIN32) || defined(_WIN32)
+				    WaitForSingleObject(var_sem, INFINITE);
+#else
 				    sem_wait(&var_sem);
+#endif
 				}
 			    var_thlkg->var_idlflg = 1;
 			}
@@ -670,9 +683,13 @@ int thlkg_initialise(thlkg_stopctrl ctrl_st,		/* start control */
 
 #if defined (WIN32) || defined (_WIN32)
     /* initialise mutex */
-    mutex = CreateMutex(NULL,			/* default security */
-			FALSE,			/* initially not owned */
-			NULL);			/* no name */
+    mutex = CreateMutex(NULL,				/* default security */
+			FALSE,				/* initially not owned */
+			NULL);				/* no name */
+
+    var_sem = CreateSemaphore(NULL,			/* default security */
+			      0,			/* initial sem count */
+			      10);			/* maximum sem count */
     
 #else
     /* initialise mutex */
@@ -711,7 +728,8 @@ extern void thlkg_delete()
     thlkg_clear_tasks();
 
 #if defined (WIN32) || defined (_WIN32)
-    CloseHandle(mutex);
+    CloseHandle(mutex);				/* destroy mutex */
+    CloseHandle(var_sem);			/* destroy semaphore */
 #else
     /* Destroy mutex */
     pthread_mutex_destroy(&mutex);
@@ -785,12 +803,14 @@ int thlkg_start(thlkg* obj)
 int thlkg_stop(thlkg* obj)
 {
     /* set stop flag and join thread */
-    sem_post(&var_sem);
+
     
     /* lock mutex */
 #if defined (WIN32) || defined (_WIN32)
+    ReleaseSemaphore(var_sem, 1, NULL);
     WaitForSingleObject(mutex, INFINITE);
 #else
+    sem_post(&var_sem);
     pthread_mutex_lock(&mutex);
 #endif
     
@@ -806,7 +826,10 @@ int thlkg_stop(thlkg* obj)
     /* wait until thread finishes if test in progress */
 #if defined (WIN32) || defined (_WIN32)
     if(start_test)
-	CloseHandle(thread);
+	{
+	    WaitForSingleObject(thread, INFINITE);
+	    CloseHandle(thread);
+	}
 #elseif
     if(start_test)
 	pthread_join(thread, NULL);
