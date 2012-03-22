@@ -83,7 +83,8 @@ inline int thpid_pid_control(struct thpid* obj,		/* object */
 
     obj->var_err = set - x_out;				/* error */
     
-    printf("PID Error%f\n", obj->var_err);
+    printf("PID Error %f\n", obj->var_err);
+    printf("Gradient %f\n", obj->var_m);
     /* calculate output */
     switch(obj->var_eqtype)
 	{

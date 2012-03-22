@@ -70,7 +70,7 @@ static inline int thgsens_init(thgsens* obj)
 			      THGSENS_MIN_VOLT,	/* minimum voltage */
 			      THGSENS_MAX_VOLT,	/* maximum voltage */
 			      DAQmx_Val_Volts,	/* measurement in volts */
-			      NULL);			/* custom scaling */
+			      NULL);		/* custom scaling */
 
     /* check for errors */
     if(err_code)
