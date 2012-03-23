@@ -269,9 +269,17 @@ void* thahup_async_start(void* obj)
 
     /* start both acquiring and writing tasks */
     if(ERR_CHECK(NIStartTask(var_thahup->var_outask)))
+#if defined (WIN32) || defined (_WIN32)
+	return FALSE;
+#else
 	return NULL;
+#endif
     if(ERR_CHECK(NIStartTask(var_thahup->var_intask)))
+#if defined (WIN32) || defined (_WIN32)
+	return FALSE;
+#else
 	return NULL;
+#endif
 
     float64 var_act_st_val = 0.0;	/* actuator stop val */
 
@@ -363,7 +371,11 @@ void* thahup_async_start(void* obj)
 
     /* indicate test stopped */
     start_test = 0;
+#if defined (WIN32) || defined (_WIN32)
+    return TRUE;
+#else
     return NULL;
+#endif
 }
 
 /*************************************************************/
@@ -580,7 +592,8 @@ int thahup_initialise(thahup_stopctrl ctrl_st,		/* start control */
 
     var_sem = CreateSemaphore(NULL,			/* default security */
 			      0,			/* initial sem count */
-			      10);			/* maximum sem count */
+			      10,			/* maximum sem count */
+			      NULL);
 #else    
     pthread_mutex_init(&mutex, NULL);
 

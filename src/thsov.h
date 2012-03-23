@@ -7,6 +7,7 @@
 #include <stdio.h>
 #if defined (WIN32) || defined (_WIN32)
 #include <NIDAQmx.h>
+#include <windows.h>
 #else
 #include <NIDAQmxBase.h>
 #endif
@@ -69,7 +70,11 @@ struct _thsov
     double var_min_feedbak_vlt;		/* minimum feedback voltage */
     unsigned int var_cont_flg;		/* continue full cycle */
     unsigned int var_raw_chnl_flg;	/* raw channel output flag */
+#if defined (WIN32) || defined (_WIN32)
+    DWORD var_thrid;
+#else
     int var_thrid;
+#endif
 };
 
 /* C functions */

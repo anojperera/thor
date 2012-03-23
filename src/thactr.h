@@ -42,7 +42,11 @@ struct _thactr
     FILE** var_fp;			/* File pointer */
 
     unsigned int var_stflg;		/* stop flag */
+#if defined (WIN32) || defined (_WIN32)
+    DWORD var_thrid;
+#else
     int var_thrid;			/* thread ID */
+#endif
 
 };
 

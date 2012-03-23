@@ -5,12 +5,11 @@
 #include "thornifix.h"		/* Header file for portability
 				 * between linux and win32 */
 
-#if defined(WIN32) || defined(_WIN32)
-#include <windows.h>
-#else
+#if !defined(WIN32) || !defined(_WIN32)
 #include <unistd.h>
-#endif
 #include <pthread.h>
+#endif
+
 #include <math.h>
 
 /* Test object declared static */
@@ -81,9 +80,14 @@ static unsigned int counter = 0;		/* counter */
 static unsigned int gcounter = 0;
 
 /* create thread attribute object */
+#if defined (WIN32) || defined (_WIN32)
+static HANDLE thread;
+static HANDLE mutex;
+#else
 static pthread_attr_t attr;
 static pthread_t thread;
 static pthread_mutex_t mutex;
+#endif
 
 static int start_test = 0;
 
@@ -256,7 +260,14 @@ static int thsov_create_supply_volt_array()
 static inline void thsov_set_values()
 {
     /* Lock mutex */
+#if defined (WIN32) || defined (_WIN32)
+    DWORD mutex_state;
+    mutex_state = WaitForSingleObject(mutex, INFINITE);
+    if(mutex_state != WAIT_OBJECT_0)
+	return;
+#else
     pthread_mutex_lock(&mutex);
+#endif
     
     var_thsov->var_tmp_sensor->var_raw =
 	(val_buff[0]>0? val_buff[0] : 0.0);
@@ -305,7 +316,11 @@ static inline void thsov_set_values()
 	thsov_write_raw_values();
 
     /* unlock mutex */
+#if defined (WIN32) || defined (_WIN32)
+    ReleaseMutex(mutex);
+#else
     pthread_mutex_unlock(&mutex);
+#endif
 
 }
 
@@ -368,7 +383,11 @@ inline int thsov_write_values()
 }
 
 /* Thread function to initiate start of the test */
+#if defined (WIN32) || defined (_WIN32)
+DWORD WINAPI thsov_async_start(LPVOID obj)
+#else
 static void* thsov_async_start(void* obj)
+#endif
 {
     gcounter = 0;		/* reset counter */
     counter = 0;		/* reset counter */
@@ -387,9 +406,17 @@ static void* thsov_async_start(void* obj)
 
     /* start both accuiring and writing tasks */
     if(ERR_CHECK(NIStartTask(var_thsov->var_outask)))
+#if defined (WIN32) || defined (_WIN32)
+	return FALSE;
+#else
 	return NULL;
+#endif
     if(ERR_CHECK(NIStartTask(var_thsov->var_intask)))
-	return NULL;
+#if defined (WIN32) || defined (_WIN32)
+	return FALSE;
+#else
+    	return NULL;
+#endif
 
     /* Output to screen */
     printf("Cycle\tState\tAngle\tVoltage\tTemp\n");
@@ -558,7 +585,11 @@ static void* thsov_async_start(void* obj)
 
     /* indicate test stopped */
     start_test = 0;
+#if defined (WIN32) || defined (_WIN32)
+    return TRUE;
+#else
     return NULL;    
+#endif
 }
 
  /* Constructor */
@@ -733,10 +764,16 @@ int thsov_initialise(gthsen_fptr tmp_update,		/* update temperature */
     	    thsov_clear_tasks();
     	    return 1;
     	}
-#endif
-    
+
+    /* initialise mutex */
+    mutex = CreateMutex(NULL,				/* default security */
+			FALSE,				/* initially not owned */
+			NULL);				/* no name */
+#else
     /* Initialis mutex */
     pthread_mutex_init(&mutex, NULL);
+#endif
+    
     printf("%s\n","Initialisation complete");
     
     return 0;
@@ -780,7 +817,11 @@ void thsov_delete(thsov** obj)
     thsov_clear_tasks();
 
     /* Destroy mutex */
+#if defined (WIN32) || defined (_WIN32)
+    CloseHandle(mutex);				/* destroy mutex */
+#else
     pthread_mutex_destroy(&mutex);
+#endif
 
     printf("%s\n","delete thor..");
 
@@ -830,11 +871,20 @@ int thsov_start(thsov* obj)
     var_thsov->var_stflg = 1;
 
     /* initialise thread attributes */
+#if defined (WIN32) || defined (_WIN32)
+    thread = CreateThread(NULL,			/* default security attribute */
+    		     0,				/* use default stack size */
+    		     thsov_async_start,		/* thread function */
+    		     NULL,			/* argument to thread function */
+    		     0,				/* default creation flag */
+    		     &var_thsov->var_thrid);	/* thread id */
+#else
     pthread_attr_init(&attr);
     pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
 
     var_thsov->var_thrid =
 	pthread_create(&thread, &attr, thsov_async_start, NULL);
+#endif
 
     return 0;
     
@@ -843,22 +893,37 @@ int thsov_start(thsov* obj)
 /* Stop test */
 int thsov_stop(thsov* obj)
 {
+#if defined (WIN32) || defined (_WIN32)
+    WaitForSingleObject(mutex, INFINITE);
+#else
     pthread_mutex_lock(&mutex);
+#endif
     var_thsov->var_stflg = 0;
+#if defined (WIN32) || defined (_WIN32)
+        ReleaseMutex(mutex);
+#else
     pthread_mutex_unlock(&mutex);
+#endif
 
     printf("%s\n","waiting for NI Tasks to finish..");
+#if defined (WIN32) || defined (_WIN32)
+    if(start_test)
+	{
+	    WaitForSingleObject(thread, INFINITE);
+	    CloseHandle(thread);
+	}
+#else
     if(start_test)
 	pthread_join(thread, NULL);
+    pthread_attr_destroy(&attr);
+#endif
 
     start_test = 0;
 
     /* Test stopped */
     printf("%s\n","test stopped..");
 
-    pthread_attr_destroy(&attr);
     return 0;
-    
 }
 
 /*=======================================================*/

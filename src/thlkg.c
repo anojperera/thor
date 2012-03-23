@@ -42,15 +42,15 @@ static float64 val_buff[THLKG_NUM_CHANNELS];
 
 #if defined(WIN32) || defined(_WIN32)
 /* create thread attribute object */
+static HANDLE thread;
+static HANDLE mutex;
+static HANDLE var_sem;
+#else
 static pthread_attr_t attr;
 static pthread_t thread;
 static pthread_mutex_t mutex;
 /* semaphore to control calibration */
 static sem_t var_sem;
-#else
-static HANDLE thread;
-static HANDLE mutex;
-static HANDLE var_sem;
 #endif
 
 static int start_test = 0;
@@ -302,9 +302,17 @@ static void* thlkg_async_start(void* obj)
     
     /* start both acquiring and writing tasks */
     if(ERR_CHECK(NIStartTask(var_thlkg->var_outask)))
+#if defined (WIN32) || defined (_WIN32)
+	return FALSE;
+#else
 	return NULL;
+#endif
     if(ERR_CHECK(NIStartTask(var_thlkg->var_intask)))
+#if defined (WIN32) || defined (_WIN32)
+	return FALSE;
+#else
 	return NULL;
+#endif
 
     /* wait until static pressure reaches below default */
     while(1)
@@ -466,7 +474,11 @@ static void* thlkg_async_start(void* obj)
 
     /* indicate test stopped */
     start_test = 0;
+#if defined (WIN32) || defined (_WIN32)
+    return TRUE;
+#else
     return NULL;
+#endif
 }
 
 /**************************************************************************/
@@ -687,7 +699,8 @@ int thlkg_initialise(thlkg_stopctrl ctrl_st,		/* start control */
 
     var_sem = CreateSemaphore(NULL,			/* default security */
 			      0,			/* initial sem count */
-			      10);			/* maximum sem count */
+			      10,			/* maximum sem count */
+			      NULL);
     
 #else
     /* initialise mutex */
@@ -785,7 +798,7 @@ int thlkg_start(thlkg* obj)
     		     NULL,			/* argument to thread function */
     		     0,				/* default creation flag */
     		     &var_thlkg->var_thrid);	/* thread id */
-#endif    
+#else
     pthread_attr_init(&attr);
     pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
     var_thlkg->var_thrid =
@@ -825,10 +838,11 @@ int thlkg_stop(thlkg* obj)
 #if defined (WIN32) || defined (_WIN32)
     if(start_test)
 	{
-	    WaitForSingleObject(thread, INFINITE);
+	    printf("%s\n", "Waiting for clear..");
+	    WaitForSingleObject(thread, 5000);
 	    CloseHandle(thread);
 	}
-#elseif
+#else
     if(start_test)
 	pthread_join(thread, NULL);
 #endif
@@ -847,10 +861,10 @@ int thlkg_stop(thlkg* obj)
 /* set fan control */
 int thlkg_set_fanctrl_volt(double percen)
 {
+    unsigned int i = 0;
     if(percen < 0 || percen > 100 || !var_thlkg)
 	return 0;
 
-    unsigned int i = 0;
     /* lock mutex */
     printf("\n%s\n", "setting voltage");
 #if defined (WIN32) || defined (_WIN32)
@@ -861,7 +875,11 @@ int thlkg_set_fanctrl_volt(double percen)
 
     if(var_thlkg->var_pidflg > 0)
 	{
+#if defined (WIN32) || defined (_WIN32)
+	    ReleaseMutex(mutex);
+#else
 	    pthread_mutex_unlock(&mutex);
+#endif
 	    return 0;
 	}
 
@@ -900,7 +918,7 @@ int thlkg_set_fanctrl_volt(double percen)
 		}
 	    counter = 0;
 	    var_thlkg->var_pidflg = 1;
-	    if(var_thlkg->var_disb_fptr)
+	    if(var_thlkg->var_disb_fptr && start_test)
 		var_thlkg->var_disb_fptr(var_thlkg->sobj_ptr, 0);
 	}
     else

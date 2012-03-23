@@ -60,7 +60,7 @@ struct _thlkg
     double var_fansignal[2];		/* fan signal array controls fan and relay */
 #if defined (WIN32) || defined (_WIN32)
     DWORD var_thrid;			/* thread id */    
-#ese
+#else
     int var_thrid;			/* thread id */
 #endif
     unsigned int var_stflg;		/* start flag */

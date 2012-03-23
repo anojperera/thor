@@ -135,9 +135,17 @@ static void* thactr_async_start(void* obj)
 
     /* start both accuiring and writing tasks */
     if(ERR_CHECK(NIStartTask(var_thactr->var_outask)))
+#if defined (WIN32) || defined (_WIN32)
+	return FALSE;
+#else
 	return NULL;
+#endif
     if(ERR_CHECK(NIStartTask(var_thactr->var_intask)))
+#if defined (WIN32) || defined (_WIN32)
+	return FALSE;
+#else
 	return NULL;
+#endif
 
     /* Output to screen */
     if(var_thactr->var_fp)
@@ -229,7 +237,11 @@ static void* thactr_async_start(void* obj)
     printf("%s\n","Test End");
 
     start_test = 0;
+#if defined (WIN32) || defined (_WIN32)
+    return TRUE;
+#else
     return NULL;
+#endif
 }
 
 /* Constructor */
