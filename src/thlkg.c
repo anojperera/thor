@@ -3,9 +3,7 @@
 
 #include "thlkg.h"
 #include "thornifix.h"
-#if defined(WIN32) || defined(_WIN32)
-#include <windows.h>
-#else
+#if !defined(WIN32) || !defined(_WIN32)
 #include <pthread.h>
 #include <semaphore.h>
 #include <unistd.h>

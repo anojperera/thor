@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <math.h>
 #if defined (WIN32) || defined (_WIN32)
+#include <windows.h>
 #include <NIDAQmx.h>
 #else
 #include <NIDAQmxBase.h>
