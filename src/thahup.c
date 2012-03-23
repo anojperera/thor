@@ -1,15 +1,13 @@
 /* Implementation of ahu test object */
 
 #include "thahup.h"
-#if defined(WIN32) || defined(_WIN32)
-#include <windows.h>
-#else
+#if !defined(WIN32) || !defined(_WIN32)
 #include <unistd.h>
-#endif
-
 #include <pthread.h>
-#include <math.h>
 #include <semaphore.h>
+#endif
+#include <math.h>
+
 #include "thlinreg.h"
 #include "thpid.h"
 /* object */
@@ -49,15 +47,22 @@ static unsigned int gcounter = 0;
 static float64 val_buff[THAHUP_NUM_INPUT_CHANNELS];
 
 /* thread and thread attributes objects */
+#if defined (WIN32) || defined (_WIN32)
+static HANDLE thread;
+static HANDLE mutex;
+static HANDLE var_sem;
+#else
 static pthread_attr_t attr;
 static pthread_t thread;
 static pthread_mutex_t mutex;
+/* semaphore to control calibration */
+static sem_t var_sem;
+#endif
 
 /* start test flag */
 static int start_test = 0;
 
-/* semaphore to control calibration */
-static sem_t var_sem;
+
 
 static struct thxy* var_thxy = NULL;
 static theq* var_theq = NULL;
@@ -133,7 +138,14 @@ static inline void thahup_actout_signals()
 /* function for assigning values to sensors */
 static inline void thahup_set_values()
 {
+#if defined (WIN32) || defined (_WIN32)
+    DWORD mutex_state;
+    mutex_state = WaitForSingleObject(mutex, INFINITE);
+    if(mutex_state != WAIT_OBJECT_0)
+	return;
+#else
     pthread_mutex_lock(&mutex);
+#endif
     /* set values temperature */
     var_thahup->var_tmpsensor->var_raw =
 	(val_buff[0]>0? val_buff[0] : 0.0);
@@ -198,11 +210,18 @@ static inline void thahup_set_values()
 	    if(var_thahup->var_act_fd_val > 9.9)
 		{
 		    var_thahup->var_calflg = 1;
+#if defined (WIN32) || defined (_WIN32)
+		    ReleaseSemaphore(var_sem, 1, NULL);
+#else
 		    sem_post(&var_sem);
+#endif
 		}
 	}
-
+#if defined (WIN32) || defined (_WIN32)
+    ReleaseMutex(mutex);
+#else    
     pthread_mutex_unlock(&mutex);
+#endif
 
 }
 
@@ -236,7 +255,11 @@ static inline void thahup_write_results()
 
 
 /* start test asynchronously */
+#if defined (WIN32) || defined (_WIN32)
+DWORD WINAPI thahup_async_start(LPVOID obj)
+#else
 void* thahup_async_start(void* obj)
+#endif    
 {
     counter = 0;		/* reset counter */
     gcounter = 0;		/* reset counter */
@@ -298,7 +321,11 @@ void* thahup_async_start(void* obj)
 	    /* wait for semaphore */
 	    if(var_thahup->var_calflg == 0)
 		{
+#if defined (WIN32) || defined (_WIN32)
+		    WaitForSingleObject(var_sem, INFINITE);
+#else		    
 		    sem_wait(&var_sem);
+#endif
 		    thahup_linreg();
 		}
 
@@ -546,11 +573,20 @@ int thahup_initialise(thahup_stopctrl ctrl_st,		/* start control */
         *obj = var_thahup;
 
     /* initialise mutex */
+#if defined (WIN32) || defined (_WIN32)
+    mutex = CreateMutex(NULL,				/* default security */
+			FALSE,				/* initially not owned */
+			NULL);				/* no name */
+
+    var_sem = CreateSemaphore(NULL,			/* default security */
+			      0,			/* initial sem count */
+			      10);			/* maximum sem count */
+#else    
     pthread_mutex_init(&mutex, NULL);
 
     /* initialise semaphore */
     sem_init(&var_sem, 0, 0);
-
+#endif
     return 0;
 }
 
@@ -590,9 +626,13 @@ void thahup_delete()
     
     thahup_clear_tasks();
 
+#if defined (WIN32) || defined (_WIN32)
+    CloseHandle(mutex);				/* destroy mutex */
+    CloseHandle(var_sem);			/* destroy semaphore */
+#else
     pthread_mutex_destroy(&mutex);
     sem_destroy(&var_sem);
-
+#endif
     printf("%s\n","delete thor..");
     free(var_thahup);
     
@@ -636,11 +676,20 @@ int thahup_start(thahup* obj)
     var_thahup->var_idlflg = 0;		/* idle flag to off */
 
     /* initialise thread attributes */
+#if defined (WIN32) || defined (_WIN32)
+    thread = CreateThread(NULL,			/* default security attribute */
+    		     0,				/* use default stack size */
+    		     thahup_async_start,	/* thread function */
+    		     NULL,			/* argument to thread function */
+    		     0,				/* default creation flag */
+    		     &var_thahup->var_thrid);	/* thread id */
+#else    
     pthread_attr_init(&attr);
     pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
 
     var_thahup->var_thrid =
 	pthread_create(&thread, &attr, thahup_async_start, NULL);
+#endif
 
     return 0;
 }
@@ -652,19 +701,41 @@ int thahup_stop(thahup* obj)
     /* set stop flag and join thread */
 
     /* lock mutex */
+#if defined (WIN32) || defined (_WIN32)
+    WaitForSingleObject(mutex, INFINITE);
+#else
     pthread_mutex_lock(&mutex);
+#endif
     var_thahup->var_stflg = 0;
     /* if process waiting on semaphore post to
      * exit */
     if(gcounter == 0 && var_thahup->var_calflg == 0)
-	sem_post(&var_sem);
+	{
+#if defined (WIN32) || defined (_WIN32)
+	    ReleaseSemaphore(var_sem, 1, NULL);
+#else
+	    sem_post(&var_sem);
+#endif
+	}
+#if defined (WIN32) || defined (_WIN32)
+    WaitForSingleObject(mutex, INFINITE);
+#else
     pthread_mutex_unlock(&mutex);
+#endif
 
     /* wait until thread finishes if test in progress */
+#if defined (WIN32) || defined (_WIN32)
+    if(start_test)
+	{
+	    WaitForSingleObject(thread, INFINITE);
+	    CloseHandle(thread);
+	}	
+#else
     if(start_test)
 	pthread_join(thread, NULL);
 
     pthread_attr_destroy(&attr);    
+#endif
 
     /* function stop notify */
     printf("%s\n","test stopped");
@@ -683,9 +754,17 @@ int thahup_set_actctrl_volt(double percen)
 
     /* lock mutex */
     printf("%s\n","setting voltage");
+#if defined (WIN32) || defined (_WIN32)
+    WaitForSingleObject(mutex, INFINITE);
+#else
     pthread_mutex_lock(&mutex);
+#endif
     var_thahup->var_actsignal = 9.95 * percen / 100;
+#if defined (WIN32) || defined (_WIN32)
+    ReleaseMutex(mutex);
+#else
     pthread_mutex_unlock(&mutex);
+#endif
 
     return 0;
 }

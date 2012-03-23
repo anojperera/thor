@@ -10,6 +10,7 @@
 
 #include <stdio.h>
 #if defined (WIN32) || defined (_WIN32)
+#include <windows.h>
 #include <NIDAQmx.h>
 #else
 #include <NIDAQmxBase.h>
@@ -59,8 +60,11 @@ struct _thahup
     double var_act_fd_minval;		/* minimum val */
     
     float64 var_smplerate;		/* sample rate */
-
+#if defined (WIN32) || defined (_WIN32)
+    DWORD var_thrid;
+#else
     int var_thrid;			/* thread id */
+#endif
     unsigned int var_stflg;		/* start flag */
     unsigned int var_idlflg;		/* idle flag */
     unsigned int var_calflg;		/* calibration flag */
