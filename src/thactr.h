@@ -12,6 +12,7 @@
 
 #if defined (WIN32) || defined (_WIN32)
 #include <NIDAQmx.h>
+#include <windows.h>
 #else
 #include <NIDAQmxBase.h>
 #endif

@@ -2,14 +2,12 @@
 
 #include "thactr.h"
 
-#if defined(WIN32) || defined(_WIN32)
-#include <windows.h>
-#else
+#if !defined(WIN32) || !defined(_WIN32)
 #include <unistd.h>
-#endif
-
 #include <pthread.h>
 #include <semaphore.h>
+#endif
+
 #include "thornifix.h"
 
 static thactr* var_thactr = NULL;		/* object pointer */
@@ -45,9 +43,14 @@ static unsigned int counter = 0;		/* counter */
 static unsigned int gcounter = 0;
 
 /* create thread attribute object */
+#if defined (WIN32) || defined (_WIN32)
+static HANDLE thread;
+static HANDLE mutex;
+#else
 static pthread_attr_t attr;
 static pthread_t thread;
 static pthread_mutex_t mutex;
+#endif
 static int start_test = 0;
 
 /* Private functions */
@@ -72,7 +75,14 @@ static inline void thactr_clear_tasks()
 static inline void thactr_set_values()
 {
     /* Lock mutex */
+#if defined (WIN32) || defined (_WIN32)
+    DWORD mutex_state;
+    mutex_state = WaitForSingleObject(mutex, INFINITE);
+    if(mutex_state != WAIT_OBJECT_0)
+	return;
+#else
     pthread_mutex_lock(&mutex);
+#endif
     
     var_thactr->var_tmp_sensor->var_raw =
 	(val_buff[0]>0? val_buff[0] : 0.0);
@@ -83,8 +93,11 @@ static inline void thactr_set_values()
 	var_thactr->var_opcl_flg = 0;
 
     printf("%i\t%f\t%f\n",gcounter,val_buff[THACTR_OPEN_IX], val_buff[THACTR_CLOSE_IX]);
-
+#if defined (WIN32) || defined (_WIN32)
+    ReleaseMutex(mutex);
+#else
     pthread_mutex_unlock(&mutex);
+#endif
 }
 
 /* Write value */
@@ -104,7 +117,11 @@ static inline void thactr_write_values()
 	   thgsens_get_value2(var_thactr->var_tmp_sensor));
 }
 
+#if defined (WIN32) || defined (_WIN32)
+DWORD WINAPI thactr_async_start(LPVOID obj)
+#else
 static void* thactr_async_start(void* obj)
+#endif
 {
     gcounter = 0;		/* reset counter */
     counter = 0;		/* reset counter */
@@ -337,13 +354,19 @@ int thactr_initialise(gthor_fptr update_cycle,	/* Function pointer to update cyc
     	    thactr_clear_tasks();
     	    return 1;
     	}
+
+    /* Initialise mutex */
+    mutex = CreateMutex(NULL,				/* default security */
+			FALSE,				/* initially not owned */
+			NULL);				/* no name */
+#else
+    /* initialis mutex */
+    pthread_mutex_init(&mutex, NULL);
 #endif
 
     if(obj)
 	*obj = var_thactr;
 
-    /* initialis mutex */
-    pthread_mutex_init(&mutex, NULL);
     printf("%s\n","Initialisation complete");
 
     return 0;
@@ -374,8 +397,11 @@ void thactr_delete(thactr** obj)
 
     /* Clear tasks */
     thactr_clear_tasks();
-
+#if defined (WIN32) || defined (_WIN32)
+    CloseHandle(mutex);				/* destroy mutex */
+#else
     pthread_mutex_destroy(&mutex);
+#endif
 
     free(var_thactr);
     var_thactr = NULL;
@@ -394,31 +420,55 @@ int thactr_start(thactr* obj)
     var_thactr->var_stflg = 1;
 
     /* initialise thread attributes */
+#if defined (WIN32) || defined (_WIN32)
+    thread = CreateThread(NULL,			/* default security attribute */
+    		     0,				/* use default stack size */
+    		     thactr_async_start,	/* thread function */
+    		     NULL,			/* argument to thread function */
+    		     0,				/* default creation flag */
+    		     &var_thactr->var_thrid);	/* thread id */
+#else
     pthread_attr_init(&attr);
     pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
 
     var_thactr->var_thrid =
 	pthread_create(&thread, &attr, thactr_async_start, NULL);
+#endif
     return 0;
 }
 
 /* Stop test */
 int thactr_stop(thactr* obj)
 {
+#if defined (WIN32) || defined (_WIN32)
+    WaitForSingleObject(mutex, INFINITE);
+#else
     pthread_mutex_lock(&mutex);
+#endif
     var_thactr->var_stflg = 0;
+#if defined (WIN32) || defined (_WIN32)
+    ReleaseMutex(mutex);
+#else
     pthread_mutex_unlock(&mutex);
+#endif
 
     printf("%s\n","waiting for NI Tasks to finish..");
+#if defined (WIN32) || defined (_WIN32)
+    if(start_test)
+	{
+	    WaitForSingleObject(thread, INFINITE);
+	    CloseHandle(thread);
+	}
+#else
     if(start_test)
 	pthread_join(thread, NULL);
+    pthread_attr_destroy(&attr);
+#endif
 
     start_test = 0;
 
     /* Test stopped */
     printf("%s\n","test_stopped..");
-
-    pthread_attr_destroy(&attr);
     return 0;
 }
 
