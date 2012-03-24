@@ -44,10 +44,13 @@ struct _thlkg
 {
     TaskHandle var_outask;		/* analog output task */
     TaskHandle var_intask;		/* analog input task */
-    thgsens* var_dpsensor;		/* differential pressure sensor */
+    thgsens* var_dpsensor1;		/* differential pressure sensor 1 */
+    thgsens* var_dpsensor2;		/* differential pressure sensor 2 */
     thgsens* var_stsensor;		/* static sensor */
     thgsens* var_tmpsensor;		/* temperature sensor */
     gthsen_fptr var_lkgupdate;		/* function pointer to update leakage */
+    gthsen_fptr var_stupdate;		/* function pointer to update static pressure */
+    gthsen_fptr var_dpupdate;		/* function pointer to update differential pressure */
     double var_stopval;			/* value to stop controlling fan */
     double var_stop_static_adj;		/* static pressure adjustment */
     thlkg_stopctrl var_stoptype;	/* stop type to control fan, in ctrl
@@ -57,6 +60,12 @@ struct _thlkg
     float64 var_smplerate;		/* sample rate */
     double* var_fanout;			/* array of fan control signals */
     double var_leakage;			/* leakage per damper */
+    double var_dp;			/* differential pressure */
+    dobule var_st;			/* static pressure */
+    double* var_lkg_arr;
+    double* var_dp_arr;
+    double* var_st_arr;
+
     double var_fansignal[2];		/* fan signal array controls fan and relay */
 #if defined (WIN32) || defined (_WIN32)
     DWORD var_thrid;			/* thread id */    

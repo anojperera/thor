@@ -16,26 +16,39 @@
 static thlkg* var_thlkg = NULL;			/* leakage test object */
 
 #define THLKG_TMP_CHANNEL "Dev1/ai0"		/* temperature channel */
-#define THLKG_DP_CHANNEL "Dev1/ai1"		/* differential pressure channel */
-#define THLKG_ST_CHANNEL "Dev1/ai2"	       	/* static pressure channel */
-#define THLKG_FANFEEDBACK_CHANNEL "Dev1/ai3"	/* Fan control feedback */
+/* For the differential readings shall be taken from two sensors
+ * and the difference is calculated. HP shall be 1 and LP shall be 2. */
+#define THLKG_DP1_CHANNEL "Dev1/ai1"		/* differential pressure channel 1 */
+#define THLKG_DP2_CHANNEL "Dev1/ai2"		/* differential pressure channel 2 */
+#define THLKG_ST_CHANNEL "Dev1/ai3"	       	/* static pressure channel */
+#define THLKG_FANFEEDBACK_CHANNEL "Dev1/ai4"	/* Fan control feedback */
 #define THLKG_FANST_CHANNEL "Dev1/ao0"		/* Fan start stop control */
 #define THLKG_FAN_CHANNEL "Dev1/ao1"		/* fan control channel */
 #define THLKG_BUFF_SZ 2048
 #define THLKG_RATE 1000.0			/* rate of fan control */
-#define THLKG_NUM_CHANNELS 4			/* number of channels */
+#define THLKG_NUM_CHANNELS 5			/* number of channels */
 #define THLKG_SAMPLES_PERSECOND 4		/* samples per second per
 						   channel */
 #define THLKG_STATIC_PRESSURE_CHECK 4.5		/* static pressure check */
 
 #define THLKG_START_RELAY1_VOLTAGE 0.93		/* relay starting voltage */
 #define THLKG_STATIC_PRESSURE_ADJ 30.0		/* static pressure adjustment */
-
-
+#define THLKG_UPDATE_RATE 3			/* update rate */
 static char err_msg[THLKG_BUFF_SZ];
+
+/* Counters */
+static unsigned int s_counter = 0;		/* sample counter */
 static unsigned int counter = 0;		/* counter */
 static unsigned int gcounter = 0;
 static unsigned int pcounter = 0;		/* counter for PID */
+
+/* Flag to indicate max counter has been reached. This flag is used
+ * in moving average calculations. In the firs round of data collection
+ * actual sample number shall be passed to the averaging function. When
+ * the maximum is reached, the counter is reset. Since we want to
+ * calculate moving average, maximum sample size is passed to the averaging
+ * function */
+static unsigned int max_flg = 0;
 
 /* buffer to hold input values */
 static float64 val_buff[THLKG_NUM_CHANNELS];
@@ -103,7 +116,7 @@ static inline void thlkg_add_xy_to_list()
     if(!var_thxy || !var_theq)
 	return;
 
-    var_thxy->y = val_buff[3];		/* Fan Speed
+    var_thxy->y = val_buff[4];		/* Fan Speed
 					 * feedback */
     
     if(var_thlkg->var_stoptype == thlkg_lkg)
@@ -150,7 +163,8 @@ int thlkg_reset_sensors(thlkg* obj)
     var_thlkg->var_fansignal[0] = 0.0;
     var_thlkg->var_fansignal[1] = 0.0;
     
-    thgsens_reset_all(var_thlkg->var_dpsensor);
+    thgsens_reset_all(var_thlkg->var_dpsensor1);
+    thgsens_reset_all(var_thlkg->var_dpsensor2);
     thgsens_reset_all(var_thlkg->var_stsensor);
     thgsens_reset_all(var_thlkg->var_tmpsensor);
 
@@ -175,43 +189,62 @@ static inline void thlkg_set_values()
     /* set value of dp */
     thgsens_add_value(var_thlkg->var_tmpsensor,
 		      (val_buff[0]>0? val_buff[0] : 0.0));
-    thgsens_add_value(var_thlkg->var_dpsensor,
+    thgsens_add_value(var_thlkg->var_dpsensor1,
 		      (val_buff[1]>0? val_buff[1] : 0.0));
+    thgsens_add_value(var_thlkg->var_dpsensor2,
+		      (val_buff[1]>0? val_buff[2] : 0.0));
     thgsens_add_value(var_thlkg->var_stsensor,
-		      (val_buff[2]>0? val_buff[2] : 0.0));
+		      (val_buff[2]>0? val_buff[3] : 0.0));
 
     /* workout leakage here and
      * call to update external value if
      * function pointer has set */
+    var_thlkg->var_dp = thgsens_get_value2(var_thlkg->var_dpsensor1) -
+	thgsens_get_value2(var_thlkg->var_dpsensor2);
+    var_thlkg->var_st = thgsens_get_value2(var_thlkg->var_stsensor);
     switch(var_thlkg->var_dia_orf)
 	{
 	case thlkg_ordia1:
 	    var_thlkg->var_leakage =
-		0.248456 * pow(thgsens_get_value2(var_thlkg->var_dpsensor), 0.49954);
+		0.248456 * pow(var_thlkg->var_dp, 0.49954);
 	    break;
 	case thlkg_ordia2:
 	    var_thlkg->var_leakage =
-		0.559366 * pow(thgsens_get_value2(var_thlkg->var_dpsensor), 0.499551);
+		0.559366 * pow(var_thlkg->var_dp, 0.499551);
 	    break;
 	case thlkg_ordia3:
 	    var_thlkg->var_leakage =
-		0.99558 * pow(thgsens_get_value2(var_thlkg->var_dpsensor), 0.49668);
+		0.99558 * pow(var_thlkg->var_dp, 0.49668);
 	    break;
 	case thlkg_ordia4:
 	    var_thlkg->var_leakage =
-		2.29643 * pow(thgsens_get_value2(var_thlkg->var_dpsensor), 0.49539);
+		2.29643 * pow(var_thlkg->var_dp, 0.49539);
 	    break;
 	case thlkg_ordia5:
 	    var_thlkg->var_leakage =
-		4.26362 * pow(thgsens_get_value2(var_thlkg->var_dpsensor), 0.49446);
+		4.26362 * pow(var_thlkg->var_dp, 0.49446);
 	    break;
 	default:
 	    var_thlkg->var_leakage =
-		7.22534 * pow(thgsens_get_value2(var_thlkg->var_dpsensor), 0.49325);
+		7.22534 * pow(var_thlkg->var_dp, 0.49325);
 	    break;
 	}
 
-
+    /* Moving average calculations */
+    var_thlkg->var_lkg_arr[s_counter] = var_thlkg->var_leakage;
+    var_thlkg->var_dp_arr[s_counter] = var_thlkg->var_dp;
+    var_thlkg->var_st_arr[s_counter] = var_thlkg->var_st;
+    /* call averaging functions */
+    var_thlkg->var_leakage = Mean(var_thlkg->var_lkg_arr,
+				  (max_flg? THLKG_SAMPLES_PERSECOND * THLKG_UPDATE_RATE :
+				   s_counter));
+    var_thlkg->var_dp = Mean(var_thlkg->var_dp_arr,
+				  (max_flg? THLKG_SAMPLES_PERSECOND * THLKG_UPDATE_RATE :
+				   s_counter));
+    var_thlkg->var_st = Mean(var_thlkg->var_st_arr,
+				  (max_flg? THLKG_SAMPLES_PERSECOND * THLKG_UPDATE_RATE :
+				   s_counter));
+    
     /* calibrate */
     if (var_thlkg->var_calflg == 0 &&
 	(var_thlkg->var_stoptype == thlkg_lkg ||
@@ -241,8 +274,15 @@ static inline void thlkg_set_values()
 #endif
     
     /* call function pointer to update external ui if assigned */
-    if(var_thlkg->var_lkgupdate)
-	var_thlkg->var_lkgupdate(var_thlkg->sobj_ptr, &var_thlkg->var_leakage);
+    if(s_counter == 0)
+	{
+	    if(var_thlkg->var_lkgupdate)
+		var_thlkg->var_lkgupdate(var_thlkg->sobj_ptr, &var_thlkg->var_leakage);
+	    if(var_thlkg->var_dpupdate)
+		var_thlkg->var_dpupdate(var_thlkg->sobj_ptr, &var_thlkg->var_dp);
+	    if(var_thlkg->var_stupdate)
+		var_thlkg->var_stupdate(var_thlkg->sobj_ptr, &var_thlkg->var_st);
+	}
     
 }
 
@@ -250,13 +290,16 @@ static inline void thlkg_set_values()
  * File must be open and must be able to write */
 static inline void thlkg_write_results()
 {
+    double _dp = 0.0;
     /* check if file pointer was assigned */
     if(var_thlkg->var_fp)
 	{
 	    /* format */
 	    /* dp, st, lkg, tmp */
+	    _dp = thgsens_get_value(var_thlkg->var_dpsensor1) -
+		thgsens_get_value(var_thlkg->var_dpsensor2);
 	    fprintf(var_thlkg->var_fp, "%f,%f,%f,%f\n",
-		    thgsens_get_value(var_thlkg->var_dpsensor),
+		    _dp,
 		    thgsens_get_value(var_thlkg->var_stsensor),
 		    var_thlkg->var_leakage,
 		    thgsens_get_value(var_thlkg->var_tmpsensor));
@@ -267,7 +310,7 @@ static inline void thlkg_write_results()
     printf("%i\t%f\t%f\t%f\t%f\t%f\r",
 	   gcounter,
 	   var_thlkg->var_fansignal[1],
-	   thgsens_get_value(var_thlkg->var_dpsensor),
+	   _dp,
 	   thgsens_get_value(var_thlkg->var_stsensor),
 	   var_thlkg->var_leakage,
 	   thgsens_get_value(var_thlkg->var_tmpsensor));
@@ -494,7 +537,7 @@ int thlkg_initialise(thlkg_stopctrl ctrl_st,		/* start control */
 							 * function */
 {
     int32 err_code;
-    
+    int i;
     var_thlkg = (thlkg*) malloc(sizeof(thlkg));
     
     if(!var_thlkg)
@@ -581,12 +624,25 @@ int thlkg_initialise(thlkg_stopctrl ctrl_st,		/* start control */
 
 	    return 0;
 	}
-    /* create differential pressure switch */
-    if(!thgsens_new(&var_thlkg->var_dpsensor,
-		    THLKG_DP_CHANNEL,
+    /* create differential pressure switch 1 */
+    if(!thgsens_new(&var_thlkg->var_dpsensor1,
+		    THLKG_DP1_CHANNEL,
 		    &var_thlkg->var_intask,
-		    update_dp,
-		    sobj))
+		    NULL,
+		    NULL))
+	{
+	    fprintf(stderr, "%s\n", "unable to create dp sensor");
+	    thlkg_clear_tasks();
+
+	    return 0;
+	}
+
+    /* create differential pressure switch 2 */
+    if(!thgsens_new(&var_thlkg->var_dpsensor2,
+		    THLKG_DP2_CHANNEL,
+		    &var_thlkg->var_intask,
+		    NULL,
+		    NULL))
 	{
 	    fprintf(stderr, "%s\n", "unable to create dp sensor");
 	    thlkg_clear_tasks();
@@ -598,8 +654,8 @@ int thlkg_initialise(thlkg_stopctrl ctrl_st,		/* start control */
     if(!thgsens_new(&var_thlkg->var_stsensor,
 		    THLKG_ST_CHANNEL,
 		    &var_thlkg->var_intask,
-		    update_st,
-		    sobj))
+		    NULL,
+		    NULL))
 	{
 	    fprintf(stderr, "%s\n", "unable to create st sensor");
 	    thlkg_clear_tasks();
@@ -623,7 +679,8 @@ int thlkg_initialise(thlkg_stopctrl ctrl_st,		/* start control */
 	}
 
     var_thlkg->var_lkgupdate = update_lkg;
-
+    var_thlkg->var_stupdate = update_st;
+    var_thlkg->var_dpupdate = update_dp;
     var_thlkg->var_stopval = 0.0;
     var_thlkg->var_stop_static_adj = THLKG_STATIC_PRESSURE_ADJ;
     var_thlkg->var_stoptype = ctrl_st;
@@ -634,13 +691,26 @@ int thlkg_initialise(thlkg_stopctrl ctrl_st,		/* start control */
     var_thlkg->var_fansignal[1] = 0.0;
     var_thlkg->var_stflg = 1;
     var_thlkg->var_leakage = 0.0;
+    var_thlkg->var_dp = 0.0;
+    var_thlkg->var_st = 0.0;
     var_thlkg->var_idlflg = 0;
     var_thlkg->sobj_ptr = sobj;
     var_thlkg->var_calflg = 0;
     var_thlkg->var_pidflg = 0;
     var_thlkg->var_disb_fptr = NULL;
     var_thlkg->var_fanout = NULL;
-
+    var_thlkg->var_lkg_arr = (double*) 
+	calloc(THLKG_SAMPLES_PERSECOND * THLKG_UPDATE_RATE, sizeof(double));
+    var_thlkg->var_dp_arr = (double*) 
+	calloc(THLKG_SAMPLES_PERSECOND * THLKG_UPDATE_RATE, sizeof(double));
+    var_thlkg->var_st_arr = (double*)
+	calloc(THLKG_SAMPLES_PERSECOND * THLKG_UPDATE_RATE, sizeof(double));
+    for(i=0; i<THLKG_SAMPLES_PERSECOND * THLKG_UPDATE_RATE; i++)
+	{
+	    var_thlkg->var_lkg_arr[i] = 0.0;
+	    var_thlkg->var_dp_arr[i] = 0.0;
+	    var_thlkg->var_st_arr[i] = 0.0;
+	}
     /* call to create signal array for fan control */
     thlkg_fanout_signals();
 
@@ -718,17 +788,30 @@ extern void thlkg_delete()
 {
     printf("%s\n","deleting sensors..");
     /* destroy sensors */
-    thgsens_delete(&var_thlkg->var_dpsensor);
+    thgsens_delete(&var_thlkg->var_dpsensor1);
+    thgsens_delete(&var_thlkg->var_dpsensor2);
     thgsens_delete(&var_thlkg->var_stsensor);
     thgsens_delete(&var_thlkg->var_tmpsensor);
     
     printf("%s\n","clean up");
     /* set function pointer to NULL */
     var_thlkg->var_lkgupdate = NULL;
+    var_thlkg->var_stupdate = NULL;
+    var_thlkg->var_dpupdate = NULL;
 
+    free(var_thlkg->var_lkg_arr);
+    free(var_thlkg->var_dp_arr);
+    free(var_thlkg->var_st_arr);
+    var_thlkg->var_lkg_arr = NULL;
+    var_thlkg->var_dp_arr = NULL;
+    var_thlkg->var_st_arr = NULL;
+    
     /* set file pointer to NULL, to
      * be closed by the calling function */
     var_thlkg->var_fp = NULL;
+
+    /* set sobj to NULL */
+    var_thlkg->sobj_ptr = NULL;
 
     /* delete fan signal array */
     free(var_thlkg->var_fanout);
@@ -768,9 +851,15 @@ extern void thlkg_delete()
 int thlkg_start(thlkg* obj)
 {
     /* check if sensor range is assigned */
-    if(!var_thlkg->var_dpsensor->var_okflg)
+    if(!var_thlkg->var_dpsensor1->var_okflg)
 	{
-	    fprintf(stderr, "%s\n", "dp sensor range not set");
+	    fprintf(stderr, "%s\n", "dp sensor 1 range not set");
+	    return 0;
+	}
+
+    if(!var_thlkg->var_dpsensor2->var_okflg)
+	{
+	    fprintf(stderr, "%s\n", "dp sensor 2 range not set");
 	    return 0;
 	}
 
@@ -954,8 +1043,14 @@ int32 CVICALLBACK EveryNCallback(TaskHandle taskHandle,
 				 NULL)))
 	return 1;
 
+    
     /* Call to set values */
     thlkg_set_values();
+    if(s_counter++ >= THLKG_SAMPLES_PERSECOND * THLKG_UPDATE_RATE)
+	{
+	    s_counter = 0;
+	    max_flg = 1;
+	}
     return 0;
     
 }
