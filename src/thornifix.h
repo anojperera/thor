@@ -79,6 +79,13 @@ static inline double Round(double val, unsigned int places)	/* rounds a number *
     return b/off;
 
 }
-
+static inline double Mean(const double* data, size_t num)
+{
+    dobule val = 0.0;
+    int i;
+    for(i=0; i<num; i++)
+	val += data[i];
+    return val / (num <= 0? 1.0 : (double) num);
+}
 #endif /* _THORNIFIX_H_ */
 
