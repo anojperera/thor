@@ -81,7 +81,7 @@ static inline double Round(double val, unsigned int places)	/* rounds a number *
 }
 static inline double Mean(const double* data, size_t num)
 {
-    dobule val = 0.0;
+    double val = 0.0;
     int i;
     for(i=0; i<num; i++)
 	val += data[i];

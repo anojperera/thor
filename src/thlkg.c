@@ -31,7 +31,7 @@ static thlkg* var_thlkg = NULL;			/* leakage test object */
 						   channel */
 #define THLKG_STATIC_PRESSURE_CHECK 4.5		/* static pressure check */
 
-#define THLKG_START_RELAY1_VOLTAGE 0.93		/* relay starting voltage */
+#define THLKG_START_RELAY1_VOLTAGE 4.0		/* relay starting voltage */
 #define THLKG_STATIC_PRESSURE_ADJ 30.0		/* static pressure adjustment */
 #define THLKG_UPDATE_RATE 3			/* update rate */
 static char err_msg[THLKG_BUFF_SZ];
@@ -291,13 +291,14 @@ static inline void thlkg_set_values()
 static inline void thlkg_write_results()
 {
     double _dp = 0.0;
+    _dp = thgsens_get_value(var_thlkg->var_dpsensor1) -
+	thgsens_get_value(var_thlkg->var_dpsensor2);
+    
     /* check if file pointer was assigned */
     if(var_thlkg->var_fp)
 	{
 	    /* format */
 	    /* dp, st, lkg, tmp */
-	    _dp = thgsens_get_value(var_thlkg->var_dpsensor1) -
-		thgsens_get_value(var_thlkg->var_dpsensor2);
 	    fprintf(var_thlkg->var_fp, "%f,%f,%f,%f\n",
 		    _dp,
 		    thgsens_get_value(var_thlkg->var_stsensor),
@@ -619,9 +620,6 @@ int thlkg_initialise(thlkg_stopctrl ctrl_st,		/* start control */
 	    fprintf(stderr, "%s\n", "unable to create temperature sensor");
 	    thlkg_clear_tasks();
 
-	    thgsens_delete(&var_thlkg->var_dpsensor);
-	    thgsens_delete(&var_thlkg->var_stsensor);
-
 	    return 0;
 	}
     /* create differential pressure switch 1 */
@@ -660,7 +658,8 @@ int thlkg_initialise(thlkg_stopctrl ctrl_st,		/* start control */
 	    fprintf(stderr, "%s\n", "unable to create st sensor");
 	    thlkg_clear_tasks();
 
-	    thgsens_delete(&var_thlkg->var_dpsensor);
+	    thgsens_delete(&var_thlkg->var_dpsensor1);
+	    thgsens_delete(&var_thlkg->var_dpsensor2);	    
 	    return 0;
 	}
 
@@ -700,12 +699,12 @@ int thlkg_initialise(thlkg_stopctrl ctrl_st,		/* start control */
     var_thlkg->var_disb_fptr = NULL;
     var_thlkg->var_fanout = NULL;
     var_thlkg->var_lkg_arr = (double*) 
-	calloc(THLKG_SAMPLES_PERSECOND * THLKG_UPDATE_RATE, sizeof(double));
+	calloc((THLKG_SAMPLES_PERSECOND * THLKG_UPDATE_RATE), sizeof(double));
     var_thlkg->var_dp_arr = (double*) 
-	calloc(THLKG_SAMPLES_PERSECOND * THLKG_UPDATE_RATE, sizeof(double));
+	calloc((THLKG_SAMPLES_PERSECOND * THLKG_UPDATE_RATE), sizeof(double));
     var_thlkg->var_st_arr = (double*)
-	calloc(THLKG_SAMPLES_PERSECOND * THLKG_UPDATE_RATE, sizeof(double));
-    for(i=0; i<THLKG_SAMPLES_PERSECOND * THLKG_UPDATE_RATE; i++)
+	calloc((THLKG_SAMPLES_PERSECOND * THLKG_UPDATE_RATE), sizeof(double));
+    for(i=0; i<(THLKG_SAMPLES_PERSECOND * THLKG_UPDATE_RATE); i++)
 	{
 	    var_thlkg->var_lkg_arr[i] = 0.0;
 	    var_thlkg->var_dp_arr[i] = 0.0;
@@ -1046,7 +1045,7 @@ int32 CVICALLBACK EveryNCallback(TaskHandle taskHandle,
     
     /* Call to set values */
     thlkg_set_values();
-    if(s_counter++ >= THLKG_SAMPLES_PERSECOND * THLKG_UPDATE_RATE)
+    if(s_counter++ >= (THLKG_SAMPLES_PERSECOND * THLKG_UPDATE_RATE))
 	{
 	    s_counter = 0;
 	    max_flg = 1;

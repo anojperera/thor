@@ -61,7 +61,7 @@ struct _thlkg
     double* var_fanout;			/* array of fan control signals */
     double var_leakage;			/* leakage per damper */
     double var_dp;			/* differential pressure */
-    dobule var_st;			/* static pressure */
+    double var_st;			/* static pressure */
     double* var_lkg_arr;
     double* var_dp_arr;
     double* var_st_arr;
