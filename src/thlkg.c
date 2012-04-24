@@ -201,6 +201,9 @@ static inline void thlkg_set_values()
      * function pointer has set */
     var_thlkg->var_dp = thgsens_get_value2(var_thlkg->var_dpsensor1) -
 	thgsens_get_value2(var_thlkg->var_dpsensor2);
+    /* set dp to zero for negative values */
+    if(var_thlkg->var_dp < 0.0)
+	var_thlkg->var_dp = 0.0;
     var_thlkg->var_st = thgsens_get_value2(var_thlkg->var_stsensor);
     switch(var_thlkg->var_dia_orf)
 	{
@@ -235,9 +238,11 @@ static inline void thlkg_set_values()
     var_thlkg->var_dp_arr[s_counter] = var_thlkg->var_dp;
     var_thlkg->var_st_arr[s_counter] = var_thlkg->var_st;
     /* call averaging functions */
+
     var_thlkg->var_leakage = Mean(var_thlkg->var_lkg_arr,
 				  (max_flg? THLKG_SAMPLES_PERSECOND * THLKG_UPDATE_RATE :
 				   s_counter));
+
     var_thlkg->var_dp = Mean(var_thlkg->var_dp_arr,
 				  (max_flg? THLKG_SAMPLES_PERSECOND * THLKG_UPDATE_RATE :
 				   s_counter));
@@ -849,6 +854,7 @@ extern void thlkg_delete()
  * Also performs if all reuquired data has been set */
 int thlkg_start(thlkg* obj)
 {
+    int i;
     /* check if sensor range is assigned */
     if(!var_thlkg->var_dpsensor1->var_okflg)
 	{
@@ -877,7 +883,12 @@ int thlkg_start(thlkg* obj)
     /* reset flags */
     var_thlkg->var_stflg = 1;		/* start flag to on */
     var_thlkg->var_idlflg = 0;		/* idle flag to off */
-
+    var_thlkg->var_dp = 0.0;
+    var_thlkg->var_st = 0.0;
+    var_thlkg->var_leakage = 0.0;
+    /* initialise array */
+    for(i=0; i<THLKG_NUM_CHANNELS; i++)
+	val_buff[i] = 0.0;
     /* initialise attribute */
 #if defined (WIN32) || defined (_WIN32)
     thread = CreateThread(NULL,			/* default security attribute */
