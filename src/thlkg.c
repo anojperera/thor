@@ -295,17 +295,13 @@ static inline void thlkg_set_values()
  * File must be open and must be able to write */
 static inline void thlkg_write_results()
 {
-    double _dp = 0.0;
-    _dp = thgsens_get_value(var_thlkg->var_dpsensor1) -
-	thgsens_get_value(var_thlkg->var_dpsensor2);
-    
     /* check if file pointer was assigned */
     if(var_thlkg->var_fp)
 	{
 	    /* format */
 	    /* dp, st, lkg, tmp */
 	    fprintf(var_thlkg->var_fp, "%f,%f,%f,%f\n",
-		    _dp,
+		    var_thlkg->var_dp,
 		    thgsens_get_value(var_thlkg->var_stsensor),
 		    var_thlkg->var_leakage,
 		    thgsens_get_value(var_thlkg->var_tmpsensor));
@@ -316,7 +312,7 @@ static inline void thlkg_write_results()
     printf("%i\t%f\t%f\t%f\t%f\t%f\r",
 	   gcounter,
 	   var_thlkg->var_fansignal[1],
-	   _dp,
+	   var_thlkg->var_dp,
 	   thgsens_get_value(var_thlkg->var_stsensor),
 	   var_thlkg->var_leakage,
 	   thgsens_get_value(var_thlkg->var_tmpsensor));
@@ -468,6 +464,7 @@ static void* thlkg_async_start(void* obj)
 				    var_thlkg->var_idlflg = 1;
 #if defined(WIN32) || defined(_WIN32)
 				    WaitForSingleObject(var_sem, INFINITE);
+				    printf("%s\n","Waiting on semaphore");
 #else
 				    sem_wait(&var_sem);
 #endif
@@ -515,7 +512,7 @@ static void* thlkg_async_start(void* obj)
 				    &spl_write,
 				    NULL));
 
-    printf("\n");
+    printf("Test Stopped\n");
     
     /* stop task */
     ERR_CHECK(NIStopTask(var_thlkg->var_outask));
@@ -897,6 +894,8 @@ int thlkg_start(thlkg* obj)
     		     NULL,			/* argument to thread function */
     		     0,				/* default creation flag */
     		     &var_thlkg->var_thrid);	/* thread id */
+    /* indicate windows thread start */
+    printf("%s\n","Windows thread started");
 #else
     pthread_attr_init(&attr);
     pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
