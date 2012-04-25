@@ -122,7 +122,7 @@ static inline void thlkg_add_xy_to_list()
     if(var_thlkg->var_stoptype == thlkg_lkg)
 	var_thxy->x = var_thlkg->var_leakage;
     else
-	var_thxy->x = thgsens_get_value(var_thlkg->var_stsensor);
+	var_thxy->x = var_thlkg->var_st;
 
     var_thxy->x2 = var_thxy->x * var_thxy->x;
     var_thxy->xy = var_thxy->x * var_thxy->y;
@@ -237,8 +237,8 @@ static inline void thlkg_set_values()
     var_thlkg->var_lkg_arr[s_counter] = var_thlkg->var_leakage;
     var_thlkg->var_dp_arr[s_counter] = var_thlkg->var_dp;
     var_thlkg->var_st_arr[s_counter] = var_thlkg->var_st;
-    /* call averaging functions */
 
+    /* call averaging functions */
     var_thlkg->var_leakage = Mean(var_thlkg->var_lkg_arr,
 				  (max_flg? THLKG_SAMPLES_PERSECOND * THLKG_UPDATE_RATE :
 				   s_counter));
@@ -302,7 +302,7 @@ static inline void thlkg_write_results()
 	    /* dp, st, lkg, tmp */
 	    fprintf(var_thlkg->var_fp, "%f,%f,%f,%f\n",
 		    var_thlkg->var_dp,
-		    thgsens_get_value(var_thlkg->var_stsensor),
+		    var_thlkg->var_st,
 		    var_thlkg->var_leakage,
 		    thgsens_get_value(var_thlkg->var_tmpsensor));
 	}
@@ -313,7 +313,7 @@ static inline void thlkg_write_results()
 	   gcounter,
 	   var_thlkg->var_fansignal[1],
 	   var_thlkg->var_dp,
-	   thgsens_get_value(var_thlkg->var_stsensor),
+	   var_thlkg->var_st,
 	   var_thlkg->var_leakage,
 	   thgsens_get_value(var_thlkg->var_tmpsensor));
 
@@ -937,7 +937,8 @@ int thlkg_stop(thlkg* obj)
     if(start_test)
 	{
 	    printf("%s\n", "Waiting for clear..");
-	    WaitForSingleObject(thread, 5000);
+	    TerminateThread(thread, 0);
+	    WaitForSingleObject(thread, INFINITE);
 	    CloseHandle(thread);
 	}
 #else
@@ -1055,7 +1056,7 @@ int32 CVICALLBACK EveryNCallback(TaskHandle taskHandle,
     
     /* Call to set values */
     thlkg_set_values();
-    if(s_counter++ >= (THLKG_SAMPLES_PERSECOND * THLKG_UPDATE_RATE))
+    if(++s_counter >= (THLKG_SAMPLES_PERSECOND * THLKG_UPDATE_RATE))
 	{
 	    s_counter = 0;
 	    max_flg = 1;
