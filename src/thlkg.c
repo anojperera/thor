@@ -201,6 +201,8 @@ static inline void thlkg_set_values()
      * function pointer has set */
     var_thlkg->var_dp = thgsens_get_value2(var_thlkg->var_dpsensor1) -
 	thgsens_get_value2(var_thlkg->var_dpsensor2);
+    var_thlkg->var_lp = thgsens_get_value2(var_thlkg->var_dpsensor2);
+    printf("%f\t%f\n",thgsens_get_value2(var_thlkg->var_dpsensor2), thgsens_get_value2(var_thlkg->var_dpsensor1));
     /* set dp to zero for negative values */
     if(var_thlkg->var_dp < 0.0)
 	var_thlkg->var_dp = 0.0;
@@ -308,14 +310,15 @@ static inline void thlkg_write_results()
 	}
 
     /* update screen */
-    fflush(stdout);
-    printf("%i\t%f\t%f\t%f\t%f\t%f\r",
-	   gcounter,
-	   var_thlkg->var_fansignal[1],
-	   var_thlkg->var_dp,
-	   var_thlkg->var_st,
-	   var_thlkg->var_leakage,
-	   thgsens_get_value(var_thlkg->var_tmpsensor));
+    /* fflush(stdout); */
+    /* printf("%i\t%f\t%f\t%f\t%f\t%f\t%f\r", */
+    /* 	   gcounter, */
+    /* 	   var_thlkg->var_fansignal[1], */
+    /* 	   var_thlkg->var_lp, */
+    /* 	   var_thlkg->var_dp, */
+    /* 	   var_thlkg->var_st, */
+    /* 	   var_thlkg->var_leakage, */
+    /* 	   thgsens_get_value(var_thlkg->var_tmpsensor)); */
 
     /* fulsh output */
     fflush(stdout);
@@ -522,6 +525,7 @@ static void* thlkg_async_start(void* obj)
     start_test = 0;
 #if defined (WIN32) || defined (_WIN32)
     return TRUE;
+    ExitThread(0);
 #else
     return NULL;
 #endif
@@ -693,6 +697,7 @@ int thlkg_initialise(thlkg_stopctrl ctrl_st,		/* start control */
     var_thlkg->var_stflg = 1;
     var_thlkg->var_leakage = 0.0;
     var_thlkg->var_dp = 0.0;
+    var_thlkg->var_lp = 0.0;
     var_thlkg->var_st = 0.0;
     var_thlkg->var_idlflg = 0;
     var_thlkg->sobj_ptr = sobj;
@@ -937,7 +942,7 @@ int thlkg_stop(thlkg* obj)
     if(start_test)
 	{
 	    printf("%s\n", "Waiting for clear..");
-	    TerminateThread(thread, 0);
+	    /* TerminateThread(thread, 0); */
 	    WaitForSingleObject(thread, INFINITE);
 	    CloseHandle(thread);
 	}
