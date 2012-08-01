@@ -33,7 +33,7 @@ static thahup* var_thahup = NULL;			/* ahu test object */
 #define THAHUP_RATE 1000.0				/* actuator rate control */
 
 #define THAHUP_NUM_INPUT_CHANNELS 5			/* number of channels */
-#define THAHUP_SAMPLES_PERSECOND 4			/* samples read second */
+#define THAHUP_SAMPLES_PERSECOND 8			/* samples read second */
 #define THAHUP_UPDATE_RATE 3
 #define THAHUP_MIN_FEEDBACK_VOLT 2.1			/* minimum feedback voltage */
 
