@@ -265,7 +265,8 @@ static inline void thahup_write_results()
     /* check if file pointer was assigned */
     if(var_thahup->var_fp)
 	{
-	    fprintf(var_thahup->var_fp, "%f,%f,%f,%f,%f,%f,%f\n",
+	    fprintf(var_thahup->var_fp, "%i,%f,%f,%f,%f,%f,%f,%f\n",
+		    gcounter,
 		    THAHUP_CHECK_VSENSOR(var_thahup->var_velocity->var_v1),
 		    THAHUP_CHECK_VSENSOR(var_thahup->var_velocity->var_v2),
 		    /* THAHUP_CHECK_VSENSOR(var_thahup->var_velocity->var_v3) */0.0,
