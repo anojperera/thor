@@ -262,12 +262,10 @@ int thvelsen_config_sensor(thvelsen* obj,		/* object */
 	obj->var_sen_cnt++;
 
     /* check for ok flags */
-    if(obj->var_v1 && obj->var_v2 && obj->var_v3 && obj->var_v4)
+    if(obj->var_v1 && obj->var_v2)
 	{
 	    if(obj->var_v1->var_okflg &&
-	       obj->var_v2->var_okflg &&
-	       obj->var_v3->var_okflg &&
-	       obj->var_v4->var_okflg)
+	       obj->var_v2->var_okflg)
 		obj->var_okflg = 1;
 	}
     
