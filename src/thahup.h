@@ -49,6 +49,9 @@ struct _thahup
     gthsen_fptr var_velupdate;		/* update velocity flow */
     FILE* var_fp;			/* file pointer */
     double* var_actout;			/* array of actuator output */
+    double* var_v0_arr;			/* array for smoothing v0 */
+    double* var_v1_arr;			/* array for smoothing v1 */
+    double* var_s_arr;			/* array for smoothing static */
     double var_actsignal;		/* actuator control signal */
     double var_stopval;			/* value to idle test */
     double var_volflow_val;		/* volume flow */
