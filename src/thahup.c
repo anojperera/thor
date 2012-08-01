@@ -295,6 +295,11 @@ DWORD WINAPI thahup_async_start(LPVOID obj)
 void* thahup_async_start(void* obj)
 #endif    
 {
+
+    float64 var_act_st_val = 0.0;	/* actuator stop val */
+
+    int32 spl_write = 0;		/* number of samples written */
+    
     counter = 0;		/* reset counter */
     gcounter = 0;		/* reset counter */
 
@@ -314,11 +319,6 @@ void* thahup_async_start(void* obj)
 #else
 	return NULL;
 #endif
-
-    float64 var_act_st_val = 0.0;	/* actuator stop val */
-
-    int32 spl_write = 0;		/* number of samples written */
-
 
     /* output to screen */
     printf("Counter\tDP1\tDP2\tDP3\tDP4\tV\tVol\tTmp\n");
