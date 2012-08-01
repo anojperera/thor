@@ -153,16 +153,22 @@ static inline void thahup_set_values()
     pthread_mutex_lock(&mutex);
 #endif
     
-    /* set values temperature */
-    var_thahup->var_tmpsensor->var_raw =
-	(val_buff[0]>0? val_buff[0] : 0.0);
+
 
     /* add values to array */
+    var_thahup->var_t_arr[s_counter] = (val_buff[0]>0? val_buff[0] : 0.0);
     var_thahup->var_v0_arr[s_counter] = (val_buff[1]>0? val_buff[1] : 0.0);
     var_thahup->var_v1_arr[s_counter] = (val_buff[2]>0? val_buff[2] : 0.0);
     var_thahup->var_s_arr[s_counter] = (val_buff[3]>0? val_buff[3] : 0.0);
 
+
     /* call averaging functions */
+
+    /* set values temperature */
+    var_thahup->var_tmpsensor->var_raw = 
+	Mean(var_thahup->var_t_arr,
+	     (max_flg? THAHUP_SAMPLES_PERSECOND * THAHUP_UPDATE_RATE :
+	      s_counter));
     
     /* set values of velocity sensors */
     if(var_thahup->var_velocity->var_v1->var_flg)
@@ -553,6 +559,7 @@ int thahup_initialise(thahup_stopctrl ctrl_st,		/* start control */
     var_thahup->var_v0_arr = NULL;
     var_thahup->var_v1_arr = NULL;
     var_thahup->var_s_arr = NULL;
+    var_thahup->var_t_arr = NULL;
     var_thahup->var_smplerate = 0.0;
 
     var_thahup->var_thrid = 0;
@@ -570,7 +577,7 @@ int thahup_initialise(thahup_stopctrl ctrl_st,		/* start control */
     /* Configure timing */
     if(ERR_CHECK(NICfgSampClkTiming(var_thahup->var_intask,
     				   "OnboardClock",
-    				   THAHUP_NUM_INPUT_CHANNELS,
+    				   THAHUP_SAMPLES_PERSECOND,
     				   DAQmx_Val_Rising,
     				   DAQmx_Val_ContSamps,
     				   1)))
@@ -652,7 +659,10 @@ void thahup_delete()
     /* set function pointers to NULL */
     var_thahup->var_volupdate = NULL;
     var_thahup->var_velupdate = NULL;
-
+    var_thahup->var_v0_arr = NULL;
+    var_thahup->var_v1_arr = NULL;
+    var_thahup->var_s_arr = NULL;
+    var_thahup->var_t_arr = NULL;
     var_thahup->var_fp = NULL;
 
     /* delete signal array */
@@ -729,12 +739,15 @@ int thahup_start(thahup* obj)
 					      sizeof(double));
     var_thahup->var_s_arr = (double*) calloc(THAHUP_SAMPLES_PERSECOND * THAHUP_UPDATE_RATE,
 					      sizeof(double));
+    var_thahup->var_t_arr = (double*) calloc(THAHUP_SAMPLES_PERSECOND * THAHUP_UPDATE_RATE,
+					      sizeof(double));    
     /* initialise array values */
     for(i=0;i<(THAHUP_SAMPLES_PERSECOND * THAHUP_UPDATE_RATE);i++)
 	{
 	    var_thahup->var_v0_arr[i] = 0.0;
 	    var_thahup->var_v1_arr[i] = 0.0;
 	    var_thahup->var_s_arr[i] = 0.0;
+	    var_thahup->var_t_arr[i] = 0.0;
 	}
 
     /* initialise thread attributes */
@@ -765,6 +778,7 @@ int thahup_stop(thahup* obj)
     free(var_thahup->var_v0_arr);
     free(var_thahup->var_v1_arr);
     free(var_thahup->var_s_arr);
+    free(var_thahup->var_t_arr);
     /* set stop flag and join thread */
 
     /* lock mutex */
@@ -844,8 +858,8 @@ int thahup_reset_sensors(thahup* obj)
 
     thgsens_reset_value(var_thahup->var_velocity->var_v1);
     thgsens_reset_value(var_thahup->var_velocity->var_v2);
-    thgsens_reset_value(var_thahup->var_velocity->var_v3);
-    thgsens_reset_value(var_thahup->var_velocity->var_v4);
+    /* thgsens_reset_value(var_thahup->var_velocity->var_v3); */
+    /* thgsens_reset_value(var_thahup->var_velocity->var_v4); */
     
     thgsens_reset_all(var_thahup->var_stsensor);
     thgsens_reset_all(var_thahup->var_tmpsensor);
