@@ -3,7 +3,7 @@
  * used for retrieving values and setting. The test is meant to run
  * in an automated state. Once the test is started, fan shall be throttled up
  * measurements from sensors are recorded until fan speed is maxed. */
- * All relavent data is stored in formatted text files. */
+* All relavent data is stored in formatted text files. */
  
 #ifndef __THPD__
 #define __THPD__
@@ -30,10 +30,10 @@ int thpd_set_read_time(double rtime);
 
 /* set external pointers */
 int thpd_set_ext_pointers(gthor_fptr update_dp,
-						  gthor_fptr update_velocity,
-						  gthor_fptr update_static,
-						  gthor_fltr update_temp,
-						  void* sobj);
+			  gthor_fptr update_velocity,
+			  gthor_fptr update_static,
+			  gthor_fltr update_temp,
+			  void* sobj);
 						  
 /* set file pointer */
 int thpd_set_file_pointer(FILE* fp);
