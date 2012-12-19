@@ -8,7 +8,7 @@
 
 #define THVELSEN_AIR_DENSITY 1.2
 #define THVELSEN_VELOCITY(val)				\
-    (pow((2 * val) / THVELSEN_AIR_DENSITY, 0.5))
+    pow(((2 * val) / THVELSEN_AIR_DENSITY), 0.5)
 
 /* channel name macro */
 #define THVELSET_CPYSTR(ch_ptr, channel_name) \
@@ -333,7 +333,7 @@ double thvelsen_get_velocity(thvelsen* obj)
 	}
 
     obj->var_ave_vel = (obj->var_sen_cnt>0? 
-			(v / (double) (obj->var_sen_cnt+1)) :
+			(v / (double) (obj->var_sen_cnt)) :
 			v);
 
     /* if the callback function pointer was assigned

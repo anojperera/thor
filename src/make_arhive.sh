@@ -1,6 +1,6 @@
 #!/bin/bash
 echo "compiling"
-gcc -g -Wall -O0 -c *.c
+gcc -g -Wall -O0 -c -m32 *.c
 echo "complile complete"
 mv *.o ../bin/
 echo "moved object files to bin"
