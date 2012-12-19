@@ -229,15 +229,3 @@ inline int thgsens_reset_value(thgsens* obj)
     obj->var_val = 0;
     return 1;
 }
-
-inline int thgsens_add_value(thgsens* obj, float64 val)
-{
-    if(!obj)
-	return 0;
-
-    obj->var_raw = val;
-    /* thgsens_calc_value(&obj); */
-    /* obj->var_val = */
-    /* 	thbuff_add_new(NULL, obj->var_val); */
-    return 1;
-}

@@ -55,7 +55,13 @@ extern "C" {
     extern inline int thgsens_set_range(thgsens* obj, double min, double max);
 
     /* Add new raw value */
-    extern inline int thgsens_add_value(thgsens* obj, float64 val);
+    inline __attribute__ ((always_inline)) static int thgsens_add_value(thgsens* obj, float64 val)
+    {
+	if(!obj)
+	    return 0;
+	obj->var_raw = val;
+	return 1;
+    }
 
     /* get current value */
     extern inline double thgsens_get_value(thgsens* obj);
