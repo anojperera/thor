@@ -16,6 +16,10 @@
 #define THPD_MAX_SRANGE 5000.0			/* max ststic lressure range */
 #define THPD_MAX_TRANGE 40.0			/* maximum temperature range */
 #define THPD_MIN_TRANGE -10.0			/* minimum temperature range */
+
+#define THPD_SAMPLES_PERSECOND 100 	        /* samples per second */
+#define THPD_UPDATE_PERIOD 3			/* update frequency between seconds */
+#define THPD_NUM_CHANNELS 6
  
 /* fan control channel */
 #define THPD_FAN "Dev1/ao0"			/* fan control singal */
@@ -92,6 +96,8 @@ struct	_thpd
  
 static thpd var_thpd;								/* internal variable */
 static char thpd_err_mag[THPD_ERR_MSG];						/* error message buffer */
+static float64 val_buff[THPD_NUM_CHANNELS];					/* raw value buffer from sensors */
+
  
 /* private callback functions for timing */
 static int32 CVICALLBACK EveryNCallback(TaskHandle taskHandle,
@@ -104,6 +110,7 @@ static int32 CVICALLBACK DoneCallback(TaskHandle taskHandle,
  										
 static int _thpd_clear_tasks(void);						/* clear tasks */
 DWORD WINAPI _thpd_async_start(LPVOID obj);					/* asynchronous start */
+static int _thpd_set_values();							/* set values of sensors */
  
 /* constructor */
 thpd* thpd_initialise(void)
@@ -246,6 +253,43 @@ thpd* thpd_initialise(void)
     thgsens_set_range(var_thpd.var_p1_sen, 0.0, THPD_MAX_VRANGE);
     thgsens_set_range(var_thpd.var_p2_sen, 0.0, THPD_MAX_VRANGE);
 
+    /* configure hardware timers */
+    if(ERR_CHECK(NICfgSampClkTiming(var_thpd.var_intask,
+				    "OnboardClock",
+				    THPD_SAMPLES_PERSECOND,
+				    DAQmx_Val_Rising,
+				    DAQmx_Val_ContSamps,
+				    1)))
+	{
+	    fprintf(stderr, "%s\n", "unable to configure hard timers");
+	    _thpd_clear_tasks(void);
+	    THPD_SENSOR_DELETE;
+	    return NULL;
+	}
+
+    /* Register callbaks */
+    if(ERR_CHECK(NIRegisterEveryNSamplesEvent(var_thpd.var_intask,
+					      DAQmx_Val_Acquired_Into_Buffer,
+					      1,
+					      0,
+					      EveryNCallback,
+					      NULL)))
+	{
+	    _thpd_clear_tasks(void);
+	    THPD_SENSOR_DELETE;
+	    return NULL;
+	}
+
+    if(ERR_CHECK(NIRegisterDoneEvent(var_thpd.var_intask,
+				     0,
+				     DoneCallback,
+				     NULL)))
+	{
+	    _thpd_clear_tasks(void);
+	    THPD_SENSOR_DELETE;
+	    return NULL;
+	}    
+    
     return &var_thpd;
 }
 
@@ -342,3 +386,16 @@ DWORD WINAPI _thpd_async_start(LPVOID obj);
 {
 
 }
+
+
+static int32 CVICALLBACK EveryNCallback(TaskHandle taskHandle,
+					int32 everyNSampleEvent,
+					uInt32 nSamples,
+					void* callbackdata)
+{
+
+}
+
+static int32 CVICALLBACK DoneCallback(TaskHandle taskHandle,
+				      int32 status,
+				      void* callbackdata);
