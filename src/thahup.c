@@ -19,8 +19,8 @@ static thahup* var_thahup = NULL;			/* ahu test object */
 
 #define THAHUP_VEL_DP1_CHANNEL "Dev1/ai1"		/* differential pressure velocity */
 #define THAHUP_VEL_DP2_CHANNEL "Dev1/ai2"		/* differential pressure velocity */
-/* #define THAHUP_VEL_DP3_CHANNEL "Dev1/ai3"		/\* differential pressure velocity *\/ */
-/* #define THAHUP_VEL_DP4_CHANNEL "Dev1/ai4"		/\* differential pressure velocity *\/ */
+#define THAHUP_VEL_DP3_CHANNEL "Dev1/ai3"		/* differential pressure velocity */
+#define THAHUP_VEL_DP4_CHANNEL "Dev1/ai4"		/* differential pressure velocity */
 
 #define THAHUP_ST_CHANNEL "Dev1/ai3"			/* static pressure sensor */
 #define THAHUP_ACT_FD_CHANNEL "Dev1/ai4"		/* actuator feedback channel */
