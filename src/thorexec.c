@@ -69,7 +69,9 @@ int main(int argc, char** argv)
     * action as defined.
     **/
     while(1)
-	{	    
+	{
+	    fflush(stdout);
+	    fprintf(stdout, "%s\r", _thor_msg_buff);
 	    _ctrl_ix = getchar();
 	    if(_ctrl_ix == THOR_QUIT_CODE1 || _ctrl_ix == THOR_QUIT_CODE2)
 		break;
@@ -91,9 +93,7 @@ static int _thor_update_msg_buff(char* buff)
 #if defined (WIN32) || defined (_WIN32)
     WaitForSingleObject(_thor_mutex, INFINITE);
 #endif    
-    sprintf(buff, "DP1\tDP2\tDP3\tDP4\tVel\tVol\r\n");
-    fflush(stdout);
-    fprintf(stdout, "%s\r", buff);    
+    sprintf(buff, "DP1\tDP2\tDP3\tDP4\tVel\tVol\r");
 #if defined (WIN32) || defined (_WIN32)    
     ReleaseMutex(_thor_mutex);
 #endif    
