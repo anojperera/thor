@@ -10,23 +10,33 @@
 
 #include "thlinreg.h"
 #include "thpid.h"
+
 /* object */
 static thahup* var_thahup = NULL;			/* ahu test object */
 
+/* Channel Indexes */
+#define THAHUP_ACTFD_IX 0
+#define THAHUP_TMP_IX 1
+#define THAHUP_ST_IX 2
+#define THAHUP_DP1_IX 3
+#define THAHUP_DP2_IX 4
+#define THAHUP_DP3_IX 5
+#define THAHUP_DP4_IX 6
+
 #define THAHUP_ACT_CTRL_CHANNEL "Dev1/ao0"
+#define THAHUP_ACT_FD_CHANNEL "Dev1/ai0"		/* actuator feedback channel */
+
 /* channel names for sensors */
-#define THAHUP_TMP_CHANNEL "Dev1/ai0"			/* temperature sensor */
+#define THAHUP_TMP_CHANNEL "Dev1/ai1"			/* temperature sensor */
 
-#define THAHUP_VEL_DP1_CHANNEL "Dev1/ai1"		/* differential pressure velocity */
-#define THAHUP_VEL_DP2_CHANNEL "Dev1/ai2"		/* differential pressure velocity */
-#define THAHUP_VEL_DP3_CHANNEL "Dev1/ai3"		/* differential pressure velocity */
-#define THAHUP_VEL_DP4_CHANNEL "Dev1/ai4"		/* differential pressure velocity */
-
-#define THAHUP_ST_CHANNEL "Dev1/ai5"			/* static pressure sensor */
-#define THAHUP_ACT_FD_CHANNEL "Dev1/ai6"		/* actuator feedback channel */
+#define THAHUP_ST_CHANNEL "Dev1/ai2"			/* static pressure sensor - ino 171 */
+#define THAHUP_VEL_DP1_CHANNEL "Dev1/ai3"		/* differential pressure velocity - ino 167 */
+#define THAHUP_VEL_DP2_CHANNEL "Dev1/ai4"		/* differential pressure velocity - ino 168 */
+#define THAHUP_VEL_DP3_CHANNEL "Dev1/ai5"		/* differential pressure velocity - ino 169 */
+#define THAHUP_VEL_DP4_CHANNEL "Dev1/ai6"		/* differential pressure velocity - ino 170 */
 
 #define THAHUP_MIN_RNG 0.0				/* default minimum range for velocity sensors */
-#define THAHUP_MAX_RNG 500.0				/* default maximum range for velocity sensors */
+#define THAHUP_MAX_RNG 1600.0				/* default maximum range for velocity sensors */
 
 /*******************************************/
 #define THAHUP_BUFF_SZ 2048				/* message buffer */
@@ -148,39 +158,39 @@ static inline void thahup_set_values()
 #endif
     /* set values temperature */
     var_thahup->var_tmpsensor->var_raw =
-	(val_buff[0]>0? val_buff[0] : 0.0);
+	(val_buff[THAHUP_TMP_IX]>0? val_buff[THAHUP_TMP_IX] : 0.0);
     
     /* set values of velocity sensors */
     if(var_thahup->var_velocity->var_v1->var_flg)
 	{
 	    var_thahup->var_velocity->var_v1->var_raw =
-		(val_buff[1]>0? val_buff[1] : 0.0);
+		(val_buff[THAHUP_DP1_IX]>0? val_buff[THAHUP_DP1_IX] : 0.0);
 	}
 
     if(var_thahup->var_velocity->var_v2->var_flg)
 	{
 	    var_thahup->var_velocity->var_v2->var_raw =
-		(val_buff[2]>0? val_buff[2] : 0.0);
+		(val_buff[THAHUP_DP2_IX]>0? val_buff[THAHUP_DP2_IX] : 0.0);
 	}
 
     if(var_thahup->var_velocity->var_v3->var_flg)
 	{
 	    var_thahup->var_velocity->var_v3->var_raw =
-		(val_buff[3]>0? val_buff[3] : 0.0);
+		(val_buff[THAHUP_DP3_IX]>0? val_buff[THAHUP_DP3_IX] : 0.0);
 	}
 
     if(var_thahup->var_velocity->var_v4->var_flg)
 	{
 	    var_thahup->var_velocity->var_v4->var_raw =
-		(val_buff[4]>0? val_buff[4] : 0.0);
+		(val_buff[THAHUP_DP4_IX]>0? val_buff[THAHUP_DP4_IX] : 0.0);
 	}
 
     var_thahup->var_stsensor->var_raw =
-	(val_buff[5]>0? val_buff[5] : 0.0);
+	(val_buff[THAHUP_ST_IX]>0? val_buff[THAHUP_ST_IX] : 0.0);
 
     /* actuator feedback */
     var_thahup->var_act_fd_val =
-	(val_buff[6]>0? val_buff[6] : 0.0);
+	(val_buff[THAHUP_ACTFD_IX]>0? val_buff[THAHUP_ACTFD_IX] : 0.0);
     
     /* static pressure */
     var_thahup->var_static_val =
@@ -412,70 +422,6 @@ int thahup_initialise(thahup_stopctrl ctrl_st,		/* start control */
 	    return 1;
 	}
 
-    /* create output channel for actuator control */
-    if(ERR_CHECK(NICreateAOVoltageChan(var_thahup->var_outask,
-				       THAHUP_ACT_CTRL_CHANNEL,
-				       "",
-				       0.0,
-				       10.0,
-				       DAQmx_Val_Volts,
-				       NULL)))
-	{
-	    printf("%s\n","create output channel failed!");
-	    thahup_clear_tasks();
-	    return 1;
-	}
-
-    /* create velocity sensor */
-    if(!thvelsen_new(&var_thahup->var_velocity,
-		     &var_thahup->var_intask,
-		     update_vel,
-		     sobj))
-	{
-	    printf ("%s\n","error creating velocity sensor");
-	    thahup_clear_tasks();
-	    return 1;
-	}
-
-    /* create static sensor */
-    if(!thgsens_new(&var_thahup->var_stsensor,
-		    THAHUP_ST_CHANNEL,
-		    &var_thahup->var_intask,
-		    update_static,
-		    sobj))
-	{
-	    printf ("%s\n","error creating static sensor");
-	    thvelsen_delete(&var_thahup->var_velocity);
-	    thahup_clear_tasks();
-	    return 1;
-	}
-
-    /* create temperature sensor */
-    if(!thgsens_new(&var_thahup->var_tmpsensor,
-		    THAHUP_TMP_CHANNEL,
-		    &var_thahup->var_intask,
-		    update_tmp,
-		    sobj))
-	{
-	    printf ("%s\n","error creating temperature sensor");
-	    thvelsen_delete(&var_thahup->var_velocity);
-	    thgsens_delete(&var_thahup->var_stsensor);
-	    thahup_clear_tasks();
-
-	    return 1;
-	}
-
-    /* input voltage channel for actuator feedback */
-    if(ERR_CHECK(NICreateAIVoltageChan(var_thahup->var_intask,
-				       THAHUP_ACT_FD_CHANNEL,
-				       "",
-				       DAQmx_Val_NRSE,
-				       0.0,
-				       10.0,
-				       DAQmx_Val_Volts,
-				       NULL)))
-	return 1;
-
     /* set attributes */
     var_thahup->var_volupdate = update_vol;
     var_thahup->var_velupdate = update_vel;
@@ -503,6 +449,73 @@ int thahup_initialise(thahup_stopctrl ctrl_st,		/* start control */
     var_thahup->var_sobj = sobj;
     var_thahup->var_stctrl = ctrl_st;
     var_thahup->var_calflg = 0;
+    
+    /* create output channel for actuator control */
+    if(ERR_CHECK(NICreateAOVoltageChan(var_thahup->var_outask,
+				       THAHUP_ACT_CTRL_CHANNEL,
+				       "",
+				       0.0,
+				       10.0,
+				       DAQmx_Val_Volts,
+				       NULL)))
+	{
+	    printf("%s\n","create output channel failed!");
+	    thahup_clear_tasks();
+	    return 1;
+	}
+
+    /* input voltage channel for actuator feedback */
+    if(ERR_CHECK(NICreateAIVoltageChan(var_thahup->var_intask,
+				       THAHUP_ACT_FD_CHANNEL,
+				       "",
+				       DAQmx_Val_Diff,
+				       0.0,
+				       10.0,
+				       DAQmx_Val_Volts,
+				       NULL)))
+	{
+	    printf("%s\n","create act feedback channel failed!");
+	    thahup_clear_tasks();	    
+	    return 1;
+	}
+    
+    /* create temperature sensor */
+    if(!thgsens_new(&var_thahup->var_tmpsensor,
+		    THAHUP_TMP_CHANNEL,
+		    &var_thahup->var_intask,
+		    update_tmp,
+		    sobj))
+	{
+	    printf ("%s\n","error creating temperature sensor");
+	    thahup_clear_tasks();
+	    return 1;
+	}
+
+    /* create static sensor */
+    if(!thgsens_new(&var_thahup->var_stsensor,
+		    THAHUP_ST_CHANNEL,
+		    &var_thahup->var_intask,
+		    update_static,
+		    sobj))
+	{
+	    printf ("%s\n","error creating static sensor");
+	    	    thgsens_delete(var_thahup->var_tmpsensor);
+	    thahup_clear_tasks();
+	    return 1;
+	}
+    
+    /* create velocity sensor */
+    if(!thvelsen_new(&var_thahup->var_velocity,
+		     &var_thahup->var_intask,
+		     update_vel,
+		     sobj))
+	{
+	    printf ("%s\n","error creating velocity sensor");
+	    thgsens_delete(var_thahup->var_tmpsensor);
+	    thgsens_delete(var_thahup->var_stsensor);
+	    thahup_clear_tasks();
+	    return 1;
+	}
 
     printf("%s\n","configuring velocity sensors..");
     /* configure velocity sensors */
