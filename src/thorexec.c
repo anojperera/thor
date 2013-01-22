@@ -12,21 +12,29 @@
 
 #include "thahup.h"
 
-#define THOR_QUIT_CODE1 81
-#define THOR_QUIT_CODE2 113
+#define THOR_QUIT_CODE1 81							/* Q */
+#define THOR_QUIT_CODE2 113							/* q */
+#define THOR_ACT_INCR_CODE 43							/* + */
+#define THOR_ACT_DECR_CODE 45							/* - */
 
 #define THOR_MSG_BUFFER_SZ 2048
 
 #define THOR_WAIT_TIME 250							/* waiting time for the main loop */
 #define THOR_WAIT_TIME_UNIX_CORRECTION 1000					/* correction for unix */
+#define THOR_ACT_INCR 0.5;
+#define THOR_ACT_FLOOR 2.0							/* minimum actuator control percentage */
+#define THOR_ACT_CEIL 9.0;							/* maximum acturator percentage voltage */
 
 static int _ctrl_ix;								/* control flag */
 static int _quit_flg = 1;							/* quit flag */
 static char _thor_msg_buff[THOR_MSG_BUFFER_SZ];					/* main message buffer */
+static double _thor_act_pos = THOR_ACT_FLOOR;					/* actuator percentage */
 
 /* Control methods */
 /* static int _thor_ahu_init(void); */
 static int _thor_update_msg_buff(char* buff);
+static int _thor_increment_act(void);
+static int _thor_decrement_act(void);
 /* thread function for win32 */
 #if defined (WIN32) || defined (_WIN32)
 DWORD WINAPI _thor_key_handler(LPVOID obj);
@@ -44,7 +52,6 @@ int main(int argc, char** argv)
     t.tv_sec = 0;
     t.tv_nsec = THOR_WAIT_TIME * THOR_WAIT_TIME_UNIX_CORRECTION;
 #endif
-
     /* initialise message buffer */
     memset((void*) _thor_msg_buff, 0, THOR_MSG_BUFFER_SZ);
 
@@ -67,14 +74,14 @@ int main(int argc, char** argv)
 #endif
 
     /**
-    * Main loop for receving input. Continuously scans for input and takes
-    * action as defined.
-    **/
+     * Main loop for receving input. Continuously scans for input and takes
+     * action as defined.
+     **/
     printf("DP1\tDP2\tDP3\tDP4\tVel\tVol\tStatic\tTemp\n");
     while(_quit_flg)
 	{
 	    /* call to update the message buffer */
-	    _thor_update_msg_buff(_thor_msg_buff);
+    _thor_update_msg_buff(_thor_msg_buff, NULL);
 	    fflush(stdout);
 	    fprintf(stdout, "%s\r", _thor_msg_buff);
 #if defined (WIN32) || defined (_WIN32)
@@ -93,13 +100,13 @@ int main(int argc, char** argv)
 }
 
 /* update message buffer */
-static int _thor_update_msg_buff(char* buff)
+ static int _thor_update_msg_buff(char* buff, char* opts)
 {
     /* lock mutex */
 #if defined (WIN32) || defined (_WIN32)
     WaitForSingleObject(_thor_mutex, INFINITE);
 #endif
-    sprintf(buff, "%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\r",
+    sprintf(buff, "%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\r\n",
 	    0.0,								/* DP 1 */
 	    0.0,								/* DP 2 */
 	    0.0,								/* DP 3 */
@@ -130,16 +137,49 @@ DWORD WINAPI _thor_key_handler(LPVOID obj)
 	    fflush(stdin);
 	    if(_ctrl_ix == THOR_QUIT_CODE1 || _ctrl_ix == THOR_QUIT_CODE2)
 		{
-		    /* lock mutex */
+	    /* lock mutex */
 #if defined (WIN32) || defined (_WIN32)
-		    WaitForSingleObject(_thor_mutex, INFINITE);
+	    WaitForSingleObject(_thor_mutex, INFINITE);
 #endif
-		    _quit_flg = 0;
+	    _quit_flg = 0;
 #if defined (WIN32) || defined (_WIN32)
-		    ReleaseMutex(_thor_mutex);
+	    ReleaseMutex(_thor_mutex);
 #endif
-		    break;
-		}
+	    break;
 	}
+
+#if defined (WIN32) || defined (_WIN32)
+	    WaitForSingleObject(_thor_mutex, INFINITE);
+#endif
+	    switch(_ctrl_ix)
+		{
+ case THOR_ACT_INCR_CODE:
+     _thor_increment_act();
+     break;
+ case THOR_ACT_DECR_CODE:
+     _thor_decrement_act();
+     break;
+}
+#if defined (WIN32) || defined (_WIN32)
+	    ReleaseMutex(_thor_mutex);
+#endif
+}
+    return 0;
+}
+
+/* increment actuator position */
+static int _thor_increment_act(void)
+{
+    if(_thor_act_pos<THOR_ACT_CEIL-THOR_ACT_INCR)
+	_thor_act_pos += THOR_ACT_INCR;
+    return 0;
+}
+
+/* decrement acturator position */
+static int _thor_decrement_act(void)
+{
+    if(_thor_act_pos>THOR_ACT_FLOOR-THOR_ACT_INCR)
+	_thor_act_pos -= THOR_ACT_INCR;
+
     return 0;
 }
