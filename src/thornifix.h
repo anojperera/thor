@@ -62,7 +62,7 @@ static inline int ERR_CHECK(int32 err)
     
 }
 
-static inline double Round(double val, unsigned int places)	/* rounds a number */
+inline __attribute__ ((always_inline)) static double Round(double val, unsigned int places)	/* rounds a number */
 {
     double off = pow(10, places);
 	
@@ -79,7 +79,8 @@ static inline double Round(double val, unsigned int places)	/* rounds a number *
     return b/off;
 
 }
-static inline double Mean(const double* data, size_t num)
+
+inline __attribute__ ((always_inline)) static double Mean(const double* data, size_t num)
 {
     double val = 0.0;
     int i;
