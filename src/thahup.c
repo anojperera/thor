@@ -43,7 +43,7 @@ static thahup* var_thahup = NULL;			/* ahu test object */
 #define THAHUP_BUFF_SZ 2048				/* message buffer */
 #define THAHUP_RATE 1000.0				/* actuator rate control */
 
-#define THAHUP_NUM_INPUT_CHANNELS 5			/* number of channels */
+#define THAHUP_NUM_INPUT_CHANNELS 7			/* number of channels */
 #define THAHUP_SAMPLES_PERSECOND 8			/* samples read second */
 #define THAHUP_UPDATE_RATE 3
 #define THAHUP_MIN_FEEDBACK_VOLT 2.1			/* minimum feedback voltage */
@@ -281,8 +281,8 @@ static inline void thahup_write_results()
 		    gcounter,
 		    THAHUP_CHECK_VSENSOR(var_thahup->var_velocity->var_v1),
 		    THAHUP_CHECK_VSENSOR(var_thahup->var_velocity->var_v2),
-		    /* THAHUP_CHECK_VSENSOR(var_thahup->var_velocity->var_v3) */0.0,
-		    /* THAHUP_CHECK_VSENSOR(var_thahup->var_velocity->var_v4) */0.0,
+		    THAHUP_CHECK_VSENSOR(var_thahup->var_velocity->var_v3),
+		    THAHUP_CHECK_VSENSOR(var_thahup->var_velocity->var_v4),
 		    var_thahup->var_velocity_val,
 		    var_thahup->var_volflow_val,
 		    var_thahup->var_temp_val);
@@ -291,10 +291,10 @@ static inline void thahup_write_results()
     /* update screen */
     printf("%i\t%7.2f\t%7.2f\t%7.2f\t%7.2f\t%7.2f\t%7.2f\t%7.2f\n",
 	   gcounter,
-	   /* THAHUP_CHECK_VSENSOR(var_thahup->var_velocity->var_v1) */val_buff[1],
-	   /* THAHUP_CHECK_VSENSOR(var_thahup->var_velocity->var_v2) */val_buff[2],
-	   /* THAHUP_CHECK_VSENSOR(var_thahup->var_velocity->var_v3) */0.0,
-	   /* THAHUP_CHECK_VSENSOR(var_thahup->var_velocity->var_v4) */0.0,
+	   /* THAHUP_CHECK_VSENSOR(var_thahup->var_velocity->var_v1) */val_buff[THAHUP_DP1_IX],
+	   /* THAHUP_CHECK_VSENSOR(var_thahup->var_velocity->var_v2) */val_buff[THAHUP_DP2_IX],
+	   /* THAHUP_CHECK_VSENSOR(var_thahup->var_velocity->var_v3) */val_buff[THAHUP_DP3_IX],
+	   /* THAHUP_CHECK_VSENSOR(var_thahup->var_velocity->var_v4) */val_buff[THAHUP_DP4_IX],
 	   var_thahup->var_velocity_val,
 	   var_thahup->var_volflow_val,
 	   var_thahup->var_temp_val);
@@ -799,7 +799,7 @@ int thahup_start(thahup* obj)
 /* stop the test */
 int thahup_stop(thahup* obj)
 {
-
+    fprintf(stderr, "closing initialised\n");
     /* free buffers */
     free(var_thahup->var_v0_arr);
     free(var_thahup->var_v1_arr);
@@ -811,7 +811,7 @@ int thahup_stop(thahup* obj)
 
     /* lock mutex */
 #if defined (WIN32) || defined (_WIN32)
-    WaitForSingleObject(mutex, INFINITE);
+    WaitForSingleObject(mutex, 500);
 #else
     pthread_mutex_lock(&mutex);
 #endif
@@ -827,7 +827,7 @@ int thahup_stop(thahup* obj)
 #endif
 	}
 #if defined (WIN32) || defined (_WIN32)
-    WaitForSingleObject(mutex, INFINITE);
+   ReleaseMutex(mutex);
 #else
     pthread_mutex_unlock(&mutex);
 #endif
@@ -886,8 +886,8 @@ int thahup_reset_sensors(thahup* obj)
 
     thgsens_reset_value(var_thahup->var_velocity->var_v1);
     thgsens_reset_value(var_thahup->var_velocity->var_v2);
-    /* thgsens_reset_value(var_thahup->var_velocity->var_v3); */
-    /* thgsens_reset_value(var_thahup->var_velocity->var_v4); */
+    thgsens_reset_value(var_thahup->var_velocity->var_v3);
+    thgsens_reset_value(var_thahup->var_velocity->var_v4);
     
     thgsens_reset_all(var_thahup->var_stsensor);
     thgsens_reset_all(var_thahup->var_tmpsensor);
