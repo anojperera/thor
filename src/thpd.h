@@ -2,15 +2,15 @@
  * Structre is hidden away in the source file. Interface methods are
  * used for retrieving values and setting. The test is meant to run
  * in an automated state. Once the test is started, fan shall be throttled up
- * measurements from sensors are recorded until fan speed is maxed. */
-* All relavent data is stored in formatted text files. */
+ * measurements from sensors are recorded until fan speed is maxed.
+ * All relavent data is stored in formatted text files. */
  
 #ifndef __THPD__
 #define __THPD__
 
 #include <stdlib.h>
 #include <stdio.h>
-#include "thorinifix.h"
+#include "thornifix.h"
 
 /* forward declaration of class */
 typedef struct _thpd thpd;

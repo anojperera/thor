@@ -544,7 +544,7 @@ int thahup_initialise(thahup_stopctrl ctrl_st,		/* start control */
 		    sobj))
 	{
 	    printf ("%s\n","error creating static sensor");
-	    	    thgsens_delete(var_thahup->var_tmpsensor);
+	    	    thgsens_delete(&var_thahup->var_tmpsensor);
 	    thahup_clear_tasks();
 	    return 1;
 	}
@@ -556,8 +556,8 @@ int thahup_initialise(thahup_stopctrl ctrl_st,		/* start control */
 		     sobj))
 	{
 	    printf ("%s\n","error creating velocity sensor");
-	    thgsens_delete(var_thahup->var_tmpsensor);
-	    thgsens_delete(var_thahup->var_stsensor);
+	    thgsens_delete(&var_thahup->var_tmpsensor);
+	    thgsens_delete(&var_thahup->var_stsensor);
 	    thahup_clear_tasks();
 	    return 1;
 	}

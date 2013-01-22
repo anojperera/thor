@@ -3,6 +3,10 @@
 #ifndef _THORNIFIX_H_
 #define _THORNIFIX_H_
 
+#include <stdlib.h>
+#include <stdio.h>
+#include <math.h>
+
 #if defined (WIN32) || defined (_WIN32)
 #include <NIDAQmx.h>
 /* get error string */
@@ -88,5 +92,6 @@ inline __attribute__ ((always_inline)) static double Mean(const double* data, si
 	val += data[i];
     return val / (num <= 0? 1.0 : (double) num);
 }
+
 #endif /* _THORNIFIX_H_ */
 

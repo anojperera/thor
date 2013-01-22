@@ -1,8 +1,8 @@
 /* Implementation of pressure drop program */
 #include <windows.h>
 #include <math.h>
-#include "thpd.h"
 #include "thgsens.h"
+#include "thpd.h"
 
 /* sensor channels */
 #define THPD_TEMP "Dev1/ai0"			/* temperature sensor */
@@ -288,7 +288,7 @@ thpd* thpd_initialise(void)
 	    _thpd_clear_tasks(void);
 	    THPD_SENSOR_DELETE;
 	    return NULL;
-	}    
+	}
     
     return &var_thpd;
 }
