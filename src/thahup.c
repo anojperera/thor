@@ -165,10 +165,12 @@ static inline void thahup_set_values()
 #endif
 
     /* add values to array */
-    var_thahup->var_t_arr[s_counter] = (val_buff[0]>0? val_buff[0] : 0.0);
-    var_thahup->var_v0_arr[s_counter] = (val_buff[1]>0? val_buff[1] : 0.0);
-    var_thahup->var_v1_arr[s_counter] = (val_buff[2]>0? val_buff[2] : 0.0);
-    var_thahup->var_s_arr[s_counter] = (val_buff[3]>0? val_buff[3] : 0.0);
+    var_thahup->var_t_arr[s_counter] = (val_buff[THAHUP_TMP_IX]>0? val_buff[THAHUP_TMP_IX] : 0.0);
+    var_thahup->var_v0_arr[s_counter] = (val_buff[THAHUP_DP1_IX]>0? val_buff[THAHUP_DP1_IX] : 0.0);
+    var_thahup->var_v1_arr[s_counter] = (val_buff[THAHUP_DP2_IX]>0? val_buff[THAHUP_DP2_IX] : 0.0);
+    var_thahup->var_v2_arr[s_counter] = (val_buff[THAHUP_DP3_IX]>0? val_buff[THAHUP_DP3_IX] : 0.0);
+    var_thahup->var_v3_arr[s_counter] = (val_buff[THAHUP_DP4_IX]>0? val_buff[THAHUP_DP4_IX] : 0.0);    
+    var_thahup->var_s_arr[s_counter] = (val_buff[THAHUP_ST_IX]>0? val_buff[THAHUP_ST_IX] : 0.0);
 
     /* call averaging functions */
     /* set values temperature */
@@ -194,28 +196,32 @@ static inline void thahup_set_values()
 		      s_counter));
 	}
 
-    if(s_counter == 0)
-	{
-	    var_thahup->var_act_fd_val =
-		(val_buff[THAHUP_ACTFD_IX]>0? val_buff[THAHUP_ACTFD_IX] : 0.0);
-	}
-
     if(var_thahup->var_velocity->var_v3->var_flg)
 	{
 	    var_thahup->var_velocity->var_v3->var_raw =
-		(val_buff[THAHUP_DP3_IX]>0? val_buff[THAHUP_DP3_IX] : 0.0);
+		Mean(var_thahup->var_v2_arr,
+		     (max_flg? THAHUP_SAMPLES_PERSECOND * THAHUP_UPDATE_RATE :
+		      s_counter));
 	}
 
     if(var_thahup->var_velocity->var_v4->var_flg)
 	{
 	    var_thahup->var_velocity->var_v4->var_raw =
-		(val_buff[THAHUP_DP4_IX]>0? val_buff[THAHUP_DP4_IX] : 0.0);
+		Mean(var_thahup->var_v3_arr,
+		     (max_flg? THAHUP_SAMPLES_PERSECOND * THAHUP_UPDATE_RATE :
+		      s_counter));
 	}
 
     var_thahup->var_stsensor->var_raw =
 	Mean(var_thahup->var_s_arr,
 	     (max_flg? THAHUP_SAMPLES_PERSECOND * THAHUP_UPDATE_RATE :
 	      s_counter));	
+
+    if(s_counter == 0)
+	{
+	    var_thahup->var_act_fd_val =
+		(val_buff[THAHUP_ACTFD_IX]>0? val_buff[THAHUP_ACTFD_IX] : 0.0);
+	}
     
     /* static pressure */
     var_thahup->var_static_val =
@@ -482,7 +488,13 @@ int thahup_initialise(thahup_stopctrl ctrl_st,		/* start control */
     var_thahup->var_sobj = sobj;
     var_thahup->var_stctrl = ctrl_st;
     var_thahup->var_calflg = 0;
-    
+
+    var_thahup->var_v0_arr = NULL;
+    var_thahup->var_v1_arr = NULL;
+    var_thahup->var_v2_arr = NULL;
+    var_thahup->var_v3_arr = NULL;
+    var_thahup->var_s_arr = NULL;
+    var_thahup->var_t_arr = NULL;
     /* create output channel for actuator control */
     if(ERR_CHECK(NICreateAOVoltageChan(var_thahup->var_outask,
 				       THAHUP_ACT_CTRL_CHANNEL,
@@ -667,6 +679,8 @@ void thahup_delete()
     var_thahup->var_velupdate = NULL;
     var_thahup->var_v0_arr = NULL;
     var_thahup->var_v1_arr = NULL;
+    var_thahup->var_v2_arr = NULL;
+    var_thahup->var_v2_arr = NULL;    
     var_thahup->var_s_arr = NULL;
     var_thahup->var_t_arr = NULL;
     var_thahup->var_fp = NULL;
@@ -743,6 +757,10 @@ int thahup_start(thahup* obj)
 					      sizeof(double));
     var_thahup->var_v1_arr = (double*) calloc(THAHUP_SAMPLES_PERSECOND * THAHUP_UPDATE_RATE,
 					      sizeof(double));
+    var_thahup->var_v2_arr = (double*) calloc(THAHUP_SAMPLES_PERSECOND * THAHUP_UPDATE_RATE,
+					      sizeof(double));
+    var_thahup->var_v3_arr = (double*) calloc(THAHUP_SAMPLES_PERSECOND * THAHUP_UPDATE_RATE,
+					      sizeof(double));    
     var_thahup->var_s_arr = (double*) calloc(THAHUP_SAMPLES_PERSECOND * THAHUP_UPDATE_RATE,
 					      sizeof(double));
     var_thahup->var_t_arr = (double*) calloc(THAHUP_SAMPLES_PERSECOND * THAHUP_UPDATE_RATE,
@@ -752,6 +770,8 @@ int thahup_start(thahup* obj)
 	{
 	    var_thahup->var_v0_arr[i] = 0.0;
 	    var_thahup->var_v1_arr[i] = 0.0;
+	    var_thahup->var_v2_arr[i] = 0.0;
+	    var_thahup->var_v3_arr[i] = 0.0;
 	    var_thahup->var_s_arr[i] = 0.0;
 	    var_thahup->var_t_arr[i] = 0.0;
 	}
@@ -783,6 +803,8 @@ int thahup_stop(thahup* obj)
     /* free buffers */
     free(var_thahup->var_v0_arr);
     free(var_thahup->var_v1_arr);
+    free(var_thahup->var_v2_arr);
+    free(var_thahup->var_v3_arr);
     free(var_thahup->var_s_arr);
     free(var_thahup->var_t_arr);
     /* set stop flag and join thread */

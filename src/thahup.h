@@ -51,6 +51,8 @@ struct _thahup
     double* var_actout;			/* array of actuator output */
     double* var_v0_arr;			/* array for smoothing v0 */
     double* var_v1_arr;			/* array for smoothing v1 */
+    double* var_v2_arr;			/* array for smoothing v2 */
+    double* var_v3_arr;			/* array for smoothing v3 */
     double* var_s_arr;			/* array for smoothing static */
     double* var_t_arr;			/* array for smoothing temperature */
     double var_actsignal;		/* actuator control signal */
