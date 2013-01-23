@@ -289,15 +289,25 @@ static inline void thahup_write_results()
 	}
 
     /* update screen */
-    printf("%i\t%7.2f\t%7.2f\t%7.2f\t%7.2f\t%7.2f\t%7.2f\t%7.2f\n",
-	   gcounter,
-	   /* THAHUP_CHECK_VSENSOR(var_thahup->var_velocity->var_v1) */val_buff[THAHUP_DP1_IX],
-	   /* THAHUP_CHECK_VSENSOR(var_thahup->var_velocity->var_v2) */val_buff[THAHUP_DP2_IX],
-	   /* THAHUP_CHECK_VSENSOR(var_thahup->var_velocity->var_v3) */val_buff[THAHUP_DP3_IX],
-	   /* THAHUP_CHECK_VSENSOR(var_thahup->var_velocity->var_v4) */val_buff[THAHUP_DP4_IX],
-	   var_thahup->var_velocity_val,
-	   var_thahup->var_volflow_val,
-	   var_thahup->var_temp_val);
+    /* printf("%i\t%7.2f\t%7.2f\t%7.2f\t%7.2f\t%7.2f\t%7.2f\t%7.2f\n", */
+    /* 	   gcounter, */
+    /* 	   /\* THAHUP_CHECK_VSENSOR(var_thahup->var_velocity->var_v1) *\/val_buff[THAHUP_DP1_IX], */
+    /* 	   /\* THAHUP_CHECK_VSENSOR(var_thahup->var_velocity->var_v2) *\/val_buff[THAHUP_DP2_IX], */
+    /* 	   /\* THAHUP_CHECK_VSENSOR(var_thahup->var_velocity->var_v3) *\/val_buff[THAHUP_DP3_IX], */
+    /* 	   /\* THAHUP_CHECK_VSENSOR(var_thahup->var_velocity->var_v4) *\/val_buff[THAHUP_DP4_IX], */
+    /* 	   var_thahup->var_velocity_val, */
+    /* 	   var_thahup->var_volflow_val, */
+    /* 	   var_thahup->var_temp_val); */
+    if(var_thahup->var_result_buff)
+	{
+	    var_thahup->var_result_buff[0] = val_buff[THAHUP_DP1_IX];
+	    var_thahup->var_result_buff[1] = val_buff[THAHUP_DP2_IX];
+	    var_thahup->var_result_buff[2] = val_buff[THAHUP_DP3_IX];
+	    var_thahup->var_result_buff[3] = val_buff[THAHUP_DP4_IX];
+	    var_thahup->var_result_buff[4] = var_thahup->var_velocity_val;
+	    var_thahup->var_result_buff[5] = var_thahup->var_volflow_val;
+	    var_thahup->var_result_buff[6] = var_thahup->var_temp_val;
+	}
 }
 
 
@@ -478,6 +488,7 @@ int thahup_initialise(thahup_stopctrl ctrl_st,		/* start control */
     var_thahup->var_v3_arr = NULL;
     var_thahup->var_s_arr = NULL;
     var_thahup->var_t_arr = NULL;
+    var_thahup->var_result_buff = NULL;
     /* create output channel for actuator control */
     if(ERR_CHECK(NICreateAOVoltageChan(var_thahup->var_outask,
 				       THAHUP_ACT_CTRL_CHANNEL,
@@ -667,7 +678,8 @@ void thahup_delete()
     var_thahup->var_s_arr = NULL;
     var_thahup->var_t_arr = NULL;
     var_thahup->var_fp = NULL;
-
+    var_thahup->var_result_buff = NULL;
+    
     /* delete signal array */
     free(var_thahup->var_actout);
     var_thahup->var_actout = NULL;
