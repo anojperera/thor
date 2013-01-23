@@ -309,8 +309,6 @@ void* thahup_async_start(void* obj)
 #endif    
 {
 
-    float64 var_act_st_val = 0.0;	/* actuator stop val */
-
     int32 spl_write = 0;		/* number of samples written */
     
     counter = 0;		/* reset counter */
@@ -402,21 +400,6 @@ void* thahup_async_start(void* obj)
 	    thahup_write_results();
 	    gcounter++;
 	}
-
-    /* stop actuator */
-    if(ERR_CHECK(NIWriteAnalogArrayF64(var_thahup->var_outask,
-				       1,
-				       0,
-				       10.0,
-				       DAQmx_Val_GroupByChannel,
-				       &var_act_st_val,
-				       &spl_write,
-				       NULL)))
-	printf("%s\n","actuator not stopped");
-
-    /* stop task */
-    ERR_CHECK(NIStopTask(var_thahup->var_outask));
-    ERR_CHECK(NIStopTask(var_thahup->var_intask));
 
     /* indicate test stopped */
     start_test = 0;
@@ -799,6 +782,8 @@ int thahup_start(thahup* obj)
 /* stop the test */
 int thahup_stop(thahup* obj)
 {
+    float64 var_act_st_val = 0.0;	/* actuator stop val */
+    int32 spl_write = 0;
     fprintf(stderr, "closing initialised\n");
     /* free buffers */
     free(var_thahup->var_v0_arr);
@@ -811,7 +796,7 @@ int thahup_stop(thahup* obj)
 
     /* lock mutex */
 #if defined (WIN32) || defined (_WIN32)
-    WaitForSingleObject(mutex, 500);
+    WaitForSingleObject(mutex, INFINITE);
 #else
     pthread_mutex_lock(&mutex);
 #endif
@@ -828,16 +813,34 @@ int thahup_stop(thahup* obj)
 	}
 #if defined (WIN32) || defined (_WIN32)
    ReleaseMutex(mutex);
+
+   /* Call to terminate thread */
+   TerminateThread(thread, 0);
 #else
     pthread_mutex_unlock(&mutex);
 #endif
 
+    /* stop actuator */
+    if(ERR_CHECK(NIWriteAnalogArrayF64(var_thahup->var_outask,
+				       1,
+				       0,
+				       10.0,
+				       DAQmx_Val_GroupByChannel,
+				       &var_act_st_val,
+				       &spl_write,
+				       NULL)))
+	printf("%s\n","actuator not stopped");
+
+    /* stop task */
+    ERR_CHECK(NIStopTask(var_thahup->var_outask));
+    ERR_CHECK(NIStopTask(var_thahup->var_intask));
     /* wait until thread finishes if test in progress */
 #if defined (WIN32) || defined (_WIN32)
     if(start_test)
 	{
 	    WaitForSingleObject(thread, INFINITE);
 	    CloseHandle(thread);
+	    
 	}	
 #else
     if(start_test)
