@@ -31,6 +31,7 @@
 #define THOR_ACTUATOR_PST "\rACTUATOR: ======= %.2f =======\r"
 #define THOR_MSG_BUFFER_SZ 2048							/* main buffer size */
 #define THOR_OPT_MSG_BUFFER_SZ 64						/* optional buffer size */
+#define THOR_RESULT_BUFF_SZ 8							/* result buffer size */
 
 #define THOR_WAIT_TIME 500							/* waiting time for the main loop */
 #define THOR_WAIT_TIME_UNIX_CORRECTION 1000					/* correction for unix */
@@ -48,6 +49,7 @@ static char _thor_msg_buff[THOR_MSG_BUFFER_SZ];					/* main message buffer */
 static char _thor_optmsg_buff[THOR_OPT_MSG_BUFFER_SZ];				/* optional buffer size */
 
 static double _thor_act_pos = THOR_ACT_FLOOR;					/* actuator percentage */
+static double _thor_result_buffer[THOR_OPT_MSG_BUFFER_SZ];
 
 static FILE* _thor_result_fp = NULL;						/* result file pointer */
 static thahup* thahup_obj = NULL;						/* AHU object */
@@ -56,12 +58,13 @@ static thahup* thahup_obj = NULL;						/* AHU object */
 static unsigned int _thor_msg_cnt = 0;						/* message counter */
 
 /* Control methods */
+static int _thor_init_var(void);
 static int _thor_ahu_init(void);
 static int _thor_update_msg_buff(char* buff, char* opts);
 static int _thor_adjust_act(double val);
 inline __attribute__ ((always_inline)) static int _thor_replace_newline(char* buff);
-    
-	
+
+
 /* thread function for win32 */
 #if defined (WIN32) || defined (_WIN32)
 DWORD WINAPI _thor_key_handler(LPVOID obj);
@@ -79,12 +82,11 @@ int main(int argc, char** argv)
     t.tv_sec = 0;
     t.tv_nsec = THOR_WAIT_TIME * THOR_WAIT_TIME_UNIX_CORRECTION;
 #endif
-    /* initialise message buffer */
-    memset((void*) _thor_msg_buff, 0, THOR_MSG_BUFFER_SZ);
-    
+
+    /* initialise variables */
+    _thor_init_var();
     _thor_ahu_init();
 
-    
     /* create thread for updating stdout */
 #if defined (WIN32) || defined (_WIN32)
     /* intialise mutex */
@@ -94,7 +96,7 @@ int main(int argc, char** argv)
 	    fprintf(stderr, "CreateMutex error\n");
 	    return 1;
 	}
-    
+
     _thhandle = CreateThread(NULL, 0, _thor_key_handler, NULL, 0, NULL);
     /* exit and clean up if failes */
     if(_thhandle == NULL)
@@ -130,13 +132,24 @@ int main(int argc, char** argv)
     /* delete ahu program */
     thahup_delete();
     thahup_obj = NULL;
-    
+
     /* wait for thread to closed */
 #if defined (WIN32) || defined (_WIN32)
     WaitForSingleObject(_thhandle, INFINITE);
     CloseHandle(_thhandle);
     CloseHandle(_thor_mutex);
 #endif
+    return 0;
+}
+
+/* initialise variables */
+static int _thor_init_var(void)
+{
+    int i;
+    /* initialise message buffer */
+    memset((void*) _thor_msg_buff, 0, THOR_MSG_BUFFER_SZ);
+    for(i=0; i<THOR_RESULT_BUFF_SZ; i++)
+	_thor_result_buffer[i] = 0.0;
     return 0;
 }
 
@@ -150,27 +163,27 @@ static int _thor_update_msg_buff(char* buff, char* opts)
     if(opts != NULL)
 	{
 	    sprintf(buff, THOR_MAIN_OPTMSG_FORMAT,
-		    0.0,								/* DP 1 */
-		    0.0,								/* DP 2 */
-		    0.0,								/* DP 3 */
-		    0.0,								/* DP 4 */
-		    0.0,								/* static */
-		    0.0,								/* velocity */
-		    0.0,								/* volume flow */
-		    0.0,								/* temp */
+		    _thor_result_buffer[THAHUP_RESULT_BUFF_DP1_IX],			/* DP 1 */
+		    _thor_result_buffer[THAHUP_RESULT_BUFF_DP2_IX],			/* DP 2 */
+		    _thor_result_buffer[THAHUP_RESULT_BUFF_DP3_IX],			/* DP 3 */
+		    _thor_result_buffer[THAHUP_RESULT_BUFF_DP4_IX],			/* DP 4 */
+		    _thor_result_buffer[THAHUP_RESULT_BUFF_ST_IX],			/* static */
+		    _thor_result_buffer[THAHUP_RESULT_BUFF_VEL_IX],			/* velocity */
+		    _thor_result_buffer[THAHUP_RESULT_BUFF_VOL_IX],			/* volume flow */
+		    _thor_result_buffer[THAHUP_RESULT_BUFF_TMP_IX],			/* temp */		    
 		    opts);
 	}
     else
 	{
 	    sprintf(buff, THOR_MAIN_MSG_FORMAT,
-		    0.0,								/* DP 1 */
-		    0.0,								/* DP 2 */
-		    0.0,								/* DP 3 */
-		    0.0,								/* DP 4 */
-		    0.0,								/* static */
-		    0.0,								/* velocity */
-		    0.0,								/* volume flow */
-		    0.0);								/* temp */
+		    _thor_result_buffer[THAHUP_RESULT_BUFF_DP1_IX],			/* DP 1 */
+		    _thor_result_buffer[THAHUP_RESULT_BUFF_DP2_IX],			/* DP 2 */
+		    _thor_result_buffer[THAHUP_RESULT_BUFF_DP3_IX],			/* DP 3 */
+		    _thor_result_buffer[THAHUP_RESULT_BUFF_DP4_IX],			/* DP 4 */
+		    _thor_result_buffer[THAHUP_RESULT_BUFF_ST_IX],			/* static */
+		    _thor_result_buffer[THAHUP_RESULT_BUFF_VEL_IX],			/* velocity */
+		    _thor_result_buffer[THAHUP_RESULT_BUFF_VOL_IX],			/* volume flow */
+		    _thor_result_buffer[THAHUP_RESULT_BUFF_TMP_IX]);			/* temp */
 	}
 #if defined (WIN32) || defined (_WIN32)
     ReleaseMutex(_thor_mutex);
@@ -239,9 +252,9 @@ static int _thor_adjust_act(double val)
 	_thor_act_pos += val;
     else if(val< 0 && _thor_act_pos>THOR_ACT_FLOOR+THOR_ACT_DECR)
 	_thor_act_pos += val;
-    
+
     sprintf(_thor_optmsg_buff, THOR_ACTUATOR_PST, _thor_act_pos);
-    _thor_msg_cnt = THOR_MSG_DURATION;    
+    _thor_msg_cnt = THOR_MSG_DURATION;
     _thor_update_msg_buff(_thor_msg_buff, _thor_optmsg_buff);
     return 0;
 }
@@ -291,12 +304,13 @@ static int _thor_ahu_init(void)
 	    thahup_obj->var_stctrl = thahup_man;
 	}
     thahup_set_ductdia(thahup_obj, THOR_DUCT_DIA);
+    thahup_set_result_buffer(thahup_obj, _thor_result_buffer);
      /* set sensor range */
     printf("%s\n","setting sensor range..");
     thgsens_set_range(thahup_obj->var_stsensor,
 		      THOR_STATIC_RNG_MIN,
 		      THOR_STATIC_RNG_MAX);
-    
+
     thgsens_set_range(thahup_obj->var_tmpsensor,
 		      THOR_TEMP_RNG_MIN,
 		      THOR_TEMP_RNG_MAX);

@@ -18,6 +18,15 @@
 #include "thgsens.h"		/* generic sensor */
 #include "thvelsen.h"		/* velocity sensor */
 
+#define THAHUP_RESULT_BUFF_DP1_IX 0
+#define THAHUP_RESULT_BUFF_DP2_IX 1
+#define THAHUP_RESULT_BUFF_DP3_IX 2
+#define THAHUP_RESULT_BUFF_DP4_IX 3
+#define THAHUP_RESULT_BUFF_ST_IX 4
+#define THAHUP_RESULT_BUFF_VEL_IX 5
+#define THAHUP_RESULT_BUFF_VOL_IX 6
+#define THAHUP_RESULT_BUFF_TMP_IX 7
+
 /* object conversion macros */
 #define AHUP_GET_VELOCITYDT(obj) \
     (obj->var_velocity)
@@ -131,6 +140,9 @@ extern "C" {
 
     /* reset all sensor values */
     extern int thahup_reset_sensors(thahup* obj);
+#define thahup_set_result_buffer(obj, val) \
+    obj->var_result_buff = val
+    
 #ifdef __cplusplus
 }
 #endif

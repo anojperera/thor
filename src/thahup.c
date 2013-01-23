@@ -300,13 +300,14 @@ static inline void thahup_write_results()
     /* 	   var_thahup->var_temp_val); */
     if(var_thahup->var_result_buff)
 	{
-	    var_thahup->var_result_buff[0] = val_buff[THAHUP_DP1_IX];
-	    var_thahup->var_result_buff[1] = val_buff[THAHUP_DP2_IX];
-	    var_thahup->var_result_buff[2] = val_buff[THAHUP_DP3_IX];
-	    var_thahup->var_result_buff[3] = val_buff[THAHUP_DP4_IX];
-	    var_thahup->var_result_buff[4] = var_thahup->var_velocity_val;
-	    var_thahup->var_result_buff[5] = var_thahup->var_volflow_val;
-	    var_thahup->var_result_buff[6] = var_thahup->var_temp_val;
+	    var_thahup->var_result_buff[THAHUP_RESULT_BUFF_DP1_IX] = val_buff[THAHUP_DP1_IX];
+	    var_thahup->var_result_buff[THAHUP_RESULT_BUFF_DP2_IX] = val_buff[THAHUP_DP2_IX];
+	    var_thahup->var_result_buff[THAHUP_RESULT_BUFF_DP3_IX] = val_buff[THAHUP_DP3_IX];
+	    var_thahup->var_result_buff[THAHUP_RESULT_BUFF_DP4_IX] = val_buff[THAHUP_DP4_IX];
+	    var_thahup->var_result_buff[THAHUP_RESULT_BUFF_ST_IX] = var_thahup->var_static_val;
+	    var_thahup->var_result_buff[THAHUP_RESULT_BUFF_VEL_IX] = var_thahup->var_velocity_val;
+	    var_thahup->var_result_buff[THAHUP_RESULT_BUFF_VOL_IX] = var_thahup->var_volflow_val;
+	    var_thahup->var_result_buff[THAHUP_RESULT_BUFF_TMP_IX] = var_thahup->var_temp_val;
 	}
 }
 
