@@ -93,5 +93,56 @@ inline __attribute__ ((always_inline)) static double Mean(const double* data, si
     return val / (num <= 0? 1.0 : (double) num);
 }
 
+/* polynomial interpolating function */
+static int thor_interpol(const double* x, const double* y, int n, double* z, double* fz, int m)
+{
+    int i, j, k;
+    double* _tbl, *_coef;
+    double _t;
+
+    /* allocate storage */
+    _tbl = (double*) malloc(sizeof(double)*n);
+    if(_tbl == NULL)
+	return 1;
+    _coef = (double*) calloc(n, sizeof(double));
+    if(_coef == NULL)
+	{
+	    free(_tbl);
+	    return 1;
+	}
+    /* initialise coefficnets */
+    memcpy(_tbl, y, sizeof(double)*n);
+
+    /* work out the coefficients of the interpolating polynomial */
+    _coef[0] = _tbl[0];
+
+    for(k=1; k<n; k++)
+	{
+	    for(i=0; i<n-k; i++)
+		{
+		    j=i+k;
+		    _tbl[i] = (_tbl[i+1] - _tbl[i]) / (x[j] - x[i]);
+		}
+	    _coef[k] = _tbl[0];
+	}
+    free(_tbl);
+
+    /* work out interpolating polynomial specified points */
+    for(k=0; k<m; k++)
+	{
+	    fz[k] = _coef[0];
+	    for(j=1; j<n; j++)
+		{
+		    _t = _coef[j];
+		    for(i=0; i<j; i++)
+			_t = _t * (z[k] - x[i]);
+
+		    _fz[k] += _t;
+		}
+	}
+    free(_coef);
+    return 0;
+}
+
 #endif /* _THORNIFIX_H_ */
 
