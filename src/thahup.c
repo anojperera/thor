@@ -650,6 +650,11 @@ int thahup_initialise(thahup_stopctrl ctrl_st,		/* start control */
     /* initialise semaphore */
     sem_init(&var_sem, 0, 0);
 #endif
+    /* enable all sensors by default */
+    thvelsen_enable_sensor(var_thahup->var_velocity, 0);
+    thvelsen_enable_sensor(var_thahup->var_velocity, 1);
+    thvelsen_enable_sensor(var_thahup->var_velocity, 2);
+    thvelsen_enable_sensor(var_thahup->var_velocity, 3);    
     return 0;
 }
 
