@@ -342,9 +342,6 @@ void* thahup_async_start(void* obj)
 	return NULL;
 #endif
 
-    /* output to screen */
-    printf("Counter\tDP1\tDP2\tDP3\tDP4\tV\tVol\tTmp\n");
-
     /* use software timing */
     while(var_thahup->var_stflg)
 	{
