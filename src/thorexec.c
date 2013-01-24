@@ -25,6 +25,8 @@
 #define THOR_ACT_DECR_CODE 45							/* - */
 #define THOR_PRG_START_CODE 83							/* S */
 #define THOR_PRG_STOP_CODE 115							/* s */
+#define THOR_ACT_INCRF_CODE 42							/* * */
+#define THOR_ACT_DECRF_CODE 47							/* / */
 
 #define THOR_MAIN_MSG_FORMAT "%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\r\r"
 #define THOR_MAIN_OPTMSG_FORMAT "%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\r\r%s\r"
@@ -37,6 +39,7 @@
 #define THOR_WAIT_TIME_UNIX_CORRECTION 1000					/* correction for unix */
 #define THOR_ACT_INCR 5.0
 #define THOR_ACT_DECR -5.0
+#define THOR_ACT_ADJT_FINE 1.0							/* actuator control adjustment */
 #define THOR_ACT_FLOOR 5.0							/* minimum actuator control percentage */
 #define THOR_ACT_CEIL 60.0							/* maximum acturator percentage voltage */
 #define THOR_MSG_DURATION 4							/* message duration */
@@ -237,6 +240,12 @@ DWORD WINAPI _thor_key_handler(LPVOID obj)
 		    thahup_stop(NULL);
 		    _start_flg = 0;
 		    break;
+		case THOR_ACT_INCRF_CODE:
+		    _thor_adjust_act(THOR_ACT_ADJT_FINE);
+		    break;
+		case THOR_ACT_DECRF_CODE:
+		    _thor_adjust_act(-1*THOR_ACT_ADJT_FINE);
+		    break;		    
 		}
 #if defined (WIN32) || defined (_WIN32)
 	    ReleaseMutex(_thor_mutex);
