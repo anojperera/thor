@@ -25,11 +25,14 @@ struct _thgsens
     char* var_ch_name;				/* channel name */
     TaskHandle* var_task;			/* pointer to task */
     thbuff* var_buffval;			/* buffer value */
+    const double* _var_cal_buff_x;		/* calibration buffer x */
+    const double* _var_cal_buff_y;		/* calibration buffer y */
     double var_min;				/* minimum physical dimension */
     double var_max;				/* maximum physical dimension */
     double var_val;				/* sensor return value */
     float64 var_raw;				/* raw voltage value from sensor */
     unsigned int var_termflg;			/* termination flag for data gathering */
+    int _var_calbuff_sz;			/* buffer size */
     gthsen_fptr var_update;			/* update function pointer - if the function
 						 * pointer was assigned, it shall be called
 						 * is used for updating ui */
@@ -76,6 +79,16 @@ extern "C" {
     /* reset value */
     extern inline int thgsens_reset_value(thgsens* obj);
 
+    /* set buffer and buffer size */
+    inline __attribute__ ((always_inline)) static int thgsens_set_calibration_buffers(thgsens* obj, const double* x, const double* y, int n)
+    {
+	if(obj == NULL)
+	    return 1;
+	obj->_var_cal_buff_x = x;
+	obj->_var_cal_buff_y = y;
+	obj->_var_calbuff_sz = n;
+	return 0;
+    }
 #ifdef __cplusplus
 }
 #endif
