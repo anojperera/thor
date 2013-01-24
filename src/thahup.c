@@ -47,6 +47,7 @@ static thahup* var_thahup = NULL;			/* ahu test object */
 #define THAHUP_SAMPLES_PERSECOND 8			/* samples read second */
 #define THAHUP_UPDATE_RATE 3
 #define THAHUP_MIN_FEEDBACK_VOLT 2.1			/* minimum feedback voltage */
+#define THAHUP_ACT_START_VOLTAGE 10.0			/* actuator starting voltage */
 
 #define THAHUP_CHECK_VSENSOR(obj) \
     obj? (obj->var_flg? obj->var_val : 0.0) : 0.0
@@ -74,8 +75,6 @@ static sem_t var_sem;
 
 /* start test flag */
 static int start_test = 0;
-
-
 
 static struct thxy* var_thxy = NULL;
 static theq* var_theq = NULL;
@@ -346,13 +345,11 @@ void* thahup_async_start(void* obj)
     while(var_thahup->var_stflg)
 	{
 	    /* check control option */
-	    if(var_thahup->var_calflg == 0)
-		var_thahup->var_actsignal = 0.0;
-	    else if(var_thahup->var_stctrl == thahup_auto)
+	    if(var_thahup->var_stctrl == thahup_auto)
 		{
 		    /* comment */
 		    printf("pid control\n");
-		    var_thahup->var_actsignal =
+		    var_thahup->var_actsignal[0] =
 			var_thahup->var_actout[counter];
 
 		    /* reset counter if exceed limit */
@@ -366,7 +363,7 @@ void* thahup_async_start(void* obj)
 		    thpid_pid_control(&var_thpid,
 				      var_thahup->var_stopval,
 				      var_thahup->var_static_val,
-				      &var_thahup->var_actsignal);
+				      &var_thahup->var_actsignal[0]);
 				      
 		}
 
@@ -376,7 +373,7 @@ void* thahup_async_start(void* obj)
 					       0,
 					       10.0,
 					       DAQmx_Val_GroupByChannel,
-					       (float64*) &var_thahup->var_actsignal,
+					       var_thahup->var_actsignal,
 					       &spl_write,
 					       NULL)))
 		break;
@@ -458,7 +455,7 @@ int thahup_initialise(thahup_stopctrl ctrl_st,		/* start control */
     var_thahup->var_fp = fp;
     var_thahup->var_ductdia = 0.0;
     var_thahup->var_actout = NULL;
-    var_thahup->var_actsignal = 0.0;
+    var_thahup->var_actsignal[0] = THAHUP_ACT_START_VOLTAGE;
     var_thahup->var_stopval = 0.0;
 
     var_thahup->var_volflow_val = 0.0;
@@ -797,7 +794,7 @@ int thahup_start(thahup* obj)
 /* stop the test */
 int thahup_stop(thahup* obj)
 {
-    float64 var_act_st_val = 0.0;	/* actuator stop val */
+    float64 var_act_st_val[1] = {10.0};	/* actuator stop val */
     int32 spl_write = 0;
     fprintf(stderr, "closing initialised\n");
     /* free buffers */
@@ -841,7 +838,7 @@ int thahup_stop(thahup* obj)
 				       0,
 				       10.0,
 				       DAQmx_Val_GroupByChannel,
-				       &var_act_st_val,
+				       var_act_st_val,
 				       &spl_write,
 				       NULL)))
 	printf("%s\n","actuator not stopped");
@@ -876,28 +873,26 @@ int thahup_stop(thahup* obj)
 /* set actuator control voltage */
 int thahup_set_actctrl_volt(double percen)
 {
-    int spl_write;
+    int32 spl_write;
     if(percen < 0 || percen > 100 || !var_thahup)
 	return 1;
-
-    /* lock mutex */
-    printf("%s\n","setting voltage");
 #if defined (WIN32) || defined (_WIN32)
     WaitForSingleObject(mutex, INFINITE);
 #else
     pthread_mutex_lock(&mutex);
 #endif
-    var_thahup->var_actsignal = 9.95 * percen / 100;
+    var_thahup->var_actsignal[0] = 9.95 * (100-percen) / 100;
 
     /* write to out channel */
-    if(ERR_CHECK(NIWriteAnalogArrayF64(var_thahup->var_outask,
+    ERR_CHECK(NIWriteAnalogArrayF64(var_thahup->var_outask,
 				       1,
 				       0,
 				       10.0,
 				       DAQmx_Val_GroupByChannel,
-				       (float64*) &var_thahup->var_actsignal,
+				       var_thahup->var_actsignal,
 				       &spl_write,
-				       NULL)))    
+				    NULL));
+
 #if defined (WIN32) || defined (_WIN32)
     ReleaseMutex(mutex);
 #else
@@ -910,7 +905,7 @@ int thahup_set_actctrl_volt(double percen)
 /* reset sensors */
 int thahup_reset_sensors(thahup* obj)
 {
-    var_thahup->var_actsignal = 0.0;
+    var_thahup->var_actsignal[0] = THAHUP_ACT_START_VOLTAGE;
     var_thahup->var_act_fd_val = 0.0;
 
     thgsens_reset_value(var_thahup->var_velocity->var_v1);

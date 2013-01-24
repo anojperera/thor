@@ -65,7 +65,7 @@ struct _thahup
     double* var_s_arr;			/* array for smoothing static */
     double* var_t_arr;			/* array for smoothing temperature */
     double* var_result_buff;		/* result buffer to be populated */
-    double var_actsignal;		/* actuator control signal */
+    float64 var_actsignal[1];		/* actuator control signal */
     double var_stopval;			/* value to idle test */
     double var_volflow_val;		/* volume flow */
     double var_velocity_val;		/* velocity */
