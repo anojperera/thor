@@ -6,6 +6,8 @@
 #include <string.h>
 #include "thvelsen.h"
 
+#define THVELSEN_GMIN 0.0
+#define THVELSEN_GMAX 1600.0
 #define THVELSEN_AIR_DENSITY 1.2
 #define THVELSEN_VELOCITY(val)						\
     (val<0.0? 0.0 : pow(((2 * val) / THVELSEN_AIR_DENSITY), 0.5))
@@ -22,7 +24,7 @@ static const double _v2_cal_x[] = THORNIFIX_S2_X;
 static const double _v2_cal_y[] = THORNIFIX_S2_Y;
 
 static const double _v3_cal_x[] = THORNIFIX_S3_X;
-static const doulbe _v3_cal_y[] = THORNIFIX_S3_Y;
+static const double _v3_cal_y[] = THORNIFIX_S3_Y;
 
 static const double _v4_cal_x[] = THORNIFIX_S4_X;
 static const double _v4_cal_y[] = THORNIFIX_S4_Y;
@@ -59,17 +61,13 @@ int thvelsen_new(thvelsen** obj,
     (*obj)->var_v3_flg = 0;
     (*obj)->var_v4_flg = 0;
 
-    (*obj)->var_gmin = 0.0;
-    (*obj)->var_gmax = 0.0;
+    (*obj)->var_gmin = THVELSEN_GMIN;
+    (*obj)->var_gmax = THVELSEN_GMAX;
 
     (*obj)->var_ch1 = NULL;
     (*obj)->var_ch2 = NULL;
     (*obj)->var_ch3 = NULL;
     (*obj)->var_ch4 = NULL;
-
-    (*obj)->_var_cal_buff_x = NULL;
-    (*obj)->_var_cal_buff_y = NULL;
-    (*obj)->_var_calbuff_sz = 0;
 
     (*obj)->var_sobj = data;
 
@@ -123,9 +121,6 @@ void thvelsen_delete(thvelsen** obj)
     (*obj)->var_fptr_s2 = NULL;
     (*obj)->var_fptr_s3 = NULL;
     (*obj)->var_fptr_s4 = NULL;
-
-    (*obj)->_var_cal_buff_x = NULL;
-    (*obj)->_var_cal_buff_y = NULL;    
 
     free(*obj);
     *obj = NULL;

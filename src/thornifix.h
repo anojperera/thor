@@ -5,6 +5,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <math.h>
 
 #if defined (WIN32) || defined (_WIN32)
@@ -42,7 +43,7 @@
 #define THOR_BUFF_SZ 2048
 
 /* pressure sensor calibration factors */
-#define THORNIFIX_S1_X {0.0101, 2.4725, 4.9778, 7.4767 9.9998}			/* INO 167 */
+#define THORNIFIX_S1_X {0.0101, 2.4725, 4.9778, 7.4767, 9.9998}			/* INO 167 */
 #define THORNIFIX_S1_Y {0.10, -0.21, -0.25, -0.24, -0.16}			/* INO 167 */
 
 #define THORNIFIX_S2_X {0.0103, 2.5074, 5.0248, 7.5286, 10.0297}		/* INO 168 */
@@ -153,7 +154,7 @@ static int thor_interpol(const double* x, const double* y, int n, double* z, dou
 		    for(i=0; i<j; i++)
 			_t = _t * (z[k] - x[i]);
 
-		    _fz[k] += _t;
+		    fz[k] += _t;
 		}
 	}
     free(_coef);
