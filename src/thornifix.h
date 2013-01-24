@@ -58,12 +58,29 @@
 #define THORNIFIX_ST_X {0.0096, 2.3933, 4.7914, 7.1875, 9.5614}			/* INO 171 */
 #define THORNIFIX_ST_Y {0.10, -0.03, -0.09, -0.20, -0.36}			/* INO 171 */
 #define THORNIFIX_S_CAL_SZ 5
+
+/* velocity sensor calibration correction factors */
+/* Cert No - 1239420006 */
+#define THORNIFIX_P1_X {0.353, 3.337, 13.503, 50.203, 116.407, 220.200, 357.467, 525.033}
+#define THORNIFIX_P1_Y {0.2329, 0.1416, 0.2560, 0.8527, 1.0711, 0.8427, 0.5914, 0.4186}
+
+/* Cert No - 1239420007 */
+#define THORNIFIX_P2_X {0.277, 2.510, 12.107, 46.297, 108.700, 203.133, 319.733, 459.033}
+#define THORNIFIX_P2_Y {0.3205, 0.4546, 0.5079, 1.2158, 1.5401, 1.6001, 1.9156, 2.3403}
+
+/* Cert No - 1239420008 */
+#define THORNIFIX_P3_X {0.263, 2.653, 12.693, 52.127, 119.243, 206.667, 326.067, 470.967}
+#define THORNIFIX_P2_Y {0.3379, 0.3972, 0.4005, 0.6791, 0.9025, 1.4407, 1.6880, 1.9831}
+
+#define THORNIFIX_P4_X {0.28, 2.49, 12.05, 46.55, 109.52, 201.63, 338.43, 497.33}
+#define THORNIFIX_P4_Y {0.3168, 0.4628, 0.5185, 1.1918, 1.4895, 1.6683, 1.2502, 1.2096}
+
 /* Generic callback function */
 typedef unsigned int (*gthor_fptr)(void*, void*);
 typedef unsigned int (*gthor_disb_fptr)(void*, int);
 
 /* error check function */
-static inline int ERR_CHECK(int32 err)
+inline __attribute__ ((always_inline)) static int ERR_CHECK(int32 err)
 {
     static char err_msg[THOR_BUFF_SZ] = {'\0'};
 
