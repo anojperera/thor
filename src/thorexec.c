@@ -35,10 +35,10 @@
 
 #define THOR_WAIT_TIME 500							/* waiting time for the main loop */
 #define THOR_WAIT_TIME_UNIX_CORRECTION 1000					/* correction for unix */
-#define THOR_ACT_INCR 0.5
-#define THOR_ACT_DECR -0.5
-#define THOR_ACT_FLOOR 2.0							/* minimum actuator control percentage */
-#define THOR_ACT_CEIL 9.0							/* maximum acturator percentage voltage */
+#define THOR_ACT_INCR 10.0
+#define THOR_ACT_DECR -10.0
+#define THOR_ACT_FLOOR 25.0							/* minimum actuator control percentage */
+#define THOR_ACT_CEIL 95.0							/* maximum acturator percentage voltage */
 #define THOR_MSG_DURATION 4							/* message duration */
 static unsigned int _init_flg = 0;						/* initialise flag */
 static unsigned int _start_flg = 0;						/* start test flag */

@@ -57,6 +57,10 @@ int thvelsen_new(thvelsen** obj,
     (*obj)->var_ch3 = NULL;
     (*obj)->var_ch4 = NULL;
 
+    (*obj)->_var_cal_buff_x = NULL;
+    (*obj)->_var_cal_buff_y = NULL;
+    (*obj)->_var_calbuff_sz = 0;
+
     (*obj)->var_sobj = data;
 
     (*obj)->var_okflg = 0;
@@ -109,6 +113,9 @@ void thvelsen_delete(thvelsen** obj)
     (*obj)->var_fptr_s2 = NULL;
     (*obj)->var_fptr_s3 = NULL;
     (*obj)->var_fptr_s4 = NULL;
+
+    (*obj)->_var_cal_buff_x = NULL;
+    (*obj)->_var_cal_buff_y = NULL;    
 
     free(*obj);
     *obj = NULL;

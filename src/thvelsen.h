@@ -15,6 +15,7 @@
 #else
 #include <NIDAQmxBase.h>
 #endif
+
 typedef struct _thvelsen thvelsen;
 
 struct _thvelsen
