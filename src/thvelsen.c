@@ -181,6 +181,7 @@ int thvelsen_config_sensor(thvelsen* obj,		/* object */
 		    THVELSET_CPYSTR(&obj->var_ch1, ch_name)
 			obj->var_gmin = min;
 		    obj->var_gmax = max;
+		    thgsens_set_calibration_buffers(obj->var_v1, _v1_cal_x, _v1_cal_y, THORNIFIX_S_CAL_SZ);
 		}
 	    else
 		{
@@ -210,6 +211,7 @@ int thvelsen_config_sensor(thvelsen* obj,		/* object */
 		    THVELSET_CPYSTR(&obj->var_ch1, ch_name);
 		    obj->var_gmin = min;
 		    obj->var_gmax = max;
+		    thgsens_set_calibration_buffers(obj->var_v2, _v2_cal_x, _v2_cal_y, THORNIFIX_S_CAL_SZ);
 		}
 	    else
 		{
@@ -237,6 +239,7 @@ int thvelsen_config_sensor(thvelsen* obj,		/* object */
 		    THVELSET_CPYSTR(&obj->var_ch1, ch_name);
 		    obj->var_gmin = min;
 		    obj->var_gmax = max;
+		    thgsens_set_calibration_buffers(obj->var_v3, _v3_cal_x, _v3_cal_y, THORNIFIX_S_CAL_SZ);
 		}
 	    else
 		{
@@ -264,6 +267,7 @@ int thvelsen_config_sensor(thvelsen* obj,		/* object */
 		    THVELSET_CPYSTR(&obj->var_ch1, ch_name);
 		    obj->var_gmin = min;
 		    obj->var_gmax = max;
+		    thgsens_set_calibration_buffers(obj->var_v4, _v4_cal_x, _v4_cal_y, THORNIFIX_S_CAL_SZ);
 		}
 	    else
 		{
