@@ -135,7 +135,7 @@ static int thor_interpol(const double* x, const double* y, int n, double* z, dou
     double _t;
 
     /* allocate storage */
-    _tbl = (double*) malloc(sizeof(double)*n);
+    _tbl = (double*) calloc(n, sizeof(double));
     if(_tbl == NULL)
 	return 1;
     _coef = (double*) calloc(n, sizeof(double));
@@ -145,7 +145,8 @@ static int thor_interpol(const double* x, const double* y, int n, double* z, dou
 	    return 1;
 	}
     /* initialise coefficnets */
-    memcpy(_tbl, y, sizeof(double)*n);
+    for(i=0; i<n; i++)
+	_tbl[i] = y[i];
 
     /* work out the coefficients of the interpolating polynomial */
     _coef[0] = _tbl[0];
