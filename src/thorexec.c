@@ -256,6 +256,7 @@ static int _thor_adjust_act(double val)
     sprintf(_thor_optmsg_buff, THOR_ACTUATOR_PST, _thor_act_pos);
     _thor_msg_cnt = THOR_MSG_DURATION;
     _thor_update_msg_buff(_thor_msg_buff, _thor_optmsg_buff);
+    thahup_set_actctrl_volt(_thor_act_pos);
     return 0;
 }
 

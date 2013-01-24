@@ -15,7 +15,17 @@
     (*ch_ptr) = (char*) malloc(sizeof(char) * (strlen(channel_name) + 1)); \
      strcpy(*ch_ptr, channel_name);
 
+static const double _v1_cal_x[] = THORNIFIX_S1_X;
+static const double _v1_cal_y[] = THORNIFIX_S1_Y;
 
+static const double _v2_cal_x[] = THORNIFIX_S2_X;
+static const double _v2_cal_y[] = THORNIFIX_S2_Y;
+
+static const double _v3_cal_x[] = THORNIFIX_S3_X;
+static const doulbe _v3_cal_y[] = THORNIFIX_S3_Y;
+
+static const double _v4_cal_x[] = THORNIFIX_S4_X;
+static const double _v4_cal_y[] = THORNIFIX_S4_Y;
 /* Constructor */
 int thvelsen_new(thvelsen** obj,
 		 TaskHandle* task,		/* task */
@@ -182,7 +192,9 @@ int thvelsen_config_sensor(thvelsen* obj,		/* object */
 		    printf("%s\n","unable to create velocity sensor 1");
 		    obj->var_okflg = 0;
 		}
-	    
+
+	    /* set calibration */
+
 	    break;
 
 	case 1:

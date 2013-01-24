@@ -41,6 +41,22 @@
 
 #define THOR_BUFF_SZ 2048
 
+/* pressure sensor calibration factors */
+#define THORNIFIX_S1_X {0.0101, 2.4725, 4.9778, 7.4767 9.9998}			/* INO 167 */
+#define THORNIFIX_S1_Y {0.10, -0.21, -0.25, -0.24, -0.16}			/* INO 167 */
+
+#define THORNIFIX_S2_X {0.0103, 2.5074, 5.0248, 7.5286, 10.0297}		/* INO 168 */
+#define THORNIFIX_S2_Y {0.10, 0.07, 0.19, 0.25, 0.22}				/* INO 168 */
+
+#define THORNIFIX_S3_X {0.0082, 2.4855, 4.9896, 7.4799, 9.9921}			/* INO 169 */
+#define THORNIFIX_S3_Y {0.08, -0.14, -0.21, -0.21, -0.24}			/* INO 169 */
+
+#define THORNIFIX_S4_X {0.0095, 2.4868, 5.0015, 7.5009, 10.0011}		/* INO 170 */
+#define THORNIFIX_S4_Y {0.10, -0.08, -0.09, -0.07, -0.06}			/* INO 170 */
+
+#define THORNIFIX_ST_X {0.0096, 2.3933, 4.7914, 7.1875, 9.5614}			/* INO 171 */
+#define THORNIFIX_ST_Y {0.10, -0.03, -0.09, -0.20, -0.36}			/* INO 171 */
+#define THORNIFIX_S_CAL_SZ 5
 /* Generic callback function */
 typedef unsigned int (*gthor_fptr)(void*, void*);
 typedef unsigned int (*gthor_disb_fptr)(void*, int);
@@ -49,7 +65,7 @@ typedef unsigned int (*gthor_disb_fptr)(void*, int);
 static inline int ERR_CHECK(int32 err)
 {
     static char err_msg[THOR_BUFF_SZ] = {'\0'};
-    
+
     /* get error message */
     if(err)
 	{
@@ -63,18 +79,18 @@ static inline int ERR_CHECK(int32 err)
 	}
     else
 	return 0;
-    
+
 }
 
 inline __attribute__ ((always_inline)) static double Round(double val, unsigned int places)	/* rounds a number */
 {
     double off = pow(10, places);
-	
+
     double x = val * off;
     double b = 0;
     double i_part = 0;
-	
-	
+
+
     if(modf(x, &i_part) >= 0.5)
 	b = (x>=i_part? ceil(x) : floor(x));
     else
