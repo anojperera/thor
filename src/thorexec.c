@@ -110,7 +110,7 @@ int main(int argc, char** argv)
      * Main loop for receving input. Continuously scans for input and takes
      * action as defined.
      **/
-    printf("DP1\tDP2\tDP3\tDP4\tVel\tVol\tStatic\tTemp\n");
+    printf("DP1\tDP2\tDP3\tDP4\tStatic\tVel\tVol\tTemp\n");
     while(_quit_flg)
 	{
 	    /* call to update the message buffer */
