@@ -230,7 +230,7 @@ static inline void thahup_set_values()
     /* get velocity */
     var_thahup->var_velocity_val =
 	thvelsen_get_velocity(var_thahup->var_velocity);
-
+    
     /* temperature */
     var_thahup->var_temp_val =
 	thgsens_get_value(var_thahup->var_tmpsensor);
@@ -876,6 +876,7 @@ int thahup_stop(thahup* obj)
 /* set actuator control voltage */
 int thahup_set_actctrl_volt(double percen)
 {
+    int spl_write;
     if(percen < 0 || percen > 100 || !var_thahup)
 	return 1;
 
@@ -887,6 +888,16 @@ int thahup_set_actctrl_volt(double percen)
     pthread_mutex_lock(&mutex);
 #endif
     var_thahup->var_actsignal = 9.95 * percen / 100;
+
+    /* write to out channel */
+    if(ERR_CHECK(NIWriteAnalogArrayF64(var_thahup->var_outask,
+				       1,
+				       0,
+				       10.0,
+				       DAQmx_Val_GroupByChannel,
+				       (float64*) &var_thahup->var_actsignal,
+				       &spl_write,
+				       NULL)))    
 #if defined (WIN32) || defined (_WIN32)
     ReleaseMutex(mutex);
 #else
