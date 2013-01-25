@@ -72,8 +72,10 @@
 #define THORNIFIX_P3_X {0.263, 2.653, 12.693, 52.127, 119.243, 206.667, 326.067, 470.967}
 #define THORNIFIX_P3_Y {0.3379, 0.3972, 0.4005, 0.6791, 0.9025, 1.4407, 1.6880, 1.9831}
 
+/* Cert No - 1239420009 */
 #define THORNIFIX_P4_X {0.28, 2.49, 12.05, 46.55, 109.52, 201.63, 338.43, 497.33}
 #define THORNIFIX_P4_Y {0.3168, 0.4628, 0.5185, 1.1918, 1.4895, 1.6683, 1.2502, 1.2096}
+#define THORNIFIX_P_CAL_SZ 8
 
 /* Generic callback function */
 typedef unsigned int (*gthor_fptr)(void*, void*);
