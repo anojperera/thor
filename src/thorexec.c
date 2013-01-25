@@ -35,7 +35,7 @@
 #define THOR_OPT_MSG_BUFFER_SZ 64						/* optional buffer size */
 #define THOR_RESULT_BUFF_SZ 8							/* result buffer size */
 
-#define THOR_WAIT_TIME 3000							/* waiting time for the main loop */
+#define THOR_WAIT_TIME 500							/* waiting time for the main loop */
 #define THOR_WAIT_TIME_UNIX_CORRECTION 1000					/* correction for unix */
 #define THOR_ACT_INCR 5.0
 #define THOR_ACT_DECR -5.0
@@ -113,57 +113,19 @@ int main(int argc, char** argv)
      * Main loop for receving input. Continuously scans for input and takes
      * action as defined.
      **/
-    while(1)
+    while(_quit_flg)
 	{
+	    if(_thor_msg_cnt == 0)
+		_thor_update_msg_buff(_thor_msg_buff, NULL);
+	    fflush(stdout);
+	    fprintf(stdout, "%s\r", _thor_msg_buff);
 #if defined (WIN32) || defined (_WIN32)
-	    _ctrl_ix = _getch();
+	    Sleep(THOR_WAIT_TIME);
 #else
-	    _ctrl_ix = getchar();
+	    nanosleep(&t, NULL);
 #endif
-	    /* flush input buffer */
-	    fflush(stdin);
-	    if(_ctrl_ix == THOR_QUIT_CODE1 || _ctrl_ix == THOR_QUIT_CODE2)
-		{
-	    /* lock mutex */
-#if defined (WIN32) || defined (_WIN32)
-	    	WaitForSingleObject(_thor_mutex, INFINITE);
-#endif
-	    	_quit_flg = 0;
-#if defined (WIN32) || defined (_WIN32)
-	    	ReleaseMutex(_thor_mutex);
-#endif
-	    	break;
-		}
-
-#if defined (WIN32) || defined (_WIN32)
-	    WaitForSingleObject(_thor_mutex, INFINITE);
-#endif
-	    switch(_ctrl_ix)
-		{
- 		case THOR_ACT_INCR_CODE:
-		    _thor_adjust_act(THOR_ACT_INCR);
-		    break;
-		case THOR_ACT_DECR_CODE:
-    		    _thor_adjust_act(THOR_ACT_DECR);
-		    break;
-		case THOR_PRG_START_CODE:
-		    thahup_start(NULL);
-		    _start_flg = 1;
-		    break;
-		case THOR_PRG_STOP_CODE:
-		    thahup_stop(NULL);
-		    _start_flg = 0;
-		    break;
-		case THOR_ACT_INCRF_CODE:
-		    _thor_adjust_act(THOR_ACT_ADJT_FINE);
-		    break;
-		case THOR_ACT_DECRF_CODE:
-		    _thor_adjust_act(-1*THOR_ACT_ADJT_FINE);
-		    break;		    
-		}
-#if defined (WIN32) || defined (_WIN32)
-	    ReleaseMutex(_thor_mutex);
-#endif	    /* call to update the message buffer */
+	    if(_thor_msg_cnt>0)
+		_thor_msg_cnt--;
 	}
 
     if(_start_flg)
@@ -174,7 +136,6 @@ int main(int argc, char** argv)
 
     /* wait for thread to closed */
 #if defined (WIN32) || defined (_WIN32)
-    TerminateThread(_thhandle, 0);
     WaitForSingleObject(_thhandle, INFINITE);
     CloseHandle(_thhandle);
     CloseHandle(_thor_mutex);
@@ -238,17 +199,55 @@ DWORD WINAPI _thor_msg_handler(LPVOID obj)
 {
     while(1)
 	{
-	    if(_thor_msg_cnt == 0)
-		_thor_update_msg_buff(_thor_msg_buff, NULL);
-	    fflush(stdout);
-	    fprintf(stdout, "%s\r", _thor_msg_buff);
 #if defined (WIN32) || defined (_WIN32)
-	    Sleep(THOR_WAIT_TIME);
+	    _ctrl_ix = _getch();
 #else
-	    nanosleep(&t, NULL);
+	    _ctrl_ix = getchar();
 #endif
-	    if(_thor_msg_cnt>0)
-		_thor_msg_cnt--;
+	    /* flush input buffer */
+	    fflush(stdin);
+	    if(_ctrl_ix == THOR_QUIT_CODE1 || _ctrl_ix == THOR_QUIT_CODE2)
+		{
+	    /* lock mutex */
+#if defined (WIN32) || defined (_WIN32)
+	    	WaitForSingleObject(_thor_mutex, INFINITE);
+#endif
+	    	_quit_flg = 0;
+#if defined (WIN32) || defined (_WIN32)
+	    	ReleaseMutex(_thor_mutex);
+#endif
+	    	break;
+		}
+
+#if defined (WIN32) || defined (_WIN32)
+	    WaitForSingleObject(_thor_mutex, INFINITE);
+#endif
+	    switch(_ctrl_ix)
+		{
+ 		case THOR_ACT_INCR_CODE:
+		    _thor_adjust_act(THOR_ACT_INCR);
+		    break;
+		case THOR_ACT_DECR_CODE:
+    		    _thor_adjust_act(THOR_ACT_DECR);
+		    break;
+		case THOR_PRG_START_CODE:
+		    thahup_start(NULL);
+		    _start_flg = 1;
+		    break;
+		case THOR_PRG_STOP_CODE:
+		    thahup_stop(NULL);
+		    _start_flg = 0;
+		    break;
+		case THOR_ACT_INCRF_CODE:
+		    _thor_adjust_act(THOR_ACT_ADJT_FINE);
+		    break;
+		case THOR_ACT_DECRF_CODE:
+		    _thor_adjust_act(-1*THOR_ACT_ADJT_FINE);
+		    break;		    
+		}
+#if defined (WIN32) || defined (_WIN32)
+	    ReleaseMutex(_thor_mutex);
+#endif	    /* call to update the message buffer */
 	}
     return 0;
 }
