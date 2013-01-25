@@ -36,7 +36,7 @@ inline __attribute__ ((always_inline)) static int thgsens_calc_value(thgsens** o
 	(*obj)->var_val = 0.0;
     else
 	{
-	    _g[0] = (*obj)->var_val;
+	    _g[0] = (*obj)->var_raw;
 	    /* if buffers are assigned, call polynomial interpolation to calculate correct value */
 	    if((*obj)->_var_cal_buff_x && (*obj)->_var_cal_buff_y && (*obj)->_var_calbuff_sz && (*obj)->_var_raw_set)
 		{

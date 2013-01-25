@@ -32,6 +32,7 @@ struct _thgsens
     double var_val;				/* sensor return value */
     float64 var_raw;				/* raw voltage value from sensor */
     unsigned int var_termflg;			/* termination flag for data gathering */
+    unsigned int _var_raw_set;			/* flag to indicate raw value set */
     int _var_calbuff_sz;			/* buffer size */
     gthsen_fptr var_update;			/* update function pointer - if the function
 						 * pointer was assigned, it shall be called
@@ -63,6 +64,7 @@ extern "C" {
 	if(!obj)
 	    return 0;
 	obj->var_raw = val;
+	obj->_var_raw_set = 1;
 	return 1;
     }
 
