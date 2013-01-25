@@ -70,7 +70,7 @@
 
 /* Cert No - 1239420008 */
 #define THORNIFIX_P3_X {0.263, 2.653, 12.693, 52.127, 119.243, 206.667, 326.067, 470.967}
-#define THORNIFIX_P2_Y {0.3379, 0.3972, 0.4005, 0.6791, 0.9025, 1.4407, 1.6880, 1.9831}
+#define THORNIFIX_P3_Y {0.3379, 0.3972, 0.4005, 0.6791, 0.9025, 1.4407, 1.6880, 1.9831}
 
 #define THORNIFIX_P4_X {0.28, 2.49, 12.05, 46.55, 109.52, 201.63, 338.43, 497.33}
 #define THORNIFIX_P4_Y {0.3168, 0.4628, 0.5185, 1.1918, 1.4895, 1.6683, 1.2502, 1.2096}
@@ -128,56 +128,7 @@ inline __attribute__ ((always_inline)) static double Mean(const double* data, si
 }
 
 /* polynomial interpolating function */
-static int thor_interpol(const double* x, const double* y, int n, double* z, double* fz, int m)
-{
-    int i, j, k;
-    double* _tbl, *_coef;
-    double _t;
-
-    /* allocate storage */
-    _tbl = (double*) calloc(n, sizeof(double));
-    if(_tbl == NULL)
-	return 1;
-    _coef = (double*) calloc(n, sizeof(double));
-    if(_coef == NULL)
-	{
-	    free(_tbl);
-	    return 1;
-	}
-    /* initialise coefficnets */
-    for(i=0; i<n; i++)
-	_tbl[i] = y[i];
-
-    /* work out the coefficients of the interpolating polynomial */
-    _coef[0] = _tbl[0];
-
-    for(k=1; k<n; k++)
-	{
-	    for(i=0; i<n-k; i++)
-		{
-		    j=i+k;
-		    _tbl[i] = (_tbl[i+1] - _tbl[i]) / (x[j] - x[i]);
-		}
-	    _coef[k] = _tbl[0];
-	}
-    free(_tbl);
-
-    /* work out interpolating polynomial specified points */
-    for(k=0; k<m; k++)
-	{
-	    fz[k] = _coef[0];
-	    for(j=1; j<n; j++)
-		{
-		    _t = _coef[j];
-		    for(i=0; i<j; i++)
-			_t = _t * (z[k] - x[i]);
-
-		    fz[k] += _t;
-		}
-	}
-    free(_coef);
-    return 0;
-}
+int thor_interpol(const double* x, const double* y, int n, double* z, double* fz, int m);
 
 #endif /* _THORNIFIX_H_ */
 
