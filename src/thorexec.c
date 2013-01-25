@@ -35,7 +35,7 @@
 #define THOR_OPT_MSG_BUFFER_SZ 64						/* optional buffer size */
 #define THOR_RESULT_BUFF_SZ 8							/* result buffer size */
 
-#define THOR_WAIT_TIME 500							/* waiting time for the main loop */
+#define THOR_WAIT_TIME 3000							/* waiting time for the main loop */
 #define THOR_WAIT_TIME_UNIX_CORRECTION 1000					/* correction for unix */
 #define THOR_ACT_INCR 5.0
 #define THOR_ACT_DECR -5.0
