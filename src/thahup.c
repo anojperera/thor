@@ -49,7 +49,7 @@ static thahup* var_thahup = NULL;			/* ahu test object */
 #define THAHUP_MIN_FEEDBACK_VOLT 2.1			/* minimum feedback voltage */
 #define THAHUP_ACT_START_VOLTAGE 10.0			/* actuator starting voltage */
 
-#define THAHUP_CHECK_VSENSOR(obj) \
+#define THAHUP_CHECK_VSENSOR(obj)			\
     obj? (obj->var_flg? obj->var_val : 0.0) : 0.0
 
 /* static char err_msg[THAHUP_BUFF_SZ]; */
@@ -82,13 +82,13 @@ static struct thpid var_thpid;
 
 /* Function declarations for continuous reading */
 static int32 CVICALLBACK EveryNCallback(TaskHandle taskHandle,
-				 int32 everyNsamplesEventType,
-				 uInt32 nSamples,
-				 void *callbackData);
+					int32 everyNsamplesEventType,
+					uInt32 nSamples,
+					void *callbackData);
 
 static int32 CVICALLBACK DoneCallback(TaskHandle taskHandle,
-			       int32 status,
-			       void *callbackData);
+				      int32 status,
+				      void *callbackData);
 
 /* initialise calibration */
 static inline void thahup_linreg()
@@ -173,48 +173,48 @@ static inline void thahup_set_values()
 
     /* call averaging functions */
     /* set values temperature */
-    var_thahup->var_tmpsensor->var_raw = 
-	Mean(var_thahup->var_t_arr,
-	     (max_flg? THAHUP_SAMPLES_PERSECOND * THAHUP_UPDATE_RATE :
-	      s_counter));
+    thgsens_add_value(var_thahup->var_tmpsensor, 
+		      Mean(var_thahup->var_t_arr,
+			   (max_flg? THAHUP_SAMPLES_PERSECOND * THAHUP_UPDATE_RATE :
+			    s_counter)));
     
     /* set values of velocity sensors */
     if(var_thahup->var_velocity->var_v1->var_flg)
 	{
-	    var_thahup->var_velocity->var_v1->var_raw = 
-		Mean(var_thahup->var_v0_arr,
-		     (max_flg? THAHUP_SAMPLES_PERSECOND * THAHUP_UPDATE_RATE :
-		      s_counter));
+	    thgsens_add_value(var_thahup->var_velocity->var_v1,
+			      Mean(var_thahup->var_v0_arr,
+				   (max_flg? THAHUP_SAMPLES_PERSECOND * THAHUP_UPDATE_RATE :
+				    s_counter)));
 	}
 
     if(var_thahup->var_velocity->var_v2->var_flg)
 	{
-	    var_thahup->var_velocity->var_v2->var_raw =
-		Mean(var_thahup->var_v1_arr,
-		     (max_flg? THAHUP_SAMPLES_PERSECOND * THAHUP_UPDATE_RATE :
-		      s_counter));
+	    thgsens_add_value(var_thahup->var_velocity->var_v2,
+			      Mean(var_thahup->var_v1_arr,
+				   (max_flg? THAHUP_SAMPLES_PERSECOND * THAHUP_UPDATE_RATE :
+				    s_counter)));
 	}
 
     if(var_thahup->var_velocity->var_v3->var_flg)
 	{
-	    var_thahup->var_velocity->var_v3->var_raw =
-		Mean(var_thahup->var_v2_arr,
-		     (max_flg? THAHUP_SAMPLES_PERSECOND * THAHUP_UPDATE_RATE :
-		      s_counter));
+	    thgsens_add_value(var_thahup->var_velocity->var_v3,
+			      Mean(var_thahup->var_v2_arr,
+				   (max_flg? THAHUP_SAMPLES_PERSECOND * THAHUP_UPDATE_RATE :
+				    s_counter)));
 	}
 
     if(var_thahup->var_velocity->var_v4->var_flg)
 	{
-	    var_thahup->var_velocity->var_v4->var_raw =
-		Mean(var_thahup->var_v3_arr,
-		     (max_flg? THAHUP_SAMPLES_PERSECOND * THAHUP_UPDATE_RATE :
-		      s_counter));
+	    thgsens_add_value(var_thahup->var_velocity->var_v4,
+			      Mean(var_thahup->var_v3_arr,
+				   (max_flg? THAHUP_SAMPLES_PERSECOND * THAHUP_UPDATE_RATE :
+				    s_counter)));
 	}
 
-    var_thahup->var_stsensor->var_raw =
-	Mean(var_thahup->var_s_arr,
-	     (max_flg? THAHUP_SAMPLES_PERSECOND * THAHUP_UPDATE_RATE :
-	      s_counter));	
+    thgsens_add_value(var_thahup->var_stsensor,
+		      Mean(var_thahup->var_s_arr,
+			   (max_flg? THAHUP_SAMPLES_PERSECOND * THAHUP_UPDATE_RATE :
+			    s_counter)));	
 
     if(s_counter == 0)
 	{
@@ -315,7 +315,7 @@ static inline void thahup_write_results()
 #if defined (WIN32) || defined (_WIN32)
 DWORD WINAPI thahup_async_start(LPVOID obj)
 #else
-void* thahup_async_start(void* obj)
+    void* thahup_async_start(void* obj)
 #endif    
 {
 
@@ -332,13 +332,13 @@ void* thahup_async_start(void* obj)
 #if defined (WIN32) || defined (_WIN32)
 	return FALSE;
 #else
-	return NULL;
+    return NULL;
 #endif
     if(ERR_CHECK(NIStartTask(var_thahup->var_intask)))
 #if defined (WIN32) || defined (_WIN32)
 	return FALSE;
 #else
-	return NULL;
+    return NULL;
 #endif
 
     /* use software timing */
@@ -379,15 +379,15 @@ void* thahup_async_start(void* obj)
 		break;
 
 	    /* wait for semaphore */
-/* 	    if(var_thahup->var_calflg == 0) */
-/* 		{ */
-/* #if defined (WIN32) || defined (_WIN32) */
-/* 		    WaitForSingleObject(var_sem, INFINITE); */
-/* #else		     */
-/* 		    sem_wait(&var_sem); */
-/* #endif */
-/* 		    thahup_linreg(); */
-/* 		} */
+	    /* 	    if(var_thahup->var_calflg == 0) */
+	    /* 		{ */
+	    /* #if defined (WIN32) || defined (_WIN32) */
+	    /* 		    WaitForSingleObject(var_sem, INFINITE); */
+	    /* #else		     */
+	    /* 		    sem_wait(&var_sem); */
+	    /* #endif */
+	    /* 		    thahup_linreg(); */
+	    /* 		} */
 
 #if defined(WIN32) || defined(_WIN32)
 	    Sleep(500);
@@ -533,7 +533,7 @@ int thahup_initialise(thahup_stopctrl ctrl_st,		/* start control */
 		    sobj))
 	{
 	    printf ("%s\n","error creating static sensor");
-	    	    thgsens_delete(&var_thahup->var_tmpsensor);
+	    thgsens_delete(&var_thahup->var_tmpsensor);
 	    thahup_clear_tasks();
 	    return 1;
 	}
@@ -583,11 +583,11 @@ int thahup_initialise(thahup_stopctrl ctrl_st,		/* start control */
 
     /* Configure timing */
     if(ERR_CHECK(NICfgSampClkTiming(var_thahup->var_intask,
-    				   "OnboardClock",
-    				   THAHUP_SAMPLES_PERSECOND,
-    				   DAQmx_Val_Rising,
-    				   DAQmx_Val_ContSamps,
-    				   1)))
+				    "OnboardClock",
+				    THAHUP_SAMPLES_PERSECOND,
+				    DAQmx_Val_Rising,
+				    DAQmx_Val_ContSamps,
+				    1)))
     	{
     	    thahup_clear_tasks();
     	    return 1;
@@ -757,9 +757,9 @@ int thahup_start(thahup* obj)
     var_thahup->var_v3_arr = (double*) calloc(THAHUP_SAMPLES_PERSECOND * THAHUP_UPDATE_RATE,
 					      sizeof(double));    
     var_thahup->var_s_arr = (double*) calloc(THAHUP_SAMPLES_PERSECOND * THAHUP_UPDATE_RATE,
-					      sizeof(double));
+					     sizeof(double));
     var_thahup->var_t_arr = (double*) calloc(THAHUP_SAMPLES_PERSECOND * THAHUP_UPDATE_RATE,
-					      sizeof(double));    
+					     sizeof(double));    
     /* initialise array values */
     for(i=0;i<(THAHUP_SAMPLES_PERSECOND * THAHUP_UPDATE_RATE);i++)
 	{
@@ -774,11 +774,11 @@ int thahup_start(thahup* obj)
     /* initialise thread attributes */
 #if defined (WIN32) || defined (_WIN32)
     thread = CreateThread(NULL,			/* default security attribute */
-    		     0,				/* use default stack size */
-    		     thahup_async_start,	/* thread function */
-    		     NULL,			/* argument to thread function */
-    		     0,				/* default creation flag */
-    		     &var_thahup->var_thrid);	/* thread id */
+			  0,				/* use default stack size */
+			  thahup_async_start,	/* thread function */
+			  NULL,			/* argument to thread function */
+			  0,				/* default creation flag */
+			  &var_thahup->var_thrid);	/* thread id */
 #else    
     pthread_attr_init(&attr);
     pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
@@ -824,10 +824,10 @@ int thahup_stop(thahup* obj)
 #endif
 	}
 #if defined (WIN32) || defined (_WIN32)
-   ReleaseMutex(mutex);
+    ReleaseMutex(mutex);
 
-   /* Call to terminate thread */
-   TerminateThread(thread, 0);
+    /* Call to terminate thread */
+    TerminateThread(thread, 0);
 #else
     pthread_mutex_unlock(&mutex);
 #endif
@@ -885,12 +885,12 @@ int thahup_set_actctrl_volt(double percen)
 
     /* write to out channel */
     ERR_CHECK(NIWriteAnalogArrayF64(var_thahup->var_outask,
-				       1,
-				       0,
-				       10.0,
-				       DAQmx_Val_GroupByChannel,
-				       var_thahup->var_actsignal,
-				       &spl_write,
+				    1,
+				    0,
+				    10.0,
+				    DAQmx_Val_GroupByChannel,
+				    var_thahup->var_actsignal,
+				    &spl_write,
 				    NULL));
 
 #if defined (WIN32) || defined (_WIN32)

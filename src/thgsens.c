@@ -38,10 +38,11 @@ inline __attribute__ ((always_inline)) static int thgsens_calc_value(thgsens** o
 	{
 	    _g[0] = (*obj)->var_val;
 	    /* if buffers are assigned, call polynomial interpolation to calculate correct value */
-	    if((*obj)->_var_cal_buff_x && (*obj)->_var_cal_buff_y && (*obj)->_var_calbuff_sz)
+	    if((*obj)->_var_cal_buff_x && (*obj)->_var_cal_buff_y && (*obj)->_var_calbuff_sz && (*obj)->_var_raw_set)
 		{
 		    thor_interpol((*obj)->_var_cal_buff_x, (*obj)->_var_cal_buff_y, (*obj)->_var_calbuff_sz, _g, _gx, THGSENS_G_SZ);
 		    (*obj)->var_raw -= _gx[0]/100;
+		    (*obj)->_var_raw_set = 0;
 		}
 	    (*obj)->var_val = (*obj)->var_grad * (double) (*obj)->var_raw +
 		(*obj)->var_intc;
@@ -131,6 +132,7 @@ int thgsens_new(thgsens** obj, const char* ch_name,
     (*obj)->var_intc = 0;
     (*obj)->var_okflg = 0;
     (*obj)->sobj_ptr = data;
+    (*obj)->_var_raw_set = 1;
     (*obj)->var_flg = 0;
 
     thbuff_new(10, &(*obj)->var_buffval);
