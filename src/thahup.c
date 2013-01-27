@@ -80,6 +80,10 @@ static struct thxy* var_thxy = NULL;
 static theq* var_theq = NULL;
 static struct thpid var_thpid;
 
+/* calibration factors */
+static double _var_st_x[] = THORNIFIX_ST_X;
+static double _var_st_y[] = THORNIFIX_ST_Y;
+
 /* Function declarations for continuous reading */
 static int32 CVICALLBACK EveryNCallback(TaskHandle taskHandle,
 					int32 everyNsamplesEventType,
@@ -537,6 +541,7 @@ int thahup_initialise(thahup_stopctrl ctrl_st,		/* start control */
 	    thahup_clear_tasks();
 	    return 1;
 	}
+    thgsens_set_calibration_buffers(var_thahup->var_stsensor, _var_st_x, _var_st_y, THORNIFIX_S_CAL_SZ);
     
     /* create velocity sensor */
     if(!thvelsen_new(&var_thahup->var_velocity,
