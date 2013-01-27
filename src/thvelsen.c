@@ -28,6 +28,19 @@ static const double _v3_cal_y[] = THORNIFIX_S3_Y;
 
 static const double _v4_cal_x[] = THORNIFIX_S4_X;
 static const double _v4_cal_y[] = THORNIFIX_S4_Y;
+
+static const double _v1_pcal_x[] = THORNIFIX_P1_X;
+static const double _v1_pcal_y[] = THORNIFIX_P1_Y;
+
+static const double _v2_pcal_x[] = THORNIFIX_P2_X;
+static const double _v2_pcal_y[] = THORNIFIX_P2_Y;
+
+static const double _v3_pcal_x[] = THORNIFIX_P3_X;
+static const double _v3_pcal_y[] = THORNIFIX_P3_Y;
+
+static const double _v4_pcal_x[] = THORNIFIX_P4_X;
+static const double _v4_pcal_y[] = THORNIFIX_P4_Y;
+
 /* Constructor */
 int thvelsen_new(thvelsen** obj,
 		 TaskHandle* task,		/* task */
@@ -36,7 +49,7 @@ int thvelsen_new(thvelsen** obj,
 {
     if(!obj || !task)
 	return 0;
-    
+
     /* create struct */
     *obj = (thvelsen*) malloc(sizeof(thvelsen));
     if(!(*obj))
@@ -160,7 +173,7 @@ int thvelsen_config_sensor(thvelsen* obj,		/* object */
     /* evaluate range argument */
     if(obj->var_okflg && min==0.0 && max==0.0)
 	rng_flg = 1;
-    
+
     switch(ix)
 	{
 	case 0:
@@ -218,7 +231,7 @@ int thvelsen_config_sensor(thvelsen* obj,		/* object */
 		    printf("%s\n","unable to create velocity sensor 2");
 		    obj->var_okflg = 0;
 		}
-	    
+
 	    break;
 
 	case 2:
@@ -246,7 +259,7 @@ int thvelsen_config_sensor(thvelsen* obj,		/* object */
 		    printf("%s\n","unable to create velocity sensor 3");
 		    obj->var_okflg = 0;
 		}
-	    
+
 	    break;
 
 	default:
@@ -286,7 +299,7 @@ int thvelsen_config_sensor(thvelsen* obj,		/* object */
 	       obj->var_v2->var_okflg)
 		obj->var_okflg = 1;
 	}
-    
+
     return 0;
 }
 
@@ -318,7 +331,7 @@ int thvelsen_disable_sensor(thvelsen* obj,
     /* decrement counter */
     if(obj->var_sen_cnt > 0)
 	obj->var_sen_cnt--;
-    
+
     return 0;
 }
 
@@ -329,28 +342,42 @@ double thvelsen_get_velocity(thvelsen* obj)
 	return 0;
 
     double v=0.0;
+    double _dp[1] = {0.0};
+    double _gx[1] = {0.0};
 
     if(obj->var_v1 && obj->var_v1_flg)
 	{
-	    v += THVELSEN_VELOCITY(thgsens_get_value2(obj->var_v1));	    
+	    _dp[0] = thgsens_get_value2(obj->var_v1);
+	    if(thor_interpol(_v1_pcal_x, _v1_pcal_y, THORNIFIX_P_CAL_SZ, _dp, _gx, 1))
+		_gx[0] = 0.0;
+	    v += THVELSEN_VELOCITY(_dp[0]) + _gx[0];
 	}
 
     if(obj->var_v2 && obj->var_v2_flg)
 	{
-	    v += THVELSEN_VELOCITY(thgsens_get_value2(obj->var_v2));
+	    _dp[0] = thgsens_get_value2(obj->var_v2);
+	    if(thor_interpol(_v2_pcal_x, _v2_pcal_y, THORNIFIX_P_CAL_SZ, _dp, _gx, 1))
+		_gx[0] = 0.0;
+	    v += THVELSEN_VELOCITY(_dp[0]) + _gx[0];
 	}
 
     if(obj->var_v3 && obj->var_v3_flg)
 	{
-	    v += THVELSEN_VELOCITY(thgsens_get_value2(obj->var_v3));
+	    _dp[0] = thgsens_get_value2(obj->var_v3);
+	    if(thor_interpol(_v3_pcal_x, _v3_pcal_y, THORNIFIX_P_CAL_SZ, _dp, _gx, 1))
+		_gx[0] = 0.0;
+	    v += THVELSEN_VELOCITY(_dp[0]) + _gx[0];
 	}
 
     if(obj->var_v4 && obj->var_v4_flg)
 	{
-	    v += THVELSEN_VELOCITY(thgsens_get_value2(obj->var_v4));
+	    _dp[0] = thgsens_get_value2(obj->var_v4);
+	    if(thor_interpol(_v4_pcal_x, _v4_pcal_y, THORNIFIX_P_CAL_SZ, _dp, _gx, 1))
+		_gx[0] = 0.0;
+	    v += THVELSEN_VELOCITY(_dp[0]) + _gx[0];
 	}
-    
-    obj->var_ave_vel = (obj->var_sen_cnt>0? 
+
+    obj->var_ave_vel = (obj->var_sen_cnt>0?
 			(v / (double) (obj->var_sen_cnt)) :
 			v);
 
@@ -358,7 +385,7 @@ double thvelsen_get_velocity(thvelsen* obj)
      * call to update external widget */
     if(obj->var_fptr)
 	obj->var_fptr(obj->var_sobj, &obj->var_ave_vel);
-    
+
     return obj->var_ave_vel;
 }
 
@@ -368,7 +395,7 @@ int thvelsen_enable_sensor(thvelsen* obj,
 {
     if(!obj || ix > 3)
 	return 1;
-
+ 
     switch(ix)
 	{
 	case 0:
