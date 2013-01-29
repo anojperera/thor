@@ -291,16 +291,6 @@ static inline void thahup_write_results()
 		    var_thahup->var_temp_val);
 	}
 
-    /* update screen */
-    /* printf("%i\t%7.2f\t%7.2f\t%7.2f\t%7.2f\t%7.2f\t%7.2f\t%7.2f\n", */
-    /* 	   gcounter, */
-    /* 	   /\* THAHUP_CHECK_VSENSOR(var_thahup->var_velocity->var_v1) *\/val_buff[THAHUP_DP1_IX], */
-    /* 	   /\* THAHUP_CHECK_VSENSOR(var_thahup->var_velocity->var_v2) *\/val_buff[THAHUP_DP2_IX], */
-    /* 	   /\* THAHUP_CHECK_VSENSOR(var_thahup->var_velocity->var_v3) *\/val_buff[THAHUP_DP3_IX], */
-    /* 	   /\* THAHUP_CHECK_VSENSOR(var_thahup->var_velocity->var_v4) *\/val_buff[THAHUP_DP4_IX], */
-    /* 	   var_thahup->var_velocity_val, */
-    /* 	   var_thahup->var_volflow_val, */
-    /* 	   var_thahup->var_temp_val); */
     if(var_thahup->var_result_buff)
 	{
 	    var_thahup->var_result_buff[THAHUP_RESULT_BUFF_DP1_IX] = thgsens_get_value2(var_thahup->var_velocity->var_v1);
