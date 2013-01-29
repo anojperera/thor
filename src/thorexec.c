@@ -19,6 +19,7 @@
 #define THOR_TEMP_RNG_MIN -10.0							/* minimum temperature */
 #define THOR_TEMP_RNG_MAX 40.0							/* maximum temperature */
 
+#define THOR_INIT_PROG 105							/* i */
 #define THOR_QUIT_CODE1 81							/* Q */
 #define THOR_QUIT_CODE2 113							/* q */
 #define THOR_ACT_INCR_CODE 43							/* + */
