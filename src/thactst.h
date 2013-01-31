@@ -33,7 +33,6 @@ int thactst_set_fan_speed(double percen);
 /* Start and stop the test */
 int thactst_start(void);
 int thactst_stop(void);
-
 /* Close actuator */
 int thactst_close_act(void);
 
