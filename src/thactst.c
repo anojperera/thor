@@ -21,9 +21,11 @@
 #define THACTST_MIN_RNG 0.0					/* default minimum range for velocity probes */
 #define THACTST_MAX_RNG 1600.0					/* default maximum range for velocity probes */
 #define THACTST_BUFF_SZ 2048
+#define THACTST_ACT_RATE 1000.0					/* actuator rate */
 #define THACTST_SAMPLES_PERSECOND 8
 #define THACTST_UPDATE_RATE 3
 #define THACTST_MAX_VELOCITY 5.0
+#define THACTST_FAN_SPEED_ADJ 9.98
 
 /* Object implementation */
 struct _thactst
@@ -35,6 +37,8 @@ struct _thactst
     thgsens* var_tmpsensor;					/* temperature sensor */
     thvelsen* var_velocity;					/* velocity sensors */
 
+    unsigned int var_stflg;					/* start flag */
+    unsigned int var_idlflg;					/* idle flag */
     double var_ductdia;						/* duct diameter */
     double var_width;						/* damper width */
     double var_height;						/* damper height */
@@ -45,6 +49,10 @@ struct _thactst
     double var_v_dmp;						/* velocity damper */
     double var_out_v[THACTST_OUT_CHANNELS];			/* output voltage */
     double* var_result_buff;					/* result buffer */
+    double* var_v0_arr;
+    double* var_v1_arr;
+    double* var_st_arr;
+    double* var_tmp_arr;
     FILE* var_fp;						/* file pointer */
 #if defined (WIN32) || defined (_WIN32)
     DWORD var_thid;						/* thread id */
@@ -54,9 +62,12 @@ struct _thactst
 };
 
 /* local variables */
+static unsigned int _g_counter;					/* general counter */
+static unsigned int _s_counter;
 static struct _thactst var_thactst;				/* object */
 static double _var_st_x[] = THORNIFIX_ST_X;
 static double _var_st_y[] = THORNIFIX_ST_Y;
+static double _var_val_buff[THACTST_NUM_INPUT_CHANNELS];	/* read buffer */
 #if defined (WIN32) || defined (_WIN32)
 static HANDLE _mutex;
 static HANDLE _thread;
@@ -79,6 +90,9 @@ static int32 CVICALLBACK _every_n_callback(TaskHandle taskHandle,
 static int32 CVICALLBACK _done_callback(TaskHandle taskHandle,
 					int32 status,
 					void *callbackData);
+static int _thactst_actout_signal();
+
+
 #define THACTST_DELETE_ALL			\
     thgsens_delete(&var_thactst.var_tmpsensor);	\
     thgsens_delete(&var_thactst.var_stsensor);	\
@@ -104,6 +118,8 @@ int thactst_initialise(FILE* fp, thactst* obj, void* sobj)
     var_thactst.var_tmpsensor = NULL;
     var_thactst.var_velocity = NULL;
 
+    var_thactst.var_stflg = 0;
+    var_thactst.var_idlflg = 0;
     var_thactst.var_ductdia = 0.0;
     var_thactst.var_width = 0.0;
     var_thactst.var_height = 0.0;
@@ -286,5 +302,67 @@ int thactst_set_damper_sz(double width, double height)
 int thactst_set_max_velocity(double val)
 {
     var_thactst.var_max_v = val;
+    return 0;
+}
+
+/* set fan speed */
+int thactst_set_fan_speed(double percen)
+{
+#if defined (WIN32) || defined (_WIN32)
+    WaitForSingleObject(_mutex, INFINITE);
+#endif
+    var_thactst.var_out_v[0] = THACTST_FAN_SPEED_ADJ * percen / 100;
+#if defined (WIN32) || defined (_WIN32)
+    ReleaseMutex(_mutex);
+#endif
+    return 0;
+}
+
+/* Start fan test */
+int thactst_start(void)
+{
+    int i;
+    /* check if sensor flags are set */
+    if(!var_thactst.var_stsensor->var_okflg)
+	{
+	    printf("static sensor range not set\n");
+	    return 1;
+	}
+
+    if(!var_thactst.var_tmpsensor->var_okflg)
+	{
+	    printf("temperature sensor not in range\n");
+	    return 1;
+	}
+
+    if(!var_thactst.var_velocity->var_okflg)
+	{
+	    printf("velocity sensor not in range\n");
+	    return 1;
+	}
+    /* create arrays */
+    var_thactst.var_v0_arr = (double*) calloc(THACTST_SAMPLES_PERSECOND * THACTST_UPDATE_RATE, sizeof(double));
+    var_thactst.var_v1_arr = (double*) calloc(THACTST_SAMPLES_PERSECOND * THACTST_UPDATE_RATE, sizeof(double));
+    var_thactst.var_st_arr = (double*) calloc(THACTST_SAMPLES_PERSECOND * THACTST_UPDATE_RATE, sizeof(double));
+    var_thactst.var_tmp_arr = (double*) calloc(THACTST_SAMPLES_PERSECOND * THACTST_UPDATE_RATE, sizeof(double));
+
+    for(i=0; i<(THACTST_SAMPLES_PERSECOND * THACTST_UPDATE_RATE); i++)
+	{
+	    var_thactst.var_v0_arr[i] = 0.0;
+	    var_thactst.var_v1_arr[i] = 0.0;
+	    var_thactst.var_st_arr[i] = 0.0;
+	    var_thactst.var_tmp_arr[i] = 0.0;
+	}
+
+    /* initialise thread attributes */
+#if defined (WIN32) || defined (_WIN32)
+    _thread = CreateThread(NULL,							/* default security attributes */
+			   0,								/* use default stack size */
+			   _thactst_async_start,					/* thread function */
+			   NULL,							/* argument to thread function */
+			   0,								/* default creation flag */
+			   &var_thactst.var_thid);					/* thread id */
+#endif
+
     return 0;
 }
