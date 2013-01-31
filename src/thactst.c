@@ -26,6 +26,8 @@
 #define THACTST_UPDATE_RATE 3
 #define THACTST_MAX_VELOCITY 5.0
 #define THACTST_FAN_SPEED_ADJ 9.98
+#define THACTST_SLEEP_TIME 500
+#define THACTST_MAX_WAIT 9
 
 /* Object implementation */
 struct _thactst
@@ -365,4 +367,62 @@ int thactst_start(void)
 #endif
 
     return 0;
+}
+
+/* stop test */
+int thactst_stop(void)
+{
+    int32 _spl_write = 0;
+    if(!var_thactst.var_stflg)
+	return 0;
+#if defined (WIN32) || defined (_WIN32)
+    WaitForSingleObject(_mutex, INFINITE);
+#endif
+    var_thactst.var_stflg = 0;
+#if defined (WIN32) || defined (_WIN32)
+    ReleaseMutex(_mutex);
+    /* Call to terminate thread */
+    TerminateThread(_thread, 0);
+    CloseHandle(_thread);
+#endif
+
+    /* free memory */
+    free(var_thactst.var_v0_arr);
+    free(var_thactst.var_v1_arr);
+    free(var_thactst.var_st_arr);
+    free(var_thactst.var_tmp_arr);
+
+    /* stop actuator and fan */
+    var_thactst.var_out_v[1] = 0.0;
+
+    _s_counter = 0;
+    while(1)
+	{
+	    /* stop actuator */
+	    if(ERR_CHECK(NIWriteAnalogArrayF64(var_thahup->var_outask,
+					       1,
+					       0,
+					       10.0,
+					       DAQmx_Val_GroupByChannel,
+					       var_thactst.var_out_v,
+					       &spl_write,
+					       NULL)))
+		printf("Unable to stop fan\n");
+	    if(_s_counter > THACTST_MAX_WAIT)
+		break;
+#if defined (WIN32) || defined (_WIN32)
+	    Sleep(THACTST_SLEEP_TIME);
+#endif
+	    _s_counter++;
+	    if(_s_counter > THACTST_MAX_WAIT)
+		var_thactst.var_out_v[0] = 0.0;
+	    printf("waiting for pressure decay..\r");
+	}
+	printf("\nactuator closed\n");
+	/* stop running tasks */
+	ERR_CHECK(NIStopTask(var_thactst.var_outtask));
+	ERR_CHECK(NIStopTask(var_thactst.var_intask));
+
+	printf("test stopped\n");
+	return 0;
 }
