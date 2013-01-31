@@ -3,6 +3,7 @@
 #if defined (WIN32) || defined (_WIN32)
 #include <windows.h>
 #endif
+#include <math.h>
 
 #define THACTST_NUM_OUT_CHANNELS 2				/* output channels */
 #define THACTST_NUM_INPUT_CHANNELS 4				/* input channels */
@@ -47,9 +48,11 @@ struct _thactst
     double var_height;						/* damper height */
     double var_max_v;						/* maximum velocity at damper */
 
+    double var_tmp;						/* temperature */
     double var_st_pre;						/* static pressure */
     double var_v_duct;						/* velocity in duct */
     double var_v_dmp;						/* velocity damper */
+    double var_vol;						/* volume flow */
     double var_out_v[THACTST_OUT_CHANNELS];			/* output voltage */
     double* var_result_buff;					/* result buffer */
     double* var_v0_arr;
@@ -67,6 +70,7 @@ struct _thactst
 /* local variables */
 static unsigned int _g_counter;					/* general counter */
 static unsigned int _s_counter;
+static unsigned int _max_flg;					/* maximum flag for controlling averaging buffers */
 static struct _thactst var_thactst;				/* object */
 static double _var_st_x[] = THORNIFIX_ST_X;
 static double _var_st_y[] = THORNIFIX_ST_Y;
@@ -130,6 +134,8 @@ int thactst_initialise(FILE* fp, thactst* obj, void* sobj)
 
     var_thactst.var_st_pre = 0.0;
     var_thactst.var_v_duct = 0.0;
+    var_thactst.var_v_dmp = 0.0;
+    var_thactst.var_vol = 0.0;
     var_thactst.var_out_v[0] = 0.0;
     var_thactst.var_out_v[1] = 0.0;
     var_thactst.var_result_buff = NULL;
@@ -373,6 +379,7 @@ int thactst_start(void)
 /* stop test */
 int thactst_stop(void)
 {
+    int i;
     int32 _spl_write = 0;
     if(!var_thactst.var_stflg)
 	return 0;
@@ -394,10 +401,10 @@ int thactst_stop(void)
     free(var_thactst.var_tmp_arr);
 
     /* stop actuator and fan */
-#if defined (WIN32) || defined (_WIN32)    
+#if defined (WIN32) || defined (_WIN32)
     var_thactst.var_out_v[1] = 0.0;
 #endif
-    _s_counter = 0;
+    i = 0;
     while(1)
 	{
 	    /* stop actuator */
@@ -410,36 +417,36 @@ int thactst_stop(void)
 					       &spl_write,
 					       NULL)))
 		printf("Unable to stop fan\n");
-	    if(_s_counter > THACTST_MAX_WAIT)
+	    if(i > THACTST_MAX_WAIT)
 		break;
 #if defined (WIN32) || defined (_WIN32)
 	    Sleep(THACTST_SLEEP_TIME);
 #endif
-	    _s_counter++;
-	    if(_s_counter > THACTST_MAX_WAIT)
+	    i++;
+	    if(i > THACTST_MAX_WAIT)
 		var_thactst.var_out_v[1] = THACTST_CLOSE_SOV;
 	    printf("waiting for pressure decay..\r");
 	}
-	printf("\nactuator closed\n");
-	/* stop running tasks */
-	ERR_CHECK(NIStopTask(var_thactst.var_outtask));
-	ERR_CHECK(NIStopTask(var_thactst.var_intask));
+    printf("\nactuator closed\n");
+    /* stop running tasks */
+    ERR_CHECK(NIStopTask(var_thactst.var_outtask));
+    ERR_CHECK(NIStopTask(var_thactst.var_intask));
 
-	printf("test stopped\n");
-	return 0;
+    printf("test stopped\n");
+    return 0;
 }
 
 /* Close actuator */
 int thactst_close_act(void)
 {
     int i =0;
-#if defined (WIN32) || defined (_WIN32)	    
-	    WaitForSingleObject(_mutex, INFINITE);
+#if defined (WIN32) || defined (_WIN32)
+    WaitForSingleObject(_mutex, INFINITE);
 #endif
     var_thactst.var_out_v[1] = THACTST_CLOSE_SOV;
 #if defined(WIN32) || defined (_WIN32)
     ReleaseMutex(_mutex);
-#endif    
+#endif
     while(1)
 	{
 	    if(ERR_CHECK(NIWriteAnalogArrayF64(var_thahup->var_outask,
@@ -461,8 +468,101 @@ int thactst_close_act(void)
 	    var_thactst.var_out_v[1] = 0.0;
 #if defined (WIN32) || defined (_WIN32)
 	    ReleaseMutex(_mutex);
-#endif	    
+#endif
 	    i++;
 	}
     return 0;
+}
+
+/*====================================================================================================*/
+/****************************************** Private Methods *******************************************/
+
+/* Clear Tasks */
+static void _thactst_clear_tasks()
+{
+    ERR_CHECK(NIClearTask(var_thactst.var_outtask));
+    ERR_CHECK(NIClearTask(var_thactst.var_intask));
+    return;
+}
+
+/* assigning values to abstract snesors */
+static void _thactst_set_value()
+{
+    /* wrap in mutex */
+#if defined (WIN32) || defined (_WIN32)
+    WaitForSingleObject(_mutex, INFINITE);
+#endif
+
+    var_thactst.var_tmp_arr[_s_counter] = (_var_val_buff[THACTST_TMP_IX]>0? _var_val_buff[THACTST_TMP_IX] : 0.0);
+    var_thactst.var_st_arr[_s_counter] = (_var_val_buff[THACTST_ST_IX]>0? _var_val_buff[THACTST_ST_IX] : 0.0);
+    var_thactst.var_v1_arr[_s_counter] = (_var_val_buff[THACTST_DP1_IX]>0? _var_val_buff[THACTST_DP1_IX] : 0.0);
+    var_thactst.var_v2_arr[_s_counter] = (_var_val_buff[THAHUP_DP2_IX]>0? _var_val_buff[THAHUP_DP2_IX] : 0.0);
+
+    /* set sensor raw voltages */
+    thgsens_add_value(var_thactst.var_tmpsensor,
+		      Mean(var_thactst.var_tmp_arr,
+			   (_max_flg? THACTST_SAMPLES_PERSECOND * THACTST_UPDATE_RATE : _s_counter)));
+    thgsens_add_value(var_thactst.var_stsensor,
+		      Mean(var_thactst.var_st_arr,
+			   (_max_flg? THACTST_SAMPLES_PERSECOND * THACTST_UPDATE_RATE : _s_counter)));
+    if(var_thactst.var_velocity.var_v1->var_flg)
+	{
+	    thgsens_add_value(var_thactst.var_velocity->var_v1,
+			      Mean(var_thactst.var_v1_arr,
+				   (_max_flg? THACTST_SAMPLES_PERSECOND * THACTST_UPDATE_RATE : _s_counter)));
+	}
+
+    if(var_thactst.var_velocity.var_v2->var_flg)
+	{
+	    thgsens_add_value(var_thactst.var_velocity->var_v2,
+			      Mean(var_thactst.var_v2_arr,
+				   (_max_flg? THACTST_SAMPLES_PERSECOND * THACTST_UPDATE_RATE : _s_counter)));
+	}
+
+    var_thactst.var_tmp = thgsens_get_value2(var_thactst.var_tmpsensor);
+    var_thactst.var_st_pre = thgsens_get_value2(var_thactst.var_stsensor);
+    var_thactst.var_v_duct = thvelsen_get_velocity(var_thactst.var_velocity);
+    if(var_thactst.var_ductdia > 0.0 && var_thactst.var_width > 0.0 && var_thactst.var_height > 0.0)
+	{
+	    var_thactst.var_v_dmp = (var_thactst.var_v_duct * M_PI * (var_thactst.var_ductdia / 2)^2) /
+		(var_thactst.var_width * var_thactst.var_height);
+	    var_thactst.var_vol = (var_thactst.var_v_duct * M_PI * (var_thactst.var_ductdia / 2)^2) / 1000000;
+	}
+
+    /* release mutex */
+#if defined (WIN32) || defined (_WIN32)
+    ReleaseMutex(_mutex);
+#endif
+    return;
+}
+
+/* Write results */
+static void _thactst_write_results()
+{
+    if(_g_counter == 0 && var_thactst.var_fp)
+	fprintf(var_thactst.var_fp, "Item\tTMP\t\ST\tDP1\tDP2\tVol\tV(Dmp)\n");
+    /* check if file pointer was assigned */
+    if(var_thactst.var_fp)
+	{
+	    fprintf(var_thactst.var_fp, "%i\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\n",
+		    _g_counter,									/* counter */
+		    var_thactst.var_tmp,							/* temperature */
+		    var_thactst.var_st_pre,							/* static pressure */
+		    thgsens_get_value2(var_thactst.var_velocity->var_v1),			/* DP1 */
+		    thgsens_get_value2(var_thactst.var_velocity->var_v2),			/* DP2 */
+		    var_thactst.var_vol,							/* Volume flow */
+		    var_thactst.var_v_dmp);							/* Velocity Damper */
+	}
+
+    /* if result buffer was assigned */
+    if(var_thactst.var_result_buff)
+	{
+	    var_thactst.var_result_buff[THACTST_TMP_IX]  = thgsens_get_value2(var_thactst.var_tmpsensor);
+	    var_thactst.var_result_buff[THACTST_ST_IX] = thgsens_get_value2(var_thactst.var_stsensor);
+	    var_thactst.var_result_buff[THACTST_DP1_IX] = thgsens_get_value2(var_thactst.var_velocity->var_v1);
+	    var_thactst.var_result_buff[THACTST_DP2_IX] = thgsens_get_value2(var_thactst.var_velocity->var_v2);
+	    var_thactst.var_result_buff[THACTST_VOL_IX] = var_thactst.var_vol;
+	    var_thactst.var_result_buff[THACTST_V_IX] = var_thactst.var_v_dmp;
+	}
+    return;
 }
