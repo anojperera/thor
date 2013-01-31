@@ -8,6 +8,13 @@
 #include "thgsens.h"		/* generic sensor */
 #include "thvelsen.h"		/* velocity sensor */
 
+#define THACTST_TMP_IX 0
+#define THACTST_ST_IX 1
+#define THACTST_DP1_IX 2
+#define THACTST_DP2_IX 3
+#define THACTST_VOL_IX 4
+#define THACTST_V_IX 5
+
 /* Forward declaration of struct */
 typedef struct _thactst thactst;
 
