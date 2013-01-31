@@ -35,7 +35,7 @@ int thactst_set_damper_sz(double width, double height);
 int thactst_set_max_velocity(double val);
 
 /* Fan speed */
-int thactst_set_fan_speed(double percen);
+int thactst_set_fan_speed(double* percen);
 
 /* Start and stop the test */
 int thactst_start(void);

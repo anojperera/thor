@@ -22,7 +22,7 @@
 #define THACTST_MIN_RNG 0.0					/* default minimum range for velocity probes */
 #define THACTST_MAX_RNG 1600.0					/* default maximum range for velocity probes */
 #define THACTST_BUFF_SZ 2048
-#define THACTST_ACT_RATE 1000.0					/* actuator rate */
+#define THACTST_ACT_RATE 1000					/* actuator rate */
 #define THACTST_SAMPLES_PERSECOND 8
 #define THACTST_UPDATE_RATE 3
 #define THACTST_MAX_VELOCITY 5.0
@@ -54,7 +54,9 @@ struct _thactst
     double var_v_dmp;						/* velocity damper */
     double var_vol;						/* volume flow */
     double var_out_v[THACTST_OUT_CHANNELS];			/* output voltage */
+    double* var_ext_percen;					/* persentage */
     double* var_result_buff;					/* result buffer */
+    double* var_fan_ctrl_buff;
     double* var_v0_arr;
     double* var_v1_arr;
     double* var_st_arr;
@@ -109,6 +111,7 @@ static int _thactst_actout_signal();
 /* Constructor */
 int thactst_initialise(FILE* fp, thactst* obj, void* sobj)
 {
+    int i;
     /* create output task */
     if(ERR_CHECK(NICreateTask("", &var_thactst.var_outtask)))
 	return 1;
@@ -140,6 +143,11 @@ int thactst_initialise(FILE* fp, thactst* obj, void* sobj)
     var_thactst.var_out_v[1] = 0.0;
     var_thactst.var_result_buff = NULL;
     var_thactst.var_fp = NULL;
+    var_thactst.var_ext_percen = NULL;
+
+    var_thactst.var_fan_ctrl_buff = (double*) calloc(THACTST_ACT_RATE, sizeof(double));
+    for(i=0; i<THACTST_ACT_RATE; i++)
+	var_thactst.var_fan_ctrl_buff[i] = 0.0;
 
     /* create fan control channel */
     if(ERR_CHECK(NICreateAOVoltageChan(var_thactst.var_outtask,
@@ -284,6 +292,8 @@ void thactst_delete(void)
     var_thactst.var_tmpsensor = NULL;
     var_thactst.var_velocity = NULL;
     var_thactst.var_result_buff = NULL;
+    var_thactst.var_ext_percen = NULL;    
+    free(var_thactst.var_fan_ctrl_buff);
 
     _thactst_clear_tasks();
 #if defined (WIN32) || defined (_WIN32)
@@ -315,11 +325,13 @@ int thactst_set_max_velocity(double val)
 }
 
 /* set fan speed */
-int thactst_set_fan_speed(double percen)
+int thactst_set_fan_speed(double* percen)
 {
 #if defined (WIN32) || defined (_WIN32)
     WaitForSingleObject(_mutex, INFINITE);
 #endif
+    if(var_thactst.var_ext_percen == NULL)
+	var_thactst.var_ext_percen = percen;
     var_thactst.var_out_v[0] = THACTST_FAN_SPEED_ADJ * percen / 100;
 #if defined (WIN32) || defined (_WIN32)
     ReleaseMutex(_mutex);
@@ -565,4 +577,74 @@ static void _thactst_write_results()
 	    var_thactst.var_result_buff[THACTST_V_IX] = var_thactst.var_v_dmp;
 	}
     return;
+}
+
+#if defined (WIN32) || defined (_WIN32)
+DWORD WINAPI _thactst_async_start(LPVOID obj)
+#else
+    void* _thactst_async_start(void* obj)
+#endif
+{
+    int _counter;
+    int32 _spl_write;
+    _g_counter = 0;
+    _max_flg = 0;
+    var_thactst.var_stflg = 1;
+
+    /* start both tasks */
+    if(ERR_CHECK(NIStartTask(var_thactst.var_outtask)))
+#if defined (WIN32) || defined (_WIN32)
+	return FALSE;
+#else
+    return NULL;
+#endif
+
+    if(ERR_CHECK(NIStartTask(var_thactst.var_intask)))
+	{
+	    NIStopTask(var_thactst.var_outtask);
+#if defined (WIN32) || defined (_WIN32)
+	    return FALSE;
+#else
+	    return NULL;
+#endif
+	}
+
+    /* actuator and fan control voltage */
+    _counter = 0;
+    var_thactst.var_out_v[0] = 0.0;
+    var_thactst.var_out_v[1] = THACTST_OPEN_SOV;
+    /* use software timing */
+    while(var_thactst.var_stflg)
+	{
+	    /* write to out channel */
+	    if(ERR_CHECK(NIWriteAnalogArrayF64(var_thactst.var_outtask,
+					       1,
+					       0,
+					       10.0,
+					       DAQmx_Val_GroupByChannel,
+					       var_thactst.var_out_v,
+					       &_spl_write,
+					       NULL)))
+		break;
+#if defined (WIN32) || defined (_WIN32)
+	    Sleep(THACTST_SLEEP_TIME);
+#endif
+	    _g_counter++;
+	    _thactst_write_results();
+
+	    if(var_thactst.var_v_dmp > var_thactst.var_max_v)
+		continue;
+
+	    _counter++;
+	    if(_counter > THACTST_ACT_RATE)
+		_counter = 0;
+	    var_thactst.var_out_v[0] = var_thactst.var_fan_ctrl_buff[_counter];
+	    *var_thactst.var_ext_percen = 100 * var_thactst.var_fan_ctrl_buff[_counter] / 10;
+	}
+
+#if defined (WIN32) || defined (_WIN32)
+	return FALSE;
+#else
+	return NULL;
+#endif	
 }
