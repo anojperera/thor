@@ -4,6 +4,7 @@
 #include <windows.h>
 #endif
 #include <math.h>
+#include "thactst.h"
 
 #define THACTST_NUM_OUT_CHANNELS 2				/* output channels */
 #define THACTST_NUM_INPUT_CHANNELS 4				/* input channels */
@@ -53,7 +54,7 @@ struct _thactst
     double var_v_duct;						/* velocity in duct */
     double var_v_dmp;						/* velocity damper */
     double var_vol;						/* volume flow */
-    double var_out_v[THACTST_OUT_CHANNELS];			/* output voltage */
+    double var_out_v[THACTST_NUM_OUT_CHANNELS];			/* output voltage */
     double* var_ext_percen;					/* persentage */
     double* var_result_buff;					/* result buffer */
     double* var_fan_ctrl_buff;
@@ -111,13 +112,12 @@ static int _thactst_actout_signal();
 /* Constructor */
 int thactst_initialise(FILE* fp, thactst* obj, void* sobj)
 {
-    int i;
     /* create output task */
     if(ERR_CHECK(NICreateTask("", &var_thactst.var_outtask)))
 	return 1;
 
     /* create input task */
-    if(ERR_CHECK(NIClearTask("", &var_thactst.var_intask)))
+    if(ERR_CHECK(NICreateTask("", &var_thactst.var_intask)))
 	{
 	    _thactst_clear_tasks();
 	    return 1;
@@ -145,10 +145,8 @@ int thactst_initialise(FILE* fp, thactst* obj, void* sobj)
     var_thactst.var_fp = NULL;
     var_thactst.var_ext_percen = NULL;
 
-    var_thactst.var_fan_ctrl_buff = (double*) calloc(THACTST_ACT_RATE, sizeof(double));
-    for(i=0; i<THACTST_ACT_RATE; i++)
-	var_thactst.var_fan_ctrl_buff[i] = 0.0;
-
+    _thactst_actout_signal();
+    
     /* create fan control channel */
     if(ERR_CHECK(NICreateAOVoltageChan(var_thactst.var_outtask,
 				       THACTST_FAN_CTRL_CHANNEL,
@@ -292,9 +290,10 @@ void thactst_delete(void)
     var_thactst.var_tmpsensor = NULL;
     var_thactst.var_velocity = NULL;
     var_thactst.var_result_buff = NULL;
-    var_thactst.var_ext_percen = NULL;    
-    free(var_thactst.var_fan_ctrl_buff);
-
+    var_thactst.var_ext_percen = NULL;
+    if(var_thactst.var_fan_ctrl_buff)
+	free(var_thactst.var_fan_ctrl_buff);
+    var_thactst.var_fan_ctrl_buff = NULL;
     _thactst_clear_tasks();
 #if defined (WIN32) || defined (_WIN32)
     CloseHandle(_mutex);
@@ -332,7 +331,7 @@ int thactst_set_fan_speed(double* percen)
 #endif
     if(var_thactst.var_ext_percen == NULL)
 	var_thactst.var_ext_percen = percen;
-    var_thactst.var_out_v[0] = THACTST_FAN_SPEED_ADJ * percen / 100;
+    var_thactst.var_out_v[0] = THACTST_FAN_SPEED_ADJ * (*percen) / 100;
 #if defined (WIN32) || defined (_WIN32)
     ReleaseMutex(_mutex);
 #endif
@@ -420,13 +419,13 @@ int thactst_stop(void)
     while(1)
 	{
 	    /* stop actuator */
-	    if(ERR_CHECK(NIWriteAnalogArrayF64(var_thahup->var_outask,
+	    if(ERR_CHECK(NIWriteAnalogArrayF64(var_thactst.var_outtask,
 					       1,
 					       0,
 					       10.0,
 					       DAQmx_Val_GroupByChannel,
 					       var_thactst.var_out_v,
-					       &spl_write,
+					       &_spl_write,
 					       NULL)))
 		printf("Unable to stop fan\n");
 	    if(i > THACTST_MAX_WAIT)
@@ -452,6 +451,7 @@ int thactst_stop(void)
 int thactst_close_act(void)
 {
     int i =0;
+    int32 _spl_write;
 #if defined (WIN32) || defined (_WIN32)
     WaitForSingleObject(_mutex, INFINITE);
 #endif
@@ -461,13 +461,13 @@ int thactst_close_act(void)
 #endif
     while(1)
 	{
-	    if(ERR_CHECK(NIWriteAnalogArrayF64(var_thahup->var_outask,
+	    if(ERR_CHECK(NIWriteAnalogArrayF64(var_thactst.var_outtask,
 					       1,
 					       0,
 					       10.0,
 					       DAQmx_Val_GroupByChannel,
 					       var_thactst.var_out_v,
-					       &spl_write,
+					       &_spl_write,
 					       NULL)))
 		printf("Unable to stop damper\n");
 	    if(i>0)
@@ -507,8 +507,8 @@ static void _thactst_set_value()
 
     var_thactst.var_tmp_arr[_s_counter] = (_var_val_buff[THACTST_TMP_IX]>0? _var_val_buff[THACTST_TMP_IX] : 0.0);
     var_thactst.var_st_arr[_s_counter] = (_var_val_buff[THACTST_ST_IX]>0? _var_val_buff[THACTST_ST_IX] : 0.0);
-    var_thactst.var_v1_arr[_s_counter] = (_var_val_buff[THACTST_DP1_IX]>0? _var_val_buff[THACTST_DP1_IX] : 0.0);
-    var_thactst.var_v2_arr[_s_counter] = (_var_val_buff[THAHUP_DP2_IX]>0? _var_val_buff[THAHUP_DP2_IX] : 0.0);
+    var_thactst.var_v0_arr[_s_counter] = (_var_val_buff[THACTST_DP1_IX]>0? _var_val_buff[THACTST_DP1_IX] : 0.0);
+    var_thactst.var_v1_arr[_s_counter] = (_var_val_buff[THACTST_DP2_IX]>0? _var_val_buff[THACTST_DP2_IX] : 0.0);
 
     /* set sensor raw voltages */
     thgsens_add_value(var_thactst.var_tmpsensor,
@@ -517,17 +517,17 @@ static void _thactst_set_value()
     thgsens_add_value(var_thactst.var_stsensor,
 		      Mean(var_thactst.var_st_arr,
 			   (_max_flg? THACTST_SAMPLES_PERSECOND * THACTST_UPDATE_RATE : _s_counter)));
-    if(var_thactst.var_velocity.var_v1->var_flg)
+    if(var_thactst.var_velocity->var_v1->var_flg)
 	{
 	    thgsens_add_value(var_thactst.var_velocity->var_v1,
-			      Mean(var_thactst.var_v1_arr,
+			      Mean(var_thactst.var_v0_arr,
 				   (_max_flg? THACTST_SAMPLES_PERSECOND * THACTST_UPDATE_RATE : _s_counter)));
 	}
 
-    if(var_thactst.var_velocity.var_v2->var_flg)
+    if(var_thactst.var_velocity->var_v2->var_flg)
 	{
 	    thgsens_add_value(var_thactst.var_velocity->var_v2,
-			      Mean(var_thactst.var_v2_arr,
+			      Mean(var_thactst.var_v1_arr,
 				   (_max_flg? THACTST_SAMPLES_PERSECOND * THACTST_UPDATE_RATE : _s_counter)));
 	}
 
@@ -536,9 +536,9 @@ static void _thactst_set_value()
     var_thactst.var_v_duct = thvelsen_get_velocity(var_thactst.var_velocity);
     if(var_thactst.var_ductdia > 0.0 && var_thactst.var_width > 0.0 && var_thactst.var_height > 0.0)
 	{
-	    var_thactst.var_v_dmp = (var_thactst.var_v_duct * M_PI * (var_thactst.var_ductdia / 2)^2) /
+	    var_thactst.var_v_dmp = (var_thactst.var_v_duct * M_PI * pow(var_thactst.var_ductdia / 2,2)) /
 		(var_thactst.var_width * var_thactst.var_height);
-	    var_thactst.var_vol = (var_thactst.var_v_duct * M_PI * (var_thactst.var_ductdia / 2)^2) / 1000000;
+	    var_thactst.var_vol = (var_thactst.var_v_duct * M_PI * pow(var_thactst.var_ductdia / 2,2) / 1000000);
 	}
 
     /* release mutex */
@@ -552,7 +552,7 @@ static void _thactst_set_value()
 static void _thactst_write_results()
 {
     if(_g_counter == 0 && var_thactst.var_fp)
-	fprintf(var_thactst.var_fp, "Item\tTMP\t\ST\tDP1\tDP2\tVol\tV(Dmp)\n");
+	fprintf(var_thactst.var_fp, "Item\tTMP\tST\tDP1\tDP2\tVol\tV(Dmp)\n");
     /* check if file pointer was assigned */
     if(var_thactst.var_fp)
 	{
@@ -647,4 +647,58 @@ DWORD WINAPI _thactst_async_start(LPVOID obj)
 #else
 	return NULL;
 #endif	
+}
+
+int32 CVICALLBACK _every_n_callback(TaskHandle taskHandle,
+				 int32 everyNsamplesEventType,
+				 uInt32 nSamples,
+				 void *callbackData)
+{
+    int32 _spl_read = 0;		/* samples read */
+    
+    /* Read data into buffer */
+    if(ERR_CHECK(NIReadAnalogF64(var_thactst.var_intask,
+				 1,
+				 10.0,
+				 DAQmx_Val_GroupByScanNumber,
+				 _var_val_buff,
+				 THACTST_NUM_INPUT_CHANNELS,
+				 &_spl_read,
+				 NULL)))
+	return 1;
+
+    /* Call to set values */
+    _thactst_set_value();
+    if(++_s_counter >= (THACTST_SAMPLES_PERSECOND * THACTST_UPDATE_RATE))
+	{
+	    _s_counter = 0;
+	    _max_flg = 1;
+	}    
+    return 0;
+}
+
+/* DoneCallback */
+int32 CVICALLBACK _done_callback(TaskHandle taskHandle,
+			       int32 status,
+			       void *callbackData)
+{
+    /* Check if data accquisition was stopped
+     * due to error */
+    if(ERR_CHECK(status))
+	return 0;
+
+    return 0;
+}
+
+static int _thactst_actout_signal()
+{
+    int i;
+    var_thactst.var_fan_ctrl_buff = (double*)
+	calloc(THACTST_ACT_RATE, sizeof(double));
+    for(i=0; i<THACTST_ACT_RATE; i++)
+	{
+	    var_thactst.var_fan_ctrl_buff[i] =
+		9.98 * sin((double) i * M_PI / (2 * THACTST_ACT_RATE));
+	}
+    return 0;
 }
