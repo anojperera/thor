@@ -71,6 +71,7 @@ struct _thactst
 };
 
 /* local variables */
+static unsigned int _init_flg = 0;			        /* initialise flag */
 static unsigned int _g_counter;					/* general counter */
 static unsigned int _s_counter;
 static unsigned int _max_flg;					/* maximum flag for controlling averaging buffers */
@@ -113,6 +114,7 @@ static int _thactst_actout_signal();
 int thactst_initialise(FILE* fp, thactst* obj, void* sobj)
 {
     /* create output task */
+    fprintf(stderr, "Creating and initialising tasks\n");
     if(ERR_CHECK(NICreateTask("", &var_thactst.var_outtask)))
 	return 1;
 
@@ -124,6 +126,7 @@ int thactst_initialise(FILE* fp, thactst* obj, void* sobj)
 	}
 
     /* intialise variables */
+    fprintf(stderr, "Initialising private variables..\n");
     var_thactst.var_stsensor = NULL;
     var_thactst.var_tmpsensor = NULL;
     var_thactst.var_velocity = NULL;
@@ -145,6 +148,7 @@ int thactst_initialise(FILE* fp, thactst* obj, void* sobj)
     var_thactst.var_fp = NULL;
     var_thactst.var_ext_percen = NULL;
 
+    fprintf(stderr, "Creating fan control signal\n");
     _thactst_actout_signal();
     
     /* create fan control channel */
@@ -174,7 +178,7 @@ int thactst_initialise(FILE* fp, thactst* obj, void* sobj)
 	    _thactst_clear_tasks();
 	    return 1;
 	}
-
+    fprintf(stderr, "Output channels configure complete..\n");
     /* create temperature sensor */
     if(!thgsens_new(&var_thactst.var_tmpsensor,
 		    THACTST_TMP_CHANNEL,
@@ -214,7 +218,7 @@ int thactst_initialise(FILE* fp, thactst* obj, void* sobj)
 	    return 1;
 	}
 
-    printf("%s\n","configuring velocity sensors..");
+    fprintf(stderr,"configuring velocity sensors..\n");
     /* configure velocity sensors */
     thvelsen_config_sensor(var_thactst.var_velocity,
     			   0,
@@ -229,7 +233,7 @@ int thactst_initialise(FILE* fp, thactst* obj, void* sobj)
     			   NULL,
     			   THACTST_MIN_RNG,
     			   THACTST_MAX_RNG);
-
+    fprintf(stderr, "All sensors configured\n");
     /* Configure timing */
     if(ERR_CHECK(NICfgSampClkTiming(var_thactst.var_intask,
 				    "OnboardClock",
@@ -266,17 +270,21 @@ int thactst_initialise(FILE* fp, thactst* obj, void* sobj)
 #endif
 
     /* initialisation complete */
-    printf("initialisation complete..\n");
+    fprintf(stderr, "Initialisation complete..\n");
 
     /* enable all sensors by default */
     thvelsen_enable_sensor(var_thactst.var_velocity, 0);
     thvelsen_enable_sensor(var_thactst.var_velocity, 1);
+    _init_flg = 1;
     return 0;
 }
 
 /* stop all running tasks */
 void thactst_delete(void)
 {
+    if(_init_flg == 0)
+	return;
+    _init_flg = 0;
     printf("%s\n","deleting sensors...");
 
     /* destroy sensors */
