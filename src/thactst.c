@@ -415,11 +415,15 @@ int thactst_stop(void)
 {
     int i;
     int32 _spl_write = 0;
-    if(!var_thactst.var_stflg)
-	return 0;
 #if defined (WIN32) || defined (_WIN32)
-    WaitForSingleObject(_mutex, INFINITE);
+    WaitForSingleObject(_mutex, INFINITE);    
+    if(!var_thactst.var_stflg)
+	{
+	    ReleaseMutex(_mutex);
+	    return 0;
+	}
 #endif
+    
     var_thactst.var_stflg = 0;
 #if defined (WIN32) || defined (_WIN32)
     ReleaseMutex(_mutex);
@@ -473,10 +477,15 @@ int thactst_stop(void)
 /* Close actuator */
 int thactst_close_act(void)
 {
-    int i =0;
+    int i = 0;
     int32 _spl_write;
 #if defined (WIN32) || defined (_WIN32)
     WaitForSingleObject(_mutex, INFINITE);
+    if(!var_thactst.var_stflg)
+	{
+	    ReleaseMutex(_mutex);
+	    return 0;
+	}
 #endif
     var_thactst.var_out_v[1] = THACTST_CLOSE_SOV;
 #if defined(WIN32) || defined (_WIN32)
