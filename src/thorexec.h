@@ -7,7 +7,8 @@
 extern "C" {
 #endif
     
-int thorahuexec_main(int argc, char** argv);
+    int thorahuexec_main(int argc, char** argv);
+    int thoractstexec_main(int argc, char** argv);
 
 #ifdef __cplusplus
 }

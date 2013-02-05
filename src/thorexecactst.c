@@ -9,6 +9,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include "thorexec.h"
 #include "thactst.h"
 
 #define THOR_ACTST_DUCT_DIA 510.0
