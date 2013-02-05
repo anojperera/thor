@@ -349,7 +349,7 @@ int thactst_set_fan_speed(double* percen)
 /* Set result buffer */
 int thactst_set_result_buff(double* val)
 {
-    vat_thactst.var_result_buff = val;
+    var_thactst.var_result_buff = val;
     return 0;
 }
 /* Start fan test */
