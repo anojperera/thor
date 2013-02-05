@@ -47,10 +47,10 @@ static unsigned int _quit_flg = 1;
 static unsigned int _ctrl_ix = 0;
 
 static unsigned int _thor_msg_cnt = 0;							/* message counter */
+static char _thor_msg_buff[THOR_ACTST_MSG_BUFF_SZ];
+static char _thor_msg_opt_buff[THOR_ACTST_MSG_OPT_BUFF_SZ];
 static double _thor_fan_ctrl = 0.0;
 static double _thor_result_buff[THOR_ACTST_RESULT_BUFF_SZ];
-static double _thor_result_opt_buff[THOR_ACTST_MSG_OPT_BUFF_SZ];
-static thactst _th_actst;
 
 /* private methods */
 static int _thor_init(void);
@@ -61,7 +61,7 @@ static int _thor_adjust_fan(double val);
 /* Thread function for Win32 */
 #if defined (WIN32) || defined (_WIN32)
 DWORD WINAPI _thor_msg_handler(LPVOID obj);
-HANDLE _thor_mutex;
+HANDLE _thor_mutex = NULL;
 #else
 void* _thor_msg_handler(void* obj);
 #endif
@@ -71,7 +71,7 @@ int thoractstexec_main(int argc, char** argv)
 {
     /* environment spcific variables */
 #if defined (WIN32) || defined (_WIN32)
-    HANDLE _thhandle;
+    HANDLE _thhandle = NULL;
 #else
     struct timespec t;
     t.tv_sec = 0;
@@ -95,7 +95,8 @@ int thoractstexec_main(int argc, char** argv)
 	    return 0;
 	}
 #endif
-
+    		    
+    _thor_init_var();
     /**
      * Main loop for handling process control. Continuously scans for input and take action as
      * defined.
@@ -241,7 +242,7 @@ void* _thor_msg_handler(void* obj)
 static int _thor_init(void)
 {
     /* initialise program */
-    if(thactst_initialise(NULL, &_th_actst, NULL))
+    if(thactst_initialise(NULL, NULL, NULL))
 	{
 	    fprintf(stderr, "Initialisation failed...\n");
 	    return 1;
@@ -249,6 +250,7 @@ static int _thor_init(void)
     thactst_set_diameter(THOR_ACTST_DUCT_DIA);
     thactst_set_damper_sz(THOR_ACTST_DMP_WIDTH, THOR_ACTST_DMP_HEIGHT);
     thactst_set_max_velocity(THOR_ACTST_MAX_VELOCITY);
+    thactst_set_result_buff(_thor_result_buff);
     /* Add display for the first time */
     printf("DP1\tDP2\tStatic\tVol\tVel(Dmp)\tTemp\n");
 #if defined (WIN32) || defined (_WIN32)
@@ -264,13 +266,13 @@ static int _thor_adjust_fan(double val)
 {
     if(val > 0.0 && _thor_fan_ctrl < THOR_ACTST_FAN_CEIL-THOR_ACTST_ADJ_FINE)
     _thor_fan_ctrl += val;
-    sprintf(_thor_result_opt_buff, THOR_ACTST_MAIN_FAN_FORMAT, _thor_fan_ctrl);
+    sprintf(_thor_msg_opt_buff, THOR_ACTST_MAIN_FAN_FORMAT, _thor_fan_ctrl);
 #if defined (WIN32) || defined (_WIN32)
     WaitForSingleObject(_thor_mutex, INFINITE);
     _thor_msg_cnt = THOR_ACTST_MSG_DURATION;
     ReleaseMutex(_thor_mutex);
 #endif    
-    _thor_update_msg_buff(_thor_result_buff, _thor_result_opt_buff);
-    thactst_set_fan_speed(_thor_fan_ctrl);
+    _thor_update_msg_buff(_thor_msg_buff, _thor_msg_opt_buff);
+    thactst_set_fan_speed(&_thor_fan_ctrl);
     return 0;
 }
