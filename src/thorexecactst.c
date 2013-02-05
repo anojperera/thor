@@ -27,8 +27,8 @@
 #define THOR_ACTST_PRG_START_CODE 83							/* S */
 #define THOR_ACTST_PRG_STOP_CODE 115							/* s */
 
-#define THOR_ACTST_MAIN_MSG_FORMAT "%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\r"
-#define THOR_ACTST_MAIN_OPTMSG_FORMAT "%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\r\r%s\r"
+#define THOR_ACTST_MAIN_MSG_FORMAT "%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t\t%.2f\r"
+#define THOR_ACTST_MAIN_OPTMSG_FORMAT "%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t\t%.2f\r\r%s\r"
 #define THOR_ACTST_MAIN_FAN_FORMAT "\rFAN: ===== %.2f =====\r"
 
 #define THOR_ACTST_MSG_BUFF_SZ 2048
@@ -83,11 +83,14 @@ int thoractstexec_main(int argc, char** argv)
 #if defined (WIN32) || defined (_WIN32)
     /* initialise matrix */
     _thor_mutex = CreateMutex(NULL, FALSE, NULL);
-    if(_thor_mutex)
+    if(_thor_mutex == NULL)
 	{
 	    fprintf(stderr, "CreateMutex error\n");
 	    return 1;
 	}
+
+    _thor_init_var();
+    fprintf(stderr, "Press 'i' to initiate\n");
     _thhandle = CreateThread(NULL, 0, _thor_msg_handler, NULL, 0, NULL);
     /* exit and clean up if failes */
     if(_thhandle == NULL)
@@ -95,9 +98,7 @@ int thoractstexec_main(int argc, char** argv)
 	    CloseHandle(_thor_mutex);
 	    return 0;
 	}
-#endif
-    		    
-    _thor_init_var();
+#endif    		    
     /**
      * Main loop for handling process control. Continuously scans for input and take action as
      * defined.
@@ -107,7 +108,7 @@ int thoractstexec_main(int argc, char** argv)
 	    if(_init_flg == 0)
 		continue;
 	    if(_thor_msg_cnt == 0)
-		_thor_update_msg_buff(_thor_msg_buff, NULL);
+	    	_thor_update_msg_buff(_thor_msg_buff, NULL);
 	    fflush(stdout);
 	    fprintf(stdout, "%s\r", _thor_msg_buff);
 #if defined (WIN32) || defined (_WIN32)
@@ -229,6 +230,7 @@ void* _thor_msg_handler(void* obj)
 		    _thor_adjust_fan(-1*THOR_ACTST_ADJ);
 		    break;
 		}
+	    _ctrl_ix = -1;
 	}
 
 #if defined (WIN32) || defined (_WIN32)
@@ -253,7 +255,7 @@ static int _thor_init(void)
     thactst_set_max_velocity(THOR_ACTST_MAX_VELOCITY);
     thactst_set_result_buff(_thor_result_buff);
     /* Add display for the first time */
-    printf("DP1\tDP2\tStatic\tVol\tVel(Dmp)\tTemp\n");
+    fprintf(stderr, "\nDP1\tDP2\tStatic\tVol\tVel(Dmp)\tTemp\n");
 #if defined (WIN32) || defined (_WIN32)
     WaitForSingleObject(_thor_mutex, INFINITE);
     _init_flg = 1;

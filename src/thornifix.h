@@ -120,13 +120,14 @@ inline __attribute__ ((always_inline)) static double Round(double val, unsigned 
 
 }
 
-inline __attribute__ ((always_inline)) static double Mean(const double* data, size_t num)
+inline __attribute__ ((always_inline)) static double Mean(const double* data, unsigned int num)
 {
     double val = 0.0;
-    int i;
-    for(i=0; i<num; i++)
-	val += data[i];
-    return val / (num <= 0? 1.0 : (double) num);
+    double div = 0.0;
+    unsigned int i;
+    for(i=0; i<num; i++,div+=1.0)
+    	val += data[i];
+     return val / div;
 }
 
 /* polynomial interpolating function */
