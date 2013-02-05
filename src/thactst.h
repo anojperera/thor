@@ -23,25 +23,28 @@ typedef struct _thactst thactst;
 extern "C" {
 #endif
 
-/* constructor and destructor */
-int thactst_initialise(FILE* fp, thactst* obj, void* sobj);
-void thactst_delete(void);
+    /* constructor and destructor */
+    int thactst_initialise(FILE* fp, thactst* obj, void* sobj);
+    void thactst_delete(void);
 
-/* Set sizes and duct diameter */
-int thactst_set_diameter(double dia);
-int thactst_set_damper_sz(double width, double height);
+    /* Set sizes and duct diameter */
+    int thactst_set_diameter(double dia);
+    int thactst_set_damper_sz(double width, double height);
 
-/* Set velocity ceiling */
-int thactst_set_max_velocity(double val);
+    /* Set velocity ceiling */
+    int thactst_set_max_velocity(double val);
 
-/* Fan speed */
-int thactst_set_fan_speed(double* percen);
+    /* Fan speed */
+    int thactst_set_fan_speed(double* percen);
 
-/* Start and stop the test */
-int thactst_start(void);
-int thactst_stop(void);
-/* Close actuator */
-int thactst_close_act(void);
+    /* Set result buffer */
+    int thactst_set_result_buff(double* val);
+
+    /* Start and stop the test */
+    int thactst_start(void);
+    int thactst_stop(void);
+    /* Close actuator */
+    int thactst_close_act(void);
 
 
 #ifdef __cplusplus

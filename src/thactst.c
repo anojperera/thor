@@ -9,7 +9,7 @@
 #define THACTST_NUM_OUT_CHANNELS 2				/* output channels */
 #define THACTST_NUM_INPUT_CHANNELS 4				/* input channels */
 
-#define THACTST_OPEN_SOV 5.3					/* open SOV voltage */
+#define THACTST_OPEN_SOV 4.0					/* open SOV voltage */
 #define THACTST_CLOSE_SOV 0.0					/* close SOV voltage */
 
 #define THACTST_FAN_CTRL_CHANNEL "Dev1/ao0"
@@ -80,8 +80,8 @@ static double _var_st_x[] = THORNIFIX_ST_X;
 static double _var_st_y[] = THORNIFIX_ST_Y;
 static double _var_val_buff[THACTST_NUM_INPUT_CHANNELS];	/* read buffer */
 #if defined (WIN32) || defined (_WIN32)
-static HANDLE _mutex;
-static HANDLE _thread;
+static HANDLE _mutex = NULL;
+static HANDLE _thread = NULL;
 #endif
 
 /* Private functions */
@@ -346,6 +346,12 @@ int thactst_set_fan_speed(double* percen)
     return 0;
 }
 
+/* Set result buffer */
+int thactst_set_result_buff(double* val)
+{
+    vat_thactst.var_result_buff = val;
+    return 0;
+}
 /* Start fan test */
 int thactst_start(void)
 {
