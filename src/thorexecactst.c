@@ -26,6 +26,7 @@
 #define THOR_ACTST_DECRF_FAN_CODE 47							/* / */
 #define THOR_ACTST_PRG_START_CODE 83							/* S */
 #define THOR_ACTST_PRG_STOP_CODE 115							/* s */
+#define THOR_ACTST_PRG_DMPCLOSE_CODE 67							/* C */
 
 #define THOR_ACTST_MAIN_MSG_FORMAT "%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t\t%.2f\r"
 #define THOR_ACTST_MAIN_OPTMSG_FORMAT "%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t\t%.2f\r\r%s\r"
@@ -38,7 +39,7 @@
 #define THOR_ACTST_WAIT_TIME_UNIX_CORRECTION 1000
 #define THOR_ACTST_ADJ 5.0
 #define THOR_ACTST_ADJ_FINE 1.0
-#define THOR_ACTST_FAN_CEIL 10.0
+#define THOR_ACTST_FAN_CEIL 100.0
 #define THOR_ACTST_FAN_FLOOR 0.0
 #define THOR_ACTST_MSG_DURATION 3
 
@@ -229,6 +230,9 @@ void* _thor_msg_handler(void* obj)
 		case THOR_ACTST_DECR_FAN_CODE:
 		    _thor_adjust_fan(-1*THOR_ACTST_ADJ);
 		    break;
+		case THOR_ACTST_PRG_DMPCLOSE_CODE:
+		    thactst_close_act();
+		    break;
 		}
 	    _ctrl_ix = -1;
 	}
@@ -267,7 +271,7 @@ static int _thor_init(void)
 /* fan adjustment */
 static int _thor_adjust_fan(double val)
 {
-    if(val > 0.0 && _thor_fan_ctrl < THOR_ACTST_FAN_CEIL-THOR_ACTST_ADJ_FINE)
+    if(val > 0.0 && _thor_fan_ctrl < (THOR_ACTST_FAN_CEIL-THOR_ACTST_ADJ_FINE))
     _thor_fan_ctrl += val;
     sprintf(_thor_msg_opt_buff, THOR_ACTST_MAIN_FAN_FORMAT, _thor_fan_ctrl);
 #if defined (WIN32) || defined (_WIN32)
