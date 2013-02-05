@@ -61,10 +61,10 @@ static int _thor_adjust_fan(double val);
 
 /* Thread function for Win32 */
 #if defined (WIN32) || defined (_WIN32)
-DWORD WINAPI _thor_msg_handler(LPVOID obj);
-HANDLE _thor_mutex = NULL;
+static DWORD WINAPI _thor_msg_handler(LPVOID obj);
+static HANDLE _thor_mutex = NULL;
 #else
-void* _thor_msg_handler(void* obj);
+static void* _thor_msg_handler(void* obj);
 #endif
 
 /* main loop */

@@ -70,8 +70,10 @@ inline __attribute__ ((always_inline)) static int _thor_replace_newline(char* bu
 
 /* thread function for win32 */
 #if defined (WIN32) || defined (_WIN32)
-DWORD WINAPI _thor_msg_handler(LPVOID obj);
-HANDLE _thor_mutex;
+static DWORD WINAPI _thor_msg_handler(LPVOID obj);
+static HANDLE _thor_mutex;
+#else
+void* _thor_msg_handler(void* obj);
 #endif
 
 /* main loop */
