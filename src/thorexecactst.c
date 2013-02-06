@@ -6,7 +6,7 @@
 #include <time.h>
 #include <unistd.h>
 #endif
-
+#include <getopt.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include "thorexec.h"
@@ -52,6 +52,7 @@ static unsigned int _thor_msg_cnt = 0;							/* message counter */
 static char _thor_msg_buff[THOR_ACTST_MSG_BUFF_SZ];
 static char _thor_msg_opt_buff[THOR_ACTST_MSG_OPT_BUFF_SZ];
 static double _thor_fan_ctrl = 0.0;
+static double _thor_max_v = THOR_ACTST_MAX_VELOCITY;
 static double _thor_result_buff[THOR_ACTST_RESULT_BUFF_SZ];
 
 /* private methods */
@@ -71,6 +72,13 @@ static void* _thor_msg_handler(void* obj);
 /* main loop */
 int thoractstexec_main(int argc, char** argv)
 {
+    int _next_opt;
+    char _arg_buff[THOR_ACTST_MSG_OPT_BUFF_SZ];
+    const char* const _short_opts = ":M:";
+    const struct option _long_opts[] = {
+	{"max-velocity", 1, NULL, 'M'},
+	{NULL, 0, NULL, 0}
+    };
     /* environment spcific variables */
 #if defined (WIN32) || defined (_WIN32)
     HANDLE _thhandle = NULL;
@@ -80,6 +88,21 @@ int thoractstexec_main(int argc, char** argv)
     t.tv_nsec = THOR_ACTST_WAIT_TIME * THOR_ACTST_WAIT_TIME_UNIX_CORRECTION;
 #endif
 
+    /* parse program specific arguments */
+    do
+	{
+	    _next_opt = getopt_long(argc, argv, _short_opts, _long_opts, NULL);
+	    switch(_next_opt)
+		{
+		case 'M':
+		    strncpy(_arg_buff, optarg, THOR_ACTST_MSG_OPT_BUFF_SZ-1);
+		    _thor_max_v = atof(_arg_buff);
+		    break;
+		case -1:
+		default:
+		    break;
+		}
+	}while(_next_opt != -1);
 
 #if defined (WIN32) || defined (_WIN32)
     /* initialise matrix */
@@ -256,7 +279,7 @@ static int _thor_init(void)
 	}
     thactst_set_diameter(THOR_ACTST_DUCT_DIA);
     thactst_set_damper_sz(THOR_ACTST_DMP_WIDTH, THOR_ACTST_DMP_HEIGHT);
-    thactst_set_max_velocity(THOR_ACTST_MAX_VELOCITY);
+    thactst_set_max_velocity(_thor_max_v);
     thactst_set_result_buff(_thor_result_buff);
     /* Add display for the first time */
     fprintf(stderr, "\nDP1\tDP2\tStatic\tVol\tVel(Dmp)\tTemp\n");
@@ -271,7 +294,7 @@ static int _thor_init(void)
 /* fan adjustment */
 static int _thor_adjust_fan(double val)
 {
-    if(val > 0.0 && _thor_fan_ctrl < (THOR_ACTST_FAN_CEIL-THOR_ACTST_ADJ_FINE))
+    if(_thor_fan_ctrl > 0.0 && _thor_fan_ctrl < (THOR_ACTST_FAN_CEIL-THOR_ACTST_ADJ_FINE))
     _thor_fan_ctrl += val;
     sprintf(_thor_msg_opt_buff, THOR_ACTST_MAIN_FAN_FORMAT, _thor_fan_ctrl);
 #if defined (WIN32) || defined (_WIN32)
