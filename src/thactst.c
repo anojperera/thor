@@ -508,6 +508,7 @@ int thactst_close_act(void)
 	    Sleep(THACTST_SLEEP_FAN_TIME);
 	    WaitForSingleObject(_mutex, INFINITE);
 #endif
+	    var_thactst.var_movrflg = 1;
 	    var_thactst.var_out_v[0] = 0.0;
 	    var_thactst.var_out_v[1] = 0.0;
 #if defined (WIN32) || defined (_WIN32)
@@ -667,7 +668,7 @@ DWORD WINAPI _thactst_async_start(LPVOID obj)
 		continue;
 
 	    _counter++;
-	    if(_counter > THACTST_ACT_RATE)
+	    if(_counter >= THACTST_ACT_RATE)
 		_counter = 0;
 	    if(var_thactst.var_movrflg == 0)
 		{
