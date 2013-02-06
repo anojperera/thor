@@ -289,9 +289,6 @@ int thvelsen_config_sensor(thvelsen* obj,		/* object */
 		}
 	}
 
-    if(obj->var_sen_cnt < 3)
-	obj->var_sen_cnt++;
-
     /* check for ok flags */
     if(obj->var_v1 && obj->var_v2)
 	{
@@ -418,6 +415,6 @@ int thvelsen_enable_sensor(thvelsen* obj,
     /* increment counter */
     if(obj->var_sen_cnt < 4)
 	obj->var_sen_cnt++;
-
+    printf("Sensor count: %i\n", obj->var_sen_cnt);
     return 0;
 }
