@@ -31,6 +31,7 @@
 #define THOR_ACTST_MAIN_MSG_FORMAT "%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t\t%.2f\r"
 #define THOR_ACTST_MAIN_OPTMSG_FORMAT "%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t\t%.2f\r\r%s\r"
 #define THOR_ACTST_MAIN_FAN_FORMAT "\rFAN: ===== %.2f =====\r"
+#define THOR_ACTST_LOG_FILE_NAME "Log.txt"
 
 #define THOR_ACTST_MSG_BUFF_SZ 2048
 #define THOR_ACTST_MSG_OPT_BUFF_SZ 64
@@ -54,6 +55,8 @@ static char _thor_msg_opt_buff[THOR_ACTST_MSG_OPT_BUFF_SZ];
 static double _thor_fan_ctrl = 0.0;
 static double _thor_max_v = THOR_ACTST_MAX_VELOCITY;
 static double _thor_result_buff[THOR_ACTST_RESULT_BUFF_SZ];
+
+static FILE* _thor_log_fp = NULL;							/* log file pointer */
 
 /* private methods */
 static int _thor_init(void);
@@ -87,7 +90,6 @@ int thoractstexec_main(int argc, char** argv)
     t.tv_sec = 0;
     t.tv_nsec = THOR_ACTST_WAIT_TIME * THOR_ACTST_WAIT_TIME_UNIX_CORRECTION;
 #endif
-
     /* parse program specific arguments */
     do
 	{
@@ -112,7 +114,7 @@ int thoractstexec_main(int argc, char** argv)
 	    fprintf(stderr, "CreateMutex error\n");
 	    return 1;
 	}
-
+    _thor_log_fp = fopen(THOR_ACTST_LOG_FILE_NAME, "w+");
     _thor_init_var();
     fprintf(stderr, "Press 'i' to initiate\n");
     _thhandle = CreateThread(NULL, 0, _thor_msg_handler, NULL, 0, NULL);
@@ -122,7 +124,7 @@ int thoractstexec_main(int argc, char** argv)
 	    CloseHandle(_thor_mutex);
 	    return 0;
 	}
-#endif    		    
+#endif
     /**
      * Main loop for handling process control. Continuously scans for input and take action as
      * defined.
@@ -144,6 +146,8 @@ int thoractstexec_main(int argc, char** argv)
 		_thor_msg_cnt--;
 	}
 
+    if(_thor_log_fp)
+	fclose(_thor_log_fp);
     if(_start_flg)
 	thactst_stop();
     /* delete program */
@@ -195,84 +199,84 @@ static int _thor_update_msg_buff(char* buff, char* opts)
 		    _thor_result_buff[THACTST_TMP_IX]);
 	}
 
-    /* release mutex */
-#if defined (WIN32) || defined (_WIN32)
-    ReleaseMutex(_thor_mutex);
-#endif
-    return 0;
-}
-
-/* key press handler */
-#if defined (WIN32) || defined (_WIN32)
-DWORD WINAPI _thor_msg_handler(LPVOID obj)
-#else
-void* _thor_msg_handler(void* obj)
-#endif    
-{
-    while(1)
-	{
-#if defined (WIN32) || defined (_WIN32)
-	    _ctrl_ix = _getch();
-#else
-	    _ctrl_ix = getchar();
-#endif
-	    /* flush input buffer */
-	    fflush(stdin);
-	    if(_ctrl_ix == THOR_ACTST_QUIT_CODE1 || _ctrl_ix == THOR_ACTST_QUIT_CODE2)
-		{
-		    /* lock mutex */
-#if defined (WIN32) || defined (_WIN32)		    
-		    WaitForSingleObject(_thor_mutex, INFINITE);
-#endif
-		    _quit_flg = 0;
+		    /* release mutex */
 #if defined (WIN32) || defined (_WIN32)
 		    ReleaseMutex(_thor_mutex);
 #endif
-		    break;
-		}
-	    switch(_ctrl_ix)
-		{
-		case THOR_ACTST_INIT_PROG:
-		    _thor_init();
-		    break;
-		case THOR_ACTST_PRG_START_CODE:
-		    thactst_start();
-		    break;
-		case THOR_ACTST_PRG_STOP_CODE:
-		    thactst_stop();
-		    break;
-		case THOR_ACTST_INCRF_FAN_CODE:
-		    _thor_adjust_fan(THOR_ACTST_ADJ_FINE);
-		    break;
-		case THOR_ACTST_DECRF_FAN_CODE:
-		    _thor_adjust_fan(-1*THOR_ACTST_ADJ_FINE);
-		    break;
-		case THOR_ACTST_INCR_FAN_CODE:
-		    _thor_adjust_fan(THOR_ACTST_ADJ);
-		    break;
-		case THOR_ACTST_DECR_FAN_CODE:
-		    _thor_adjust_fan(-1*THOR_ACTST_ADJ);
-		    break;
-		case THOR_ACTST_PRG_DMPCLOSE_CODE:
-		    thactst_close_act();
-		    break;
-		}
-	    _ctrl_ix = -1;
-	}
+		    return 0;
+		    }
+
+	    /* key press handler */
+#if defined (WIN32) || defined (_WIN32)
+	    DWORD WINAPI _thor_msg_handler(LPVOID obj)
+#else
+		void* _thor_msg_handler(void* obj)
+#endif
+	    {
+		while(1)
+		    {
+#if defined (WIN32) || defined (_WIN32)
+			_ctrl_ix = _getch();
+#else
+			_ctrl_ix = getchar();
+#endif
+			/* flush input buffer */
+			fflush(stdin);
+			if(_ctrl_ix == THOR_ACTST_QUIT_CODE1 || _ctrl_ix == THOR_ACTST_QUIT_CODE2)
+			    {
+				/* lock mutex */
+#if defined (WIN32) || defined (_WIN32)
+				WaitForSingleObject(_thor_mutex, INFINITE);
+#endif
+				_quit_flg = 0;
+#if defined (WIN32) || defined (_WIN32)
+				ReleaseMutex(_thor_mutex);
+#endif
+				break;
+			    }
+			switch(_ctrl_ix)
+			    {
+			    case THOR_ACTST_INIT_PROG:
+				_thor_init();
+				break;
+			    case THOR_ACTST_PRG_START_CODE:
+				thactst_start();
+				break;
+			    case THOR_ACTST_PRG_STOP_CODE:
+				thactst_stop();
+				break;
+			    case THOR_ACTST_INCRF_FAN_CODE:
+				_thor_adjust_fan(THOR_ACTST_ADJ_FINE);
+				break;
+			    case THOR_ACTST_DECRF_FAN_CODE:
+				_thor_adjust_fan(-1*THOR_ACTST_ADJ_FINE);
+				break;
+			    case THOR_ACTST_INCR_FAN_CODE:
+				_thor_adjust_fan(THOR_ACTST_ADJ);
+				break;
+			    case THOR_ACTST_DECR_FAN_CODE:
+				_thor_adjust_fan(-1*THOR_ACTST_ADJ);
+				break;
+			    case THOR_ACTST_PRG_DMPCLOSE_CODE:
+				thactst_close_act();
+				break;
+			    }
+			_ctrl_ix = -1;
+		    }
 
 #if defined (WIN32) || defined (_WIN32)
-    return 0;
+		return 0;
 #else
-    return NULL;
-#endif    
-}
+		return NULL;
+#endif
+	    }
 
 
 /* initiate program */
 static int _thor_init(void)
 {
     /* initialise program */
-    if(thactst_initialise(NULL, NULL, NULL))
+    if(thactst_initialise(_thor_log_fp, NULL, NULL))
 	{
 	    fprintf(stderr, "Initialisation failed...\n");
 	    return 1;
@@ -295,13 +299,13 @@ static int _thor_init(void)
 static int _thor_adjust_fan(double val)
 {
     if(_thor_fan_ctrl > 0.0 && _thor_fan_ctrl < (THOR_ACTST_FAN_CEIL-THOR_ACTST_ADJ_FINE))
-    _thor_fan_ctrl += val;
+	_thor_fan_ctrl += val;
     sprintf(_thor_msg_opt_buff, THOR_ACTST_MAIN_FAN_FORMAT, _thor_fan_ctrl);
 #if defined (WIN32) || defined (_WIN32)
     WaitForSingleObject(_thor_mutex, INFINITE);
     _thor_msg_cnt = THOR_ACTST_MSG_DURATION;
     ReleaseMutex(_thor_mutex);
-#endif    
+#endif
     _thor_update_msg_buff(_thor_msg_buff, _thor_msg_opt_buff);
     thactst_set_fan_speed(&_thor_fan_ctrl);
     return 0;
