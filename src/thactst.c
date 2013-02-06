@@ -80,6 +80,7 @@ static unsigned int _init_flg = 0;			        /* initialise flag */
 static unsigned int _g_counter = 0;				/* general counter */
 static unsigned int _s_counter = 0;
 static unsigned int _max_flg = 0;				/* maximum flag for controlling averaging buffers */
+static unsigned int _set_flg = 0;				/* flag to indicate file headers added */
 static struct _thactst var_thactst;				/* object */
 static double _var_st_x[] = THORNIFIX_ST_X;
 static double _var_st_y[] = THORNIFIX_ST_Y;
@@ -572,6 +573,25 @@ static void _thactst_set_value()
     		(var_thactst.var_width * var_thactst.var_height);
     	    var_thactst.var_vol = (var_thactst.var_v_duct * M_PI * pow((var_thactst.var_ductdia / 2),2) / 1000000);
     	}
+    
+    if(_g_counter == 0 && var_thactst.var_fp && _set_flg == 0)
+	{
+	    fprintf(var_thactst.var_fp, "Item\tTMP\tST\tDP1\tDP2\tVol\tV(Dmp)\tV(Du)\n");
+	    _set_flg = 1;
+	}
+    /* check if file pointer was assigned */
+    if(var_thactst.var_fp && _g_counter > 0)
+	{
+	    fprintf(var_thactst.var_fp, "%i\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\n",
+		    _g_counter,									/* counter */
+		    var_thactst.var_tmp,							/* temperature */
+		    var_thactst.var_st_pre,							/* static pressure */
+		    thgsens_get_value2(var_thactst.var_velocity->var_v1),			/* DP1 */
+		    thgsens_get_value2(var_thactst.var_velocity->var_v2),			/* DP2 */
+		    var_thactst.var_vol,							/* Volume flow */
+		    var_thactst.var_v_dmp,							/* Velocity Damper */
+		    var_thactst.var_v_duct);							/* Velocity Duct */
+	}
 
     /* release mutex */
 #if defined (WIN32) || defined (_WIN32)
@@ -583,21 +603,6 @@ static void _thactst_set_value()
 /* Write results */
 static void _thactst_write_results()
 {
-    if(_g_counter == 0 && var_thactst.var_fp)
-	fprintf(var_thactst.var_fp, "Item\tTMP\tST\tDP1\tDP2\tVol\tV(Dmp)\n");
-    /* check if file pointer was assigned */
-    if(var_thactst.var_fp)
-	{
-	    fprintf(var_thactst.var_fp, "%i\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\n",
-		    _g_counter,									/* counter */
-		    var_thactst.var_tmp,							/* temperature */
-		    var_thactst.var_st_pre,							/* static pressure */
-		    thgsens_get_value2(var_thactst.var_velocity->var_v1),			/* DP1 */
-		    thgsens_get_value2(var_thactst.var_velocity->var_v2),			/* DP2 */
-		    var_thactst.var_vol,							/* Volume flow */
-		    var_thactst.var_v_dmp);							/* Velocity Damper */
-	}
-
     /* if result buffer was assigned */
     if(var_thactst.var_result_buff)
 	{
@@ -622,7 +627,7 @@ DWORD WINAPI _thactst_async_start(LPVOID obj)
     _g_counter = 0;
     _max_flg = 0;
     var_thactst.var_stflg = 1;
-
+    _set_flg = 0;
     /* start both tasks */
     if(ERR_CHECK(NIStartTask(var_thactst.var_outtask)))
 #if defined (WIN32) || defined (_WIN32)
