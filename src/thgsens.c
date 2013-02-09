@@ -7,11 +7,11 @@
 
 #define THGSENS_MIN_VOLT 0.0			/* min voltage of sensor */
 #define THGSENS_MAX_VOLT 10.0			/* max voltage of sensor */
-
+#define THGSENS_G_SZ 1
 /* private functions */
 
 /* calculate gradient of equation */
-static inline int thgsens_calc_grad(thgsens** obj)
+inline __attribute__ ((always_inline)) static int thgsens_calc_grad(thgsens** obj)
 {
     (*obj)->var_grad = ((*obj)->var_max - (*obj)->var_min) /
 	(THGSENS_MAX_VOLT - THGSENS_MIN_VOLT);
@@ -19,7 +19,7 @@ static inline int thgsens_calc_grad(thgsens** obj)
 }
 
 /* calculate y interception */
-static inline int thgsens_cacl_intercept(thgsens** obj)
+inline __attribute__ ((always_inline)) static int thgsens_cacl_intercept(thgsens** obj)
 {
     (*obj)->var_intc = (*obj)->var_min - (*obj)->var_grad *
 	THGSENS_MIN_VOLT;
@@ -27,12 +27,23 @@ static inline int thgsens_cacl_intercept(thgsens** obj)
 }
 
 /* calculate value from raw data */
-static inline int thgsens_calc_value(thgsens** obj)
+inline __attribute__ ((always_inline)) static int thgsens_calc_value(thgsens** obj)
 {
+    double _g[THGSENS_G_SZ];
+    double _gx[THGSENS_G_SZ];
+    
     if((*obj)->var_raw <=0.0 || (*obj)->var_raw > 10.0)
 	(*obj)->var_val = 0.0;
     else
 	{
+	    _g[0] = (*obj)->var_raw;
+	    /* if buffers are assigned, call polynomial interpolation to calculate correct value */
+	    if((*obj)->_var_cal_buff_x && (*obj)->_var_cal_buff_y && (*obj)->_var_calbuff_sz && (*obj)->_var_raw_set)
+		{
+		    thor_interpol((*obj)->_var_cal_buff_x, (*obj)->_var_cal_buff_y, (*obj)->_var_calbuff_sz, _g, _gx, THGSENS_G_SZ);
+		    (*obj)->var_raw -= _gx[0]/100;
+		    (*obj)->_var_raw_set = 0;
+		}
 	    (*obj)->var_val = (*obj)->var_grad * (double) (*obj)->var_raw +
 		(*obj)->var_intc;
 	}
@@ -121,6 +132,7 @@ int thgsens_new(thgsens** obj, const char* ch_name,
     (*obj)->var_intc = 0;
     (*obj)->var_okflg = 0;
     (*obj)->sobj_ptr = data;
+    (*obj)->_var_raw_set = 1;
     (*obj)->var_flg = 0;
 
     thbuff_new(10, &(*obj)->var_buffval);

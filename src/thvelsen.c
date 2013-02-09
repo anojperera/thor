@@ -6,15 +6,40 @@
 #include <string.h>
 #include "thvelsen.h"
 
+#define THVELSEN_GMIN 0.0
+#define THVELSEN_GMAX 1600.0
 #define THVELSEN_AIR_DENSITY 1.2
-#define THVELSEN_VELOCITY(val)				\
-    pow(((2 * val) / THVELSEN_AIR_DENSITY), 0.5)
+#define THVELSEN_VELOCITY(val)						\
+    (val<0.0? 0.0 : pow(((2 * val) / THVELSEN_AIR_DENSITY), 0.5))
 
 /* channel name macro */
 #define THVELSET_CPYSTR(ch_ptr, channel_name) \
     (*ch_ptr) = (char*) malloc(sizeof(char) * (strlen(channel_name) + 1)); \
      strcpy(*ch_ptr, channel_name);
 
+static const double _v1_cal_x[] = THORNIFIX_S1_X;
+static const double _v1_cal_y[] = THORNIFIX_S1_Y;
+
+static const double _v2_cal_x[] = THORNIFIX_S2_X;
+static const double _v2_cal_y[] = THORNIFIX_S2_Y;
+
+static const double _v3_cal_x[] = THORNIFIX_S3_X;
+static const double _v3_cal_y[] = THORNIFIX_S3_Y;
+
+static const double _v4_cal_x[] = THORNIFIX_S4_X;
+static const double _v4_cal_y[] = THORNIFIX_S4_Y;
+
+static const double _v1_pcal_x[] = THORNIFIX_P1_X;
+static const double _v1_pcal_y[] = THORNIFIX_P1_Y;
+
+static const double _v2_pcal_x[] = THORNIFIX_P2_X;
+static const double _v2_pcal_y[] = THORNIFIX_P2_Y;
+
+static const double _v3_pcal_x[] = THORNIFIX_P3_X;
+static const double _v3_pcal_y[] = THORNIFIX_P3_Y;
+
+static const double _v4_pcal_x[] = THORNIFIX_P4_X;
+static const double _v4_pcal_y[] = THORNIFIX_P4_Y;
 
 /* Constructor */
 int thvelsen_new(thvelsen** obj,
@@ -24,7 +49,7 @@ int thvelsen_new(thvelsen** obj,
 {
     if(!obj || !task)
 	return 0;
-    
+
     /* create struct */
     *obj = (thvelsen*) malloc(sizeof(thvelsen));
     if(!(*obj))
@@ -49,8 +74,8 @@ int thvelsen_new(thvelsen** obj,
     (*obj)->var_v3_flg = 0;
     (*obj)->var_v4_flg = 0;
 
-    (*obj)->var_gmin = 0.0;
-    (*obj)->var_gmax = 0.0;
+    (*obj)->var_gmin = THVELSEN_GMIN;
+    (*obj)->var_gmax = THVELSEN_GMAX;
 
     (*obj)->var_ch1 = NULL;
     (*obj)->var_ch2 = NULL;
@@ -148,7 +173,7 @@ int thvelsen_config_sensor(thvelsen* obj,		/* object */
     /* evaluate range argument */
     if(obj->var_okflg && min==0.0 && max==0.0)
 	rng_flg = 1;
-    
+
     switch(ix)
 	{
 	case 0:
@@ -169,13 +194,16 @@ int thvelsen_config_sensor(thvelsen* obj,		/* object */
 		    THVELSET_CPYSTR(&obj->var_ch1, ch_name)
 			obj->var_gmin = min;
 		    obj->var_gmax = max;
+		    thgsens_set_calibration_buffers(obj->var_v1, _v1_cal_x, _v1_cal_y, THORNIFIX_S_CAL_SZ);
 		}
 	    else
 		{
 		    printf("%s\n","unable to create velocity sensor 1");
 		    obj->var_okflg = 0;
 		}
-	    
+
+	    /* set calibration */
+
 	    break;
 
 	case 1:
@@ -196,13 +224,14 @@ int thvelsen_config_sensor(thvelsen* obj,		/* object */
 		    THVELSET_CPYSTR(&obj->var_ch1, ch_name);
 		    obj->var_gmin = min;
 		    obj->var_gmax = max;
+		    thgsens_set_calibration_buffers(obj->var_v2, _v2_cal_x, _v2_cal_y, THORNIFIX_S_CAL_SZ);
 		}
 	    else
 		{
 		    printf("%s\n","unable to create velocity sensor 2");
 		    obj->var_okflg = 0;
 		}
-	    
+
 	    break;
 
 	case 2:
@@ -223,13 +252,14 @@ int thvelsen_config_sensor(thvelsen* obj,		/* object */
 		    THVELSET_CPYSTR(&obj->var_ch1, ch_name);
 		    obj->var_gmin = min;
 		    obj->var_gmax = max;
+		    thgsens_set_calibration_buffers(obj->var_v3, _v3_cal_x, _v3_cal_y, THORNIFIX_S_CAL_SZ);
 		}
 	    else
 		{
 		    printf("%s\n","unable to create velocity sensor 3");
 		    obj->var_okflg = 0;
 		}
-	    
+
 	    break;
 
 	default:
@@ -250,6 +280,7 @@ int thvelsen_config_sensor(thvelsen* obj,		/* object */
 		    THVELSET_CPYSTR(&obj->var_ch1, ch_name);
 		    obj->var_gmin = min;
 		    obj->var_gmax = max;
+		    thgsens_set_calibration_buffers(obj->var_v4, _v4_cal_x, _v4_cal_y, THORNIFIX_S_CAL_SZ);
 		}
 	    else
 		{
@@ -258,9 +289,6 @@ int thvelsen_config_sensor(thvelsen* obj,		/* object */
 		}
 	}
 
-    if(obj->var_sen_cnt < 3)
-	obj->var_sen_cnt++;
-
     /* check for ok flags */
     if(obj->var_v1 && obj->var_v2)
 	{
@@ -268,7 +296,7 @@ int thvelsen_config_sensor(thvelsen* obj,		/* object */
 	       obj->var_v2->var_okflg)
 		obj->var_okflg = 1;
 	}
-    
+
     return 0;
 }
 
@@ -300,7 +328,7 @@ int thvelsen_disable_sensor(thvelsen* obj,
     /* decrement counter */
     if(obj->var_sen_cnt > 0)
 	obj->var_sen_cnt--;
-    
+
     return 0;
 }
 
@@ -311,28 +339,42 @@ double thvelsen_get_velocity(thvelsen* obj)
 	return 0;
 
     double v=0.0;
+    double _dp[1] = {0.0};
+    double _gx[1] = {0.0};
 
     if(obj->var_v1 && obj->var_v1_flg)
 	{
-	    v += THVELSEN_VELOCITY(thgsens_get_value(obj->var_v1));
+	    _dp[0] = thgsens_get_value2(obj->var_v1);
+	    /* if(thor_interpol(_v1_pcal_x, _v1_pcal_y, THORNIFIX_P_CAL_SZ, _dp, _gx, 1)) */
+	    /* 	_gx[0] = 0.0; */
+	    v += THVELSEN_VELOCITY(_dp[0]) + _gx[0];
 	}
 
     if(obj->var_v2 && obj->var_v2_flg)
 	{
-	    v += THVELSEN_VELOCITY(thgsens_get_value(obj->var_v2));
+	    _dp[0] = thgsens_get_value2(obj->var_v2);
+	    /* if(thor_interpol(_v2_pcal_x, _v2_pcal_y, THORNIFIX_P_CAL_SZ, _dp, _gx, 1)) */
+	    /* 	_gx[0] = 0.0; */
+	    v += THVELSEN_VELOCITY(_dp[0]) + _gx[0];
 	}
 
     if(obj->var_v3 && obj->var_v3_flg)
 	{
-	    v += THVELSEN_VELOCITY(thgsens_get_value(obj->var_v3));
+	    _dp[0] = thgsens_get_value2(obj->var_v3);
+	    /* if(thor_interpol(_v3_pcal_x, _v3_pcal_y, THORNIFIX_P_CAL_SZ, _dp, _gx, 1)) */
+	    /* 	_gx[0] = 0.0; */
+	    v += THVELSEN_VELOCITY(_dp[0]) + _gx[0];
 	}
 
     if(obj->var_v4 && obj->var_v4_flg)
 	{
-	    v += THVELSEN_VELOCITY(thgsens_get_value(obj->var_v4));
+	    _dp[0] = thgsens_get_value2(obj->var_v4);
+	    /* if(thor_interpol(_v4_pcal_x, _v4_pcal_y, THORNIFIX_P_CAL_SZ, _dp, _gx, 1)) */
+	    /* 	_gx[0] = 0.0; */
+	    v += THVELSEN_VELOCITY(_dp[0]) + _gx[0];
 	}
 
-    obj->var_ave_vel = (obj->var_sen_cnt>0? 
+    obj->var_ave_vel = (obj->var_sen_cnt>0?
 			(v / (double) (obj->var_sen_cnt)) :
 			v);
 
@@ -340,7 +382,7 @@ double thvelsen_get_velocity(thvelsen* obj)
      * call to update external widget */
     if(obj->var_fptr)
 	obj->var_fptr(obj->var_sobj, &obj->var_ave_vel);
-    
+
     return obj->var_ave_vel;
 }
 
@@ -350,7 +392,7 @@ int thvelsen_enable_sensor(thvelsen* obj,
 {
     if(!obj || ix > 3)
 	return 1;
-
+ 
     switch(ix)
 	{
 	case 0:
@@ -373,6 +415,6 @@ int thvelsen_enable_sensor(thvelsen* obj,
     /* increment counter */
     if(obj->var_sen_cnt < 4)
 	obj->var_sen_cnt++;
-
+    printf("Sensor count: %i\n", obj->var_sen_cnt);
     return 0;
 }

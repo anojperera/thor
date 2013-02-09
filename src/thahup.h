@@ -18,6 +18,15 @@
 #include "thgsens.h"		/* generic sensor */
 #include "thvelsen.h"		/* velocity sensor */
 
+#define THAHUP_RESULT_BUFF_DP1_IX 0
+#define THAHUP_RESULT_BUFF_DP2_IX 1
+#define THAHUP_RESULT_BUFF_DP3_IX 2
+#define THAHUP_RESULT_BUFF_DP4_IX 3
+#define THAHUP_RESULT_BUFF_ST_IX 4
+#define THAHUP_RESULT_BUFF_VEL_IX 5
+#define THAHUP_RESULT_BUFF_VOL_IX 6
+#define THAHUP_RESULT_BUFF_TMP_IX 7
+
 /* object conversion macros */
 #define AHUP_GET_VELOCITYDT(obj) \
     (obj->var_velocity)
@@ -51,9 +60,12 @@ struct _thahup
     double* var_actout;			/* array of actuator output */
     double* var_v0_arr;			/* array for smoothing v0 */
     double* var_v1_arr;			/* array for smoothing v1 */
+    double* var_v2_arr;			/* array for smoothing v2 */
+    double* var_v3_arr;			/* array for smoothing v3 */
     double* var_s_arr;			/* array for smoothing static */
     double* var_t_arr;			/* array for smoothing temperature */
-    double var_actsignal;		/* actuator control signal */
+    double* var_result_buff;		/* result buffer to be populated */
+    float64 var_actsignal[1];		/* actuator control signal */
     double var_stopval;			/* value to idle test */
     double var_volflow_val;		/* volume flow */
     double var_velocity_val;		/* velocity */
@@ -128,6 +140,9 @@ extern "C" {
 
     /* reset all sensor values */
     extern int thahup_reset_sensors(thahup* obj);
+#define thahup_set_result_buffer(obj, val) \
+    obj->var_result_buff = val
+    
 #ifdef __cplusplus
 }
 #endif
