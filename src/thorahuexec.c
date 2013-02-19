@@ -43,6 +43,7 @@
 #define THOR_AHU_ACT_FLOOR 5.0								/* minimum actuator control percentage */
 #define THOR_AHU_ACT_CEIL 60.0								/* maximum acturator percentage voltage */
 #define THOR_AHU_MSG_DURATION 4								/* message duration */
+#define THOR_AHU_LOG_FILE_NAME "Log.txt"
 static unsigned int _init_flg = 0;							/* initialise flag */
 static unsigned int _start_flg = 0;							/* start test flag */
 static int _ctrl_ix;									/* control flag */
@@ -87,7 +88,7 @@ int thorahuexec_main(int argc, char** argv)
     t.tv_sec = 0;
     t.tv_nsec = THOR_AHU_WAIT_TIME * THOR_AHU_WAIT_TIME_UNIX_CORRECTION;
 #endif
-
+    _thor_result_fp = fopen(THOR_AHU_LOG_FILE_NAME, "w+");
     /* initialise variables */
     _thor_init_var();
     _thor_ahu_init();
@@ -135,7 +136,7 @@ int thorahuexec_main(int argc, char** argv)
     /* delete ahu program */
     thahup_delete();
     thahup_obj = NULL;
-
+    fclose(_thor_result_fp);
     /* wait for thread to closed */
 #if defined (WIN32) || defined (_WIN32)
     WaitForSingleObject(_thhandle, INFINITE);
