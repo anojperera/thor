@@ -2,9 +2,9 @@
 #include <windows.h>
 #include <conio.h>
 #else
-#include <time.h>
 #include <unistd.h>
 #endif
+#include <time.h>
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -15,6 +15,7 @@
 
 #define THOR_AHU_STATIC_RNG_MIN 0.0							/* minimum static pressure */
 #define THOR_AHU_STATIC_RNG_MAX 5000.0							/* maximum static pressure */
+#define THOR_AHU_DEFAULT_MAX_STATIC 3000.0
 #define THOR_AHU_TEMP_RNG_MIN -10.0							/* minimum temperature */
 #define THOR_AHU_TEMP_RNG_MAX 40.0							/* maximum temperature */
 
@@ -41,7 +42,7 @@
 #define THOR_AHU_ACT_DECR -5.0
 #define THOR_AHU_ACT_ADJT_FINE 1.0							/* actuator control adjustment */
 #define THOR_AHU_ACT_FLOOR 5.0								/* minimum actuator control percentage */
-#define THOR_AHU_ACT_CEIL 60.0								/* maximum acturator percentage voltage */
+#define THOR_AHU_ACT_CEIL 95.0								/* maximum acturator percentage voltage */
 #define THOR_AHU_MSG_DURATION 4								/* message duration */
 #define THOR_AHU_LOG_FILE_NAME "Log.txt"
 static unsigned int _init_flg = 0;							/* initialise flag */
@@ -53,8 +54,10 @@ static char _thor_msg_buff[THOR_AHU_MSG_BUFFER_SZ];					/* main message buffer *
 static char _thor_optmsg_buff[THOR_AHU_OPT_MSG_BUFFER_SZ];				/* optional buffer size */
 
 static double _thor_act_pos = THOR_AHU_ACT_FLOOR;					/* actuator percentage */
+static double _thor_ahu_duct_dia = THOR_AHU_DUCT_DIA;
 static double _thor_result_buffer[THOR_AHU_OPT_MSG_BUFFER_SZ];
-
+static int _thor_num_sensors = 4;
+static int _thor_def_static = THOR_AHU_DEFAULT_MAX_STATIC;
 static FILE* _thor_result_fp = NULL;							/* result file pointer */
 static thahup* thahup_obj = NULL;							/* AHU object */
 
@@ -66,8 +69,9 @@ static int _thor_init_var(void);
 static int _thor_ahu_init(void);
 static int _thor_update_msg_buff(char* buff, char* opts);
 static int _thor_adjust_act(double val);
+static int _thor_parse_args(int argc, char** argv);
 inline __attribute__ ((always_inline)) static int _thor_replace_newline(char* buff);
-
+inline __attribute__ ((always_inline)) static int _thor_open_file(void);
 
 /* thread function for win32 */
 #if defined (WIN32) || defined (_WIN32)
@@ -88,7 +92,13 @@ int thorahuexec_main(int argc, char** argv)
     t.tv_sec = 0;
     t.tv_nsec = THOR_AHU_WAIT_TIME * THOR_AHU_WAIT_TIME_UNIX_CORRECTION;
 #endif
-    _thor_result_fp = fopen(THOR_AHU_LOG_FILE_NAME, "w+");
+    /* call to create the file pointer */
+    if(_thor_open_file())
+	{
+	    fprintf(stdout, "Unable to open file, data not logged\n");
+	    _thor_result_fp = NULL;
+	}
+    
     /* initialise variables */
     _thor_init_var();
     _thor_ahu_init();
@@ -100,6 +110,8 @@ int thorahuexec_main(int argc, char** argv)
     if(_thor_mutex == NULL)
 	{
 	    fprintf(stderr, "CreateMutex error\n");
+	    if(_thor_result_fp == NULL)
+		fclose(_thor_result_fp);
 	    return 1;
 	}
     printf("DP1\tDP2\tDP3\tDP4\tStatic\tVel\tVol\tTemp\n");
@@ -108,6 +120,8 @@ int thorahuexec_main(int argc, char** argv)
     if(_thhandle == NULL)
 	{
 	    CloseHandle(_thor_mutex);
+	    if(_thor_result_fp == NULL)
+		fclose(_thor_result_fp);	    
 	    return 0;
 	}
 #endif
@@ -211,15 +225,15 @@ DWORD WINAPI _thor_msg_handler(LPVOID obj)
 	    fflush(stdin);
 	    if(_ctrl_ix == THOR_AHU_QUIT_CODE1 || _ctrl_ix == THOR_AHU_QUIT_CODE2)
 		{
-	    /* lock mutex */
+		    /* lock mutex */
 #if defined (WIN32) || defined (_WIN32)
-	    	WaitForSingleObject(_thor_mutex, INFINITE);
+		    WaitForSingleObject(_thor_mutex, INFINITE);
 #endif
-	    	_quit_flg = 0;
+		    _quit_flg = 0;
 #if defined (WIN32) || defined (_WIN32)
-	    	ReleaseMutex(_thor_mutex);
+		    ReleaseMutex(_thor_mutex);
 #endif
-	    	break;
+		    break;
 		}
 
 #if defined (WIN32) || defined (_WIN32)
@@ -314,9 +328,9 @@ static int _thor_ahu_init(void)
 	    thahup_reset_sensors(NULL);
 	    thahup_obj->var_stctrl = thahup_man;
 	}
-    thahup_set_ductdia(thahup_obj, THOR_AHU_DUCT_DIA);
+    thahup_set_ductdia(thahup_obj, _thor_ahu_duct_dia);
     thahup_set_result_buffer(thahup_obj, _thor_result_buffer);
-     /* set sensor range */
+    /* set sensor range */
     printf("%s\n","setting sensor range..");
     thgsens_set_range(thahup_obj->var_stsensor,
 		      THOR_AHU_STATIC_RNG_MIN,
@@ -327,5 +341,100 @@ static int _thor_ahu_init(void)
 		      THOR_AHU_TEMP_RNG_MAX);
 
     printf("prestart complete\n");
+    return 0;
+}
+
+/* Parse argument */
+static int _thor_parse_args(int argc, char** argv)
+{
+    int _next_opt;
+    char _arg_buff[THOR_AHU_OPT_MSG_BUFFER_SZ];
+    const char* const _short_opts = ":D:N:S:";
+    const struct option _long_opts[] = {
+	{"duct-dia", 1, NULL, 'D'},
+	{"num-sensors", 1, NULL, 'N'},
+	{"max-static", 1, NULL, 'S'}
+	{NULL, 0, NULL, 0}
+    };
+    
+    _thor_ahu_duct_dia = 0.0;
+    _thor_num_sensors = 0;
+    _thor_def_static = 0.0;
+    
+    /* parse arguments */
+    do
+	{
+	    _next_opt = getopt_long(argc, argv, _short_opts, _long_opts, NULL);
+	    switch(_next_opt)
+		{
+		case 'D':
+		    if(optarg == NULL)
+			break;
+		    strncpy(_arg_buff, optarg, THOR_AHU_OPT_MSG_BUFFER_SZ-1);
+		    _thor_ahu_duct_dia = atof(_arg_buff);
+		    break;
+		case 'N':
+		    if(optarg == NULL)
+			break;
+		    strncpy(_arg_buff, optarg, THOR_AHU_OPT_MSG_BUFFER_SZ-1);
+		    _thor_num_sensors = atoi(_arg_buff);
+		    break;		    
+		case 'S':
+		    if(optarg == NULL)
+			break;
+		    strncpy(_arg_buff, optarg, THOR_AHU_OPT_MSG_BUFFER_SZ-1);
+		    _thor_def_static = atof(_arg_buff);
+		    break;		    		    
+		case -1:
+		default:
+		    break;
+		}
+
+	}while(_next_opt != -1);
+
+    /* check values */
+    if(_thor_ahu_duct_dia <= 0.0)
+	{
+	    fprintf(stdout, "\nEnter Duct Diameter (200/600/1120): ");
+	    scanf("%f", &_thor_ahu_duct_dia);
+	}
+
+    if(_thor_num_sensors < 0)
+	{
+	    fprintf(stdout, "\nEnter number of sensors (4/2): ");
+	    scanf("%i", &_thor_num_sensors);
+	}
+
+    if(_thor_def_static < 0)
+	{
+	    fprintf(stdout, "\nEnter max external static pressure range : ");
+	    scanf("%f", &_thor_def_static);
+	}
+
+    /* assign defaults if the vaules are still invalid */
+    if(_thor_ahu_duct_dia <= 0.0)
+	_thor_ahu_duct_dia = _thor_ahu_duct_dia;
+    if(_thor_num_sensors <= 0)
+	_thor_num_sensors = 4;
+    if(_thor_def_static < 0)
+	_thor_def_static = _thor_def_static;
+    return 0;
+}
+
+/* open file pointer with time based file name */
+inline __attribute__ ((always_inline)) static int _thor_open_file(void)
+{
+    char _file_name[THOR_AHU_OPT_MSG_BUFFER_SZ];
+    time_t _tm;
+    struct tm* _tm_info;
+
+    time(&_tm);
+    _tm_info = localtime(&_tm);
+    strftime(_file_name, THOR_AHU_OPT_MSG_BUFFER_SZ, "%F-%R.txt", _tm_info);
+
+    /* open file pointer */
+    if((_thor_result_fp = fopen(_file_name, "w+")) == NULL)
+	return -1;
+
     return 0;
 }
