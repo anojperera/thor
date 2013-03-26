@@ -4,6 +4,7 @@
 #else
 #include <unistd.h>
 #endif
+#include <getopt.h>
 #include <time.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -57,7 +58,7 @@ static double _thor_act_pos = THOR_AHU_ACT_FLOOR;					/* actuator percentage */
 static double _thor_ahu_duct_dia = THOR_AHU_DUCT_DIA;
 static double _thor_result_buffer[THOR_AHU_OPT_MSG_BUFFER_SZ];
 static int _thor_num_sensors = 4;
-static int _thor_def_static = THOR_AHU_DEFAULT_MAX_STATIC;
+static double _thor_def_static = THOR_AHU_DEFAULT_MAX_STATIC;
 static FILE* _thor_result_fp = NULL;							/* result file pointer */
 static thahup* thahup_obj = NULL;							/* AHU object */
 
@@ -98,6 +99,8 @@ int thorahuexec_main(int argc, char** argv)
 	    fprintf(stdout, "Unable to open file, data not logged\n");
 	    _thor_result_fp = NULL;
 	}
+    /* call to parse arguments */
+    _thor_parse_args(argc, argv);
     
     /* initialise variables */
     _thor_init_var();
@@ -353,7 +356,7 @@ static int _thor_parse_args(int argc, char** argv)
     const struct option _long_opts[] = {
 	{"duct-dia", 1, NULL, 'D'},
 	{"num-sensors", 1, NULL, 'N'},
-	{"max-static", 1, NULL, 'S'}
+	{"max-static", 1, NULL, 'S'},
 	{NULL, 0, NULL, 0}
     };
     
@@ -396,7 +399,7 @@ static int _thor_parse_args(int argc, char** argv)
     if(_thor_ahu_duct_dia <= 0.0)
 	{
 	    fprintf(stdout, "\nEnter Duct Diameter (200/600/1120): ");
-	    scanf("%f", &_thor_ahu_duct_dia);
+	    scanf("%f", (float*) &_thor_ahu_duct_dia);
 	}
 
     if(_thor_num_sensors < 0)
@@ -408,7 +411,7 @@ static int _thor_parse_args(int argc, char** argv)
     if(_thor_def_static < 0)
 	{
 	    fprintf(stdout, "\nEnter max external static pressure range : ");
-	    scanf("%f", &_thor_def_static);
+	    scanf("%f", (float*) &_thor_def_static);
 	}
 
     /* assign defaults if the vaules are still invalid */
@@ -430,7 +433,7 @@ inline __attribute__ ((always_inline)) static int _thor_open_file(void)
 
     time(&_tm);
     _tm_info = localtime(&_tm);
-    strftime(_file_name, THOR_AHU_OPT_MSG_BUFFER_SZ, "%F-%R.txt", _tm_info);
+    strftime(_file_name, THOR_AHU_OPT_MSG_BUFFER_SZ, "%Y-%m-%d-%I-%M-%S.txt", _tm_info);
 
     /* open file pointer */
     if((_thor_result_fp = fopen(_file_name, "w+")) == NULL)
