@@ -28,7 +28,6 @@ static thahup* var_thahup = NULL;			/* ahu test object */
 
 /* channel names for sensors */
 #define THAHUP_TMP_CHANNEL "Dev1/ai1"			/* temperature sensor */
-
 #define THAHUP_ST_CHANNEL "Dev1/ai2"			/* static pressure sensor - ino 171 */
 #define THAHUP_VEL_DP1_CHANNEL "Dev1/ai3"		/* differential pressure velocity - ino 167 */
 #define THAHUP_VEL_DP2_CHANNEL "Dev1/ai4"		/* differential pressure velocity - ino 168 */
