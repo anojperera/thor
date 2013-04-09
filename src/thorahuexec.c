@@ -398,19 +398,19 @@ static int _thor_parse_args(int argc, char** argv)
     /* check values */
     if(_thor_ahu_duct_dia <= 0.0)
 	{
-	    fprintf(stdout, "\nEnter Duct Diameter (200/600/1120): ");
+	    printf("\nEnter Duct Diameter (200/600/1120): ");
 	    scanf("%f", (float*) &_thor_ahu_duct_dia);
 	}
 
-    if(_thor_num_sensors < 0)
+    if(_thor_num_sensors <= 0)
 	{
-	    fprintf(stdout, "\nEnter number of sensors (4/2): ");
+	    printf("\nEnter number of sensors (4/2): ");
 	    scanf("%i", &_thor_num_sensors);
 	}
 
-    if(_thor_def_static < 0)
+    if(_thor_def_static <= 0)
 	{
-	    fprintf(stdout, "\nEnter max external static pressure range : ");
+	    printf("\nEnter max external static pressure range : ");
 	    scanf("%f", (float*) &_thor_def_static);
 	}
 
