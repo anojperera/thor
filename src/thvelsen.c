@@ -350,34 +350,34 @@ double thvelsen_get_velocity(thvelsen* obj)
 	    v += THVELSEN_VELOCITY(_dp[0]) + _gx[0];
 	}
 
-    if(obj->var_v2 && obj->var_v2_flg)
-	{
-	    _dp[0] = thgsens_get_value2(obj->var_v2);
-	    /* if(thor_interpol(_v2_pcal_x, _v2_pcal_y, THORNIFIX_P_CAL_SZ, _dp, _gx, 1)) */
-	    /* 	_gx[0] = 0.0; */
-	    v += THVELSEN_VELOCITY(_dp[0]) + _gx[0];
-	}
+    /* if(obj->var_v2 && obj->var_v2_flg) */
+    /* 	{ */
+    /* 	    _dp[0] = thgsens_get_value2(obj->var_v2); */
+    /* 	    /\* if(thor_interpol(_v2_pcal_x, _v2_pcal_y, THORNIFIX_P_CAL_SZ, _dp, _gx, 1)) *\/ */
+    /* 	    /\* 	_gx[0] = 0.0; *\/ */
+    /* 	    v += THVELSEN_VELOCITY(_dp[0]) + _gx[0]; */
+    /* 	} */
 
-    if(obj->var_v3 && obj->var_v3_flg)
-    	{
-    	    _dp[0] = thgsens_get_value2(obj->var_v3);
-    	    /* if(thor_interpol(_v3_pcal_x, _v3_pcal_y, THORNIFIX_P_CAL_SZ, _dp, _gx, 1)) */
-    	    /* 	_gx[0] = 0.0; */
-    	    v += THVELSEN_VELOCITY(_dp[0]) + _gx[0];
-    	}
+    /* if(obj->var_v3 && obj->var_v3_flg) */
+    /* 	{ */
+    /* 	    _dp[0] = thgsens_get_value2(obj->var_v3); */
+    /* 	    /\* if(thor_interpol(_v3_pcal_x, _v3_pcal_y, THORNIFIX_P_CAL_SZ, _dp, _gx, 1)) *\/ */
+    /* 	    /\* 	_gx[0] = 0.0; *\/ */
+    /* 	    v += THVELSEN_VELOCITY(_dp[0]) + _gx[0]; */
+    /* 	} */
 
-    if(obj->var_v4 && obj->var_v4_flg)
-    	{
-    	    _dp[0] = thgsens_get_value2(obj->var_v4);
-    	    /* if(thor_interpol(_v4_pcal_x, _v4_pcal_y, THORNIFIX_P_CAL_SZ, _dp, _gx, 1)) */
-    	    /* 	_gx[0] = 0.0; */
-    	    v += THVELSEN_VELOCITY(_dp[0]) + _gx[0];
-    	}
+    /* if(obj->var_v4 && obj->var_v4_flg) */
+    /* 	{ */
+    /* 	    _dp[0] = thgsens_get_value2(obj->var_v4); */
+    /* 	    /\* if(thor_interpol(_v4_pcal_x, _v4_pcal_y, THORNIFIX_P_CAL_SZ, _dp, _gx, 1)) *\/ */
+    /* 	    /\* 	_gx[0] = 0.0; *\/ */
+    /* 	    v += THVELSEN_VELOCITY(_dp[0]) + _gx[0]; */
+    /* 	} */
 
     obj->var_ave_vel = (obj->var_sen_cnt>0?
 			(v / (double) (obj->var_sen_cnt)) :
 			v);
-
+    obj->var_ave_vel = v;
     /* if the callback function pointer was assigned
      * call to update external widget */
     if(obj->var_fptr)
