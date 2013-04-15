@@ -331,6 +331,14 @@ static int _thor_ahu_init(void)
 	    thahup_reset_sensors(NULL);
 	    thahup_obj->var_stctrl = thahup_man;
 	}
+    thvelsen_enable_sensor(thahup_obj->var_velocity, 0);
+    thvelsen_enable_sensor(thahup_obj->var_velocity, 1);
+    if(_thor_num_sensors > 3)
+	{
+	    thvelsen_enable_sensor(thahup_obj->var_velocity, 2);
+	    thvelsen_enable_sensor(thahup_obj->var_velocity, 3);
+	}
+    
     thahup_set_ductdia(thahup_obj, _thor_ahu_duct_dia);
     thahup_set_result_buffer(thahup_obj, _thor_result_buffer);
     /* set sensor range */

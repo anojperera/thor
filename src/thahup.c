@@ -250,21 +250,6 @@ static inline void thahup_set_values()
     if(var_thahup->var_volupdate)
 	var_thahup->var_volupdate(var_thahup->var_sobj, &var_thahup->var_volflow_val);
 
-    /* record calibration results on zero counter and
-     * calibration flag false */
-    /*     if(gcounter == 0 && var_thahup->var_calflg == 0) */
-    /* 	{ */
-    /* 	    thahup_add_xy_to_list(); */
-    /* 	    if(var_thahup->var_act_fd_val > 9.9) */
-    /* 		{ */
-    /* 		    var_thahup->var_calflg = 1; */
-    /* #if defined (WIN32) || defined (_WIN32) */
-    /* 		    ReleaseSemaphore(var_sem, 1, NULL); */
-    /* #else */
-    /* 		    sem_post(&var_sem); */
-    /* #endif */
-    /* 		} */
-    /* 	} */
 #if defined (WIN32) || defined (_WIN32)
     ReleaseMutex(mutex);
 #else    
@@ -642,11 +627,6 @@ int thahup_initialise(thahup_stopctrl ctrl_st,		/* start control */
     /* initialise semaphore */
     sem_init(&var_sem, 0, 0);
 #endif
-    /* enable all sensors by default */
-    thvelsen_enable_sensor(var_thahup->var_velocity, 0);
-    thvelsen_enable_sensor(var_thahup->var_velocity, 1);
-    thvelsen_enable_sensor(var_thahup->var_velocity, 2);
-    thvelsen_enable_sensor(var_thahup->var_velocity, 3);
     return 0;
 }
 
