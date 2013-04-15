@@ -153,7 +153,7 @@ static inline void thahup_actout_signals()
     for(; i<THAHUP_RATE; i++)
 	{
 	    var_thahup->var_actout[i] =
-		9.98 * sin((double) i * M_PI / (2 * THAHUP_RATE));
+		9.98 * cos((double) i * M_PI / (2 * THAHUP_RATE));
 	}
 }
 
