@@ -48,6 +48,9 @@ static thahup* var_thahup = NULL;			/* ahu test object */
 #define THAHUP_MIN_FEEDBACK_VOLT 2.1			/* minimum feedback voltage */
 #define THAHUP_ACT_START_VOLTAGE 10.0			/* actuator starting voltage */
 
+#define THAHUP_MIN_DP 0.5
+#define THAHUP_MIN_ST 1.0
+
 #define THAHUP_CHECK_VSENSOR(obj)			\
     obj? (obj->var_flg? obj->var_val : 0.0) : 0.0
 
@@ -168,11 +171,11 @@ static inline void thahup_set_values()
 
     /* add values to array */
     var_thahup->var_t_arr[s_counter] = (val_buff[THAHUP_TMP_IX]>0? val_buff[THAHUP_TMP_IX] : 0.0);
-    var_thahup->var_v0_arr[s_counter] = (val_buff[THAHUP_DP1_IX]>0? val_buff[THAHUP_DP1_IX] : 0.0);
-    var_thahup->var_v1_arr[s_counter] = (val_buff[THAHUP_DP2_IX]>0? val_buff[THAHUP_DP2_IX] : 0.0);
-    var_thahup->var_v2_arr[s_counter] = (val_buff[THAHUP_DP3_IX]>0? val_buff[THAHUP_DP3_IX] : 0.0);
-    var_thahup->var_v3_arr[s_counter] = (val_buff[THAHUP_DP4_IX]>0? val_buff[THAHUP_DP4_IX] : 0.0);    
-    var_thahup->var_s_arr[s_counter] = (val_buff[THAHUP_ST_IX]>0? val_buff[THAHUP_ST_IX] : 0.0);
+    var_thahup->var_v0_arr[s_counter] = (val_buff[THAHUP_DP1_IX]>THAHUP_MIN_DP? val_buff[THAHUP_DP1_IX] : 0.0);
+    var_thahup->var_v1_arr[s_counter] = (val_buff[THAHUP_DP2_IX]>THAHUP_MIN_DP? val_buff[THAHUP_DP2_IX] : 0.0);
+    var_thahup->var_v2_arr[s_counter] = (val_buff[THAHUP_DP3_IX]>THAHUP_MIN_DP? val_buff[THAHUP_DP3_IX] : 0.0);
+    var_thahup->var_v3_arr[s_counter] = (val_buff[THAHUP_DP4_IX]>THAHUP_MIN_DP? val_buff[THAHUP_DP4_IX] : 0.0);    
+    var_thahup->var_s_arr[s_counter] = (val_buff[THAHUP_ST_IX]>THAHUP_MIN_ST? val_buff[THAHUP_ST_IX] : 0.0);
 
     /* call averaging functions */
     /* set values temperature */
