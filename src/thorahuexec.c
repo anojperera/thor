@@ -416,7 +416,7 @@ static int _thor_parse_args(int argc, char** argv)
 
     /* assign defaults if the vaules are still invalid */
     if(_thor_ahu_duct_dia <= 0.0)
-	_thor_ahu_duct_dia = _thor_ahu_duct_dia;
+	_thor_ahu_duct_dia = THOR_AHU_DUCT_DIA;
     if(_thor_num_sensors <= 0)
 	_thor_num_sensors = 4;
     if(_thor_def_static < 0)
