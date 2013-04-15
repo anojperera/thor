@@ -142,6 +142,15 @@ extern "C" {
     extern int thahup_reset_sensors(thahup* obj);
 #define thahup_set_result_buffer(obj, val) \
     obj->var_result_buff = val
+
+    /* Set stop value of to idle test */
+#define thahup_set_stop_val(obj, val)		\
+    (obj)->var_stopval = val;			\
+    if(val <= 0.0)				\
+	(obj)->var_stctrl = thahup_man;		\
+    else					\
+	(obj)->var_stctrl = thahup_auto
+
     
 #ifdef __cplusplus
 }

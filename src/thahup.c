@@ -301,7 +301,7 @@ DWORD WINAPI thahup_async_start(LPVOID obj)
 #endif    
 {
 
-    int32 spl_write = 0;		/* number of samples written */
+    int32 spl_write = 0;	/* number of samples written */
     
     counter = 0;		/* reset counter */
     gcounter = 0;		/* reset counter */
@@ -330,7 +330,6 @@ DWORD WINAPI thahup_async_start(LPVOID obj)
 	    if(var_thahup->var_stctrl == thahup_auto)
 		{
 		    /* comment */
-		    printf("pid control\n");
 		    var_thahup->var_actsignal[0] =
 			var_thahup->var_actout[counter];
 
@@ -342,10 +341,10 @@ DWORD WINAPI thahup_async_start(LPVOID obj)
 			}
 
 		    /* call PID controller set the volate output */
-		    thpid_pid_control(&var_thpid,
-				      var_thahup->var_stopval,
-				      var_thahup->var_static_val,
-				      &var_thahup->var_actsignal[0]);
+		    /* thpid_pid_control(&var_thpid, */
+		    /* 		      var_thahup->var_stopval, */
+		    /* 		      var_thahup->var_static_val, */
+		    /* 		      &var_thahup->var_actsignal[0]); */
 				      
 		}
 
@@ -359,17 +358,6 @@ DWORD WINAPI thahup_async_start(LPVOID obj)
 					       &spl_write,
 					       NULL)))
 		break;
-
-	    /* wait for semaphore */
-	    /* 	    if(var_thahup->var_calflg == 0) */
-	    /* 		{ */
-	    /* #if defined (WIN32) || defined (_WIN32) */
-	    /* 		    WaitForSingleObject(var_sem, INFINITE); */
-	    /* #else		     */
-	    /* 		    sem_wait(&var_sem); */
-	    /* #endif */
-	    /* 		    thahup_linreg(); */
-	    /* 		} */
 
 #if defined(WIN32) || defined(_WIN32)
 	    Sleep(500);

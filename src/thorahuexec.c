@@ -16,7 +16,7 @@
 
 #define THOR_AHU_STATIC_RNG_MIN 0.0							/* minimum static pressure */
 #define THOR_AHU_STATIC_RNG_MAX 5000.0							/* maximum static pressure */
-#define THOR_AHU_DEFAULT_MAX_STATIC 3000
+#define THOR_AHU_DEFAULT_MAX_STATIC 0.0
 #define THOR_AHU_TEMP_RNG_MIN -10.0							/* minimum temperature */
 #define THOR_AHU_TEMP_RNG_MAX 40.0							/* maximum temperature */
 
@@ -338,8 +338,8 @@ static int _thor_ahu_init(void)
 	    thvelsen_enable_sensor(thahup_obj->var_velocity, 2);
 	    thvelsen_enable_sensor(thahup_obj->var_velocity, 3);
 	}
-    
-    thahup_set_ductdia(thahup_obj, _thor_ahu_duct_dia);
+    thahup_set_stop_val(thahup_obj, (double) _thor_def_static);
+    thahup_set_ductdia(thahup_obj, (double) _thor_ahu_duct_dia);
     thahup_set_result_buffer(thahup_obj, _thor_result_buffer);
     /* set sensor range */
     printf("%s\n","setting sensor range..");
