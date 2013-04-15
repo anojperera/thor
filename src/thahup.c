@@ -145,11 +145,11 @@ static inline void thahup_clear_tasks()
 /* create an array of output signals */
 static inline void thahup_actout_signals()
 {
+    int i = 0;
     /* alloc memory for actuator control array */
     var_thahup->var_actout = (double*)
 	calloc(THAHUP_RATE, sizeof(double));
 
-    int i = 0;
     for(; i<THAHUP_RATE; i++)
 	{
 	    var_thahup->var_actout[i] =
