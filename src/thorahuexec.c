@@ -12,11 +12,11 @@
 #include "thorexec.h"
 #include "thahup.h"
 
-#define THOR_AHU_DUCT_DIA 1120.0
+#define THOR_AHU_DUCT_DIA 1120
 
 #define THOR_AHU_STATIC_RNG_MIN 0.0							/* minimum static pressure */
 #define THOR_AHU_STATIC_RNG_MAX 5000.0							/* maximum static pressure */
-#define THOR_AHU_DEFAULT_MAX_STATIC 3000.0
+#define THOR_AHU_DEFAULT_MAX_STATIC 3000
 #define THOR_AHU_TEMP_RNG_MIN -10.0							/* minimum temperature */
 #define THOR_AHU_TEMP_RNG_MAX 40.0							/* maximum temperature */
 
@@ -54,11 +54,11 @@ static int _quit_flg = 1;								/* quit flag */
 static char _thor_msg_buff[THOR_AHU_MSG_BUFFER_SZ];					/* main message buffer */
 static char _thor_optmsg_buff[THOR_AHU_OPT_MSG_BUFFER_SZ];				/* optional buffer size */
 
-static double _thor_act_pos = THOR_AHU_ACT_FLOOR;					/* actuator percentage */
-static double _thor_ahu_duct_dia = THOR_AHU_DUCT_DIA;
+ static double _thor_act_pos = THOR_AHU_ACT_FLOOR;					/* actuator percentage */
+static int _thor_ahu_duct_dia = THOR_AHU_DUCT_DIA;
+static int _thor_def_static = THOR_AHU_DEFAULT_MAX_STATIC;
 static double _thor_result_buffer[THOR_AHU_OPT_MSG_BUFFER_SZ];
 static int _thor_num_sensors = 4;
-static double _thor_def_static = THOR_AHU_DEFAULT_MAX_STATIC;
 static FILE* _thor_result_fp = NULL;							/* result file pointer */
 static thahup* thahup_obj = NULL;							/* AHU object */
 
@@ -360,7 +360,7 @@ static int _thor_parse_args(int argc, char** argv)
 	{NULL, 0, NULL, 0}
     };
     
-    _thor_ahu_duct_dia = 0.0;
+    _thor_ahu_duct_dia = 0;
     _thor_num_sensors = 0;
     _thor_def_static = 0.0;
     
@@ -374,7 +374,7 @@ static int _thor_parse_args(int argc, char** argv)
 		    if(optarg == NULL)
 			break;
 		    strncpy(_arg_buff, optarg, THOR_AHU_OPT_MSG_BUFFER_SZ-1);
-		    _thor_ahu_duct_dia = atof(_arg_buff);
+		    _thor_ahu_duct_dia = atoi(_arg_buff);
 		    break;
 		case 'N':
 		    if(optarg == NULL)
@@ -386,7 +386,7 @@ static int _thor_parse_args(int argc, char** argv)
 		    if(optarg == NULL)
 			break;
 		    strncpy(_arg_buff, optarg, THOR_AHU_OPT_MSG_BUFFER_SZ-1);
-		    _thor_def_static = atof(_arg_buff);
+		    _thor_def_static = atoi(_arg_buff);
 		    break;		    		    
 		case -1:
 		default:
@@ -396,10 +396,10 @@ static int _thor_parse_args(int argc, char** argv)
 	}while(_next_opt != -1);
 
     /* check values */
-    if(_thor_ahu_duct_dia <= 0.0)
+    if(_thor_ahu_duct_dia <= 0)
 	{
 	    printf("\nEnter Duct Diameter (200/600/1120): ");
-	    scanf("%f", (float*) &_thor_ahu_duct_dia);
+	    scanf("%i", &_thor_ahu_duct_dia);
 	}
 
     if(_thor_num_sensors <= 0)
@@ -411,12 +411,13 @@ static int _thor_parse_args(int argc, char** argv)
     if(_thor_def_static <= 0)
 	{
 	    printf("\nEnter max external static pressure range : ");
-	    scanf("%f", (float*) &_thor_def_static);
+	    scanf("%i", &_thor_def_static);
 	}
 
     /* assign defaults if the vaules are still invalid */
     if(_thor_ahu_duct_dia <= 0.0)
 	_thor_ahu_duct_dia = THOR_AHU_DUCT_DIA;
+    printf("Duct dia %f\n", _thor_ahu_duct_dia);
     if(_thor_num_sensors <= 0)
 	_thor_num_sensors = 4;
     if(_thor_def_static < 0)
