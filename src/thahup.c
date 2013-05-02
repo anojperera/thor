@@ -48,8 +48,8 @@ static thahup* var_thahup = NULL;			/* ahu test object */
 #define THAHUP_MIN_FEEDBACK_VOLT 2.1			/* minimum feedback voltage */
 #define THAHUP_ACT_START_VOLTAGE 10.0			/* actuator starting voltage */
 
-#define THAHUP_MIN_DP 0.5
-#define THAHUP_MIN_ST 1.0
+#define THAHUP_MIN_DP 0.0
+#define THAHUP_MIN_ST 0.0
 
 #define THAHUP_CHECK_VSENSOR(obj)			\
     obj? (obj->var_flg? obj->var_val : 0.0) : 0.0
