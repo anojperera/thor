@@ -187,7 +187,6 @@ int thvelsen_config_sensor(thvelsen* obj,		/* object */
 		    thgsens_set_range(obj->var_v1,
 		    		      (rng_flg>0? obj->var_gmin : min),
 		    		      (rng_flg>0? obj->var_gmax : max));
-		    obj->var_v1_flg = 1;
 		    printf("%s %i %s\n","velocity sensor", ix, "complete");
 
 		    /* copy string and generic min and max val */
@@ -217,7 +216,6 @@ int thvelsen_config_sensor(thvelsen* obj,		/* object */
 		    thgsens_set_range(obj->var_v2,
 				      (rng_flg? obj->var_gmin : min),
 				      (rng_flg? obj->var_gmax : max));
-		    obj->var_v2_flg = 1;
 		    printf("%s %i %s\n","velocity sensor", ix, "complete");
 
 		    /* copy string and generic min and max val */
@@ -245,7 +243,6 @@ int thvelsen_config_sensor(thvelsen* obj,		/* object */
 		    thgsens_set_range(obj->var_v3,
 				      (rng_flg? obj->var_gmin : min),
 				      (rng_flg? obj->var_gmax : max));
-		    obj->var_v3_flg = 1;
 		    printf("%s %i %s\n","velocity sensor", ix, "complete");
 
 		    /* copy string and generic min and max val */
@@ -273,7 +270,6 @@ int thvelsen_config_sensor(thvelsen* obj,		/* object */
 		    thgsens_set_range(obj->var_v4,
 				      (rng_flg? obj->var_gmin : min),
 				      (rng_flg? obj->var_gmax : max));
-		    obj->var_v4_flg = 1;
 		    printf("%s %i %s\n","velocity sensor", ix, "complete");
 
 		    /* copy string and generic min and max val */
