@@ -20,6 +20,9 @@
 #define THOR_AHU_TEMP_RNG_MIN -10.0							/* minimum temperature */
 #define THOR_AHU_TEMP_RNG_MAX 40.0							/* maximum temperature */
 
+#define THOR_AHU_MIN_FZ_RNG 0.0								/* minimum frequency range */
+#define THOR_AHU_MAX_FZ_RNG 99.99							/* maximum frequency range */
+
 #define THOR_AHU_INIT_PROG 105								/* i */
 #define THOR_AHU_QUIT_CODE1 81								/* Q */
 #define THOR_AHU_QUIT_CODE2 113								/* q */
@@ -353,6 +356,10 @@ static int _thor_ahu_init(void)
 		      THOR_AHU_TEMP_RNG_MIN,
 		      THOR_AHU_TEMP_RNG_MAX);
 
+    thgsens_set_range(thahup_obj->var_speed,
+		      THOR_AHU_MIN_FZ_RNG,
+		      THOR_AHU_MAX_FZ_RNG);    
+
     printf("prestart complete\n");
     return 0;
 }
@@ -408,7 +415,7 @@ static int _thor_parse_args(int argc, char** argv)
     /* check values */
     if(_thor_ahu_duct_dia <= 0)
 	{
-	    printf("\nEnter Duct Diameter (200/600/1120): ");
+	    printf("\nEnter Duct Diameter (200/300/600/1120): ");
 	    scanf("%i", &_thor_ahu_duct_dia);
 	}
 

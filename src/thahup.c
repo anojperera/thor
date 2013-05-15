@@ -52,6 +52,7 @@ static thahup* var_thahup = NULL;			/* ahu test object */
 
 #define THAHUP_MIN_DP 0.0
 #define THAHUP_MIN_ST 0.0
+#define THAHUP_SP_CONV 60.0				/* frequency to speed conversion */
 
 #define THAHUP_CHECK_VSENSOR(obj)			\
     obj? (obj->var_flg? obj->var_val : 0.0) : 0.0
@@ -260,7 +261,7 @@ static inline void thahup_set_values()
 
     /* motor or fan speed */
     var_thahup->var_speed_val =
-	thgsens_get_value(var_thahup->var_speed);
+	thgsens_get_value(var_thahup->var_speed) * THAHUP_SP_CONV;
 
     if(var_thahup->var_volupdate)
 	var_thahup->var_volupdate(var_thahup->var_sobj, &var_thahup->var_volflow_val);
