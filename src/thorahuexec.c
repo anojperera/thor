@@ -12,13 +12,16 @@
 #include "thorexec.h"
 #include "thahup.h"
 
-#define THOR_AHU_DUCT_DIA 1120.0
+#define THOR_AHU_DUCT_DIA 1120
 
 #define THOR_AHU_STATIC_RNG_MIN 0.0							/* minimum static pressure */
 #define THOR_AHU_STATIC_RNG_MAX 5000.0							/* maximum static pressure */
-#define THOR_AHU_DEFAULT_MAX_STATIC 3000.0
+#define THOR_AHU_DEFAULT_MAX_STATIC 0.0
 #define THOR_AHU_TEMP_RNG_MIN -10.0							/* minimum temperature */
 #define THOR_AHU_TEMP_RNG_MAX 40.0							/* maximum temperature */
+
+#define THOR_AHU_MIN_FZ_RNG 0.0								/* minimum frequency range */
+#define THOR_AHU_MAX_FZ_RNG 99.99							/* maximum frequency range */
 
 #define THOR_AHU_INIT_PROG 105								/* i */
 #define THOR_AHU_QUIT_CODE1 81								/* Q */
@@ -30,12 +33,12 @@
 #define THOR_AHU_ACT_INCRF_CODE 42							/* * */
 #define THOR_AHU_ACT_DECRF_CODE 47							/* / */
 
-#define THOR_AHU_MAIN_MSG_FORMAT "%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\r\r"
-#define THOR_AHU_MAIN_OPTMSG_FORMAT "%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\r\r%s\r"
+#define THOR_AHU_MAIN_MSG_FORMAT "%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%i\r\r"
+#define THOR_AHU_MAIN_OPTMSG_FORMAT "%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%i\r\r%s\r"
 #define THOR_AHU_ACTUATOR_PST "\rACTUATOR: ======= %.2f =======\r"
 #define THOR_AHU_MSG_BUFFER_SZ 2048							/* main buffer size */
 #define THOR_AHU_OPT_MSG_BUFFER_SZ 64							/* optional buffer size */
-#define THOR_AHU_RESULT_BUFF_SZ 8							/* result buffer size */
+#define THOR_AHU_RESULT_BUFF_SZ 9							/* result buffer size */
 
 #define THOR_AHU_WAIT_TIME 500								/* waiting time for the main loop */
 #define THOR_AHU_WAIT_TIME_UNIX_CORRECTION 1000						/* correction for unix */
@@ -54,11 +57,11 @@ static int _quit_flg = 1;								/* quit flag */
 static char _thor_msg_buff[THOR_AHU_MSG_BUFFER_SZ];					/* main message buffer */
 static char _thor_optmsg_buff[THOR_AHU_OPT_MSG_BUFFER_SZ];				/* optional buffer size */
 
-static double _thor_act_pos = THOR_AHU_ACT_FLOOR;					/* actuator percentage */
-static double _thor_ahu_duct_dia = THOR_AHU_DUCT_DIA;
+ static double _thor_act_pos = THOR_AHU_ACT_FLOOR;					/* actuator percentage */
+static int _thor_ahu_duct_dia = THOR_AHU_DUCT_DIA;
+static int _thor_def_static = THOR_AHU_DEFAULT_MAX_STATIC;
 static double _thor_result_buffer[THOR_AHU_OPT_MSG_BUFFER_SZ];
 static int _thor_num_sensors = 4;
-static double _thor_def_static = THOR_AHU_DEFAULT_MAX_STATIC;
 static FILE* _thor_result_fp = NULL;							/* result file pointer */
 static thahup* thahup_obj = NULL;							/* AHU object */
 
@@ -117,7 +120,7 @@ int thorahuexec_main(int argc, char** argv)
 		fclose(_thor_result_fp);
 	    return 1;
 	}
-    printf("DP1\tDP2\tDP3\tDP4\tStatic\tVel\tVol\tTemp\n");
+    printf("DP1\tDP2\tDP3\tDP4\tStatic\tVel\tVol\tTemp\tRPM\n");
     _thhandle = CreateThread(NULL, 0, _thor_msg_handler, NULL, 0, NULL);
     /* exit and clean up if failes */
     if(_thhandle == NULL)
@@ -191,7 +194,8 @@ static int _thor_update_msg_buff(char* buff, char* opts)
 		    _thor_result_buffer[THAHUP_RESULT_BUFF_ST_IX],			/* static */
 		    _thor_result_buffer[THAHUP_RESULT_BUFF_VEL_IX],			/* velocity */
 		    _thor_result_buffer[THAHUP_RESULT_BUFF_VOL_IX],			/* volume flow */
-		    _thor_result_buffer[THAHUP_RESULT_BUFF_TMP_IX],			/* temp */		    
+		    _thor_result_buffer[THAHUP_RESULT_BUFF_TMP_IX],			/* temp */
+		    (int) _thor_result_buffer[THAHUP_RESULT_BUFF_SP_IX],		/* speed (rpm) */
 		    opts);
 	}
     else
@@ -204,7 +208,8 @@ static int _thor_update_msg_buff(char* buff, char* opts)
 		    _thor_result_buffer[THAHUP_RESULT_BUFF_ST_IX],			/* static */
 		    _thor_result_buffer[THAHUP_RESULT_BUFF_VEL_IX],			/* velocity */
 		    _thor_result_buffer[THAHUP_RESULT_BUFF_VOL_IX],			/* volume flow */
-		    _thor_result_buffer[THAHUP_RESULT_BUFF_TMP_IX]);			/* temp */
+		    _thor_result_buffer[THAHUP_RESULT_BUFF_TMP_IX],			/* temp */
+		    (int) _thor_result_buffer[THAHUP_RESULT_BUFF_SP_IX]),		/* speed (rpm) */
 	}
 #if defined (WIN32) || defined (_WIN32)
     ReleaseMutex(_thor_mutex);
@@ -331,7 +336,15 @@ static int _thor_ahu_init(void)
 	    thahup_reset_sensors(NULL);
 	    thahup_obj->var_stctrl = thahup_man;
 	}
-    thahup_set_ductdia(thahup_obj, _thor_ahu_duct_dia);
+    thvelsen_enable_sensor(thahup_obj->var_velocity, 0);
+    thvelsen_enable_sensor(thahup_obj->var_velocity, 1);
+    if(_thor_num_sensors > 3)
+	{
+	    thvelsen_enable_sensor(thahup_obj->var_velocity, 2);
+	    thvelsen_enable_sensor(thahup_obj->var_velocity, 3);
+	}
+    thahup_set_stop_val(thahup_obj, (double) _thor_def_static);
+    thahup_set_ductdia(thahup_obj, (double) _thor_ahu_duct_dia);
     thahup_set_result_buffer(thahup_obj, _thor_result_buffer);
     /* set sensor range */
     printf("%s\n","setting sensor range..");
@@ -342,6 +355,10 @@ static int _thor_ahu_init(void)
     thgsens_set_range(thahup_obj->var_tmpsensor,
 		      THOR_AHU_TEMP_RNG_MIN,
 		      THOR_AHU_TEMP_RNG_MAX);
+
+    thgsens_set_range(thahup_obj->var_speed,
+		      THOR_AHU_MIN_FZ_RNG,
+		      THOR_AHU_MAX_FZ_RNG);    
 
     printf("prestart complete\n");
     return 0;
@@ -360,9 +377,9 @@ static int _thor_parse_args(int argc, char** argv)
 	{NULL, 0, NULL, 0}
     };
     
-    _thor_ahu_duct_dia = 0.0;
+    _thor_ahu_duct_dia = 0;
     _thor_num_sensors = 0;
-    _thor_def_static = 0.0;
+    _thor_def_static = 0;
     
     /* parse arguments */
     do
@@ -374,7 +391,7 @@ static int _thor_parse_args(int argc, char** argv)
 		    if(optarg == NULL)
 			break;
 		    strncpy(_arg_buff, optarg, THOR_AHU_OPT_MSG_BUFFER_SZ-1);
-		    _thor_ahu_duct_dia = atof(_arg_buff);
+		    _thor_ahu_duct_dia = atoi(_arg_buff);
 		    break;
 		case 'N':
 		    if(optarg == NULL)
@@ -386,7 +403,7 @@ static int _thor_parse_args(int argc, char** argv)
 		    if(optarg == NULL)
 			break;
 		    strncpy(_arg_buff, optarg, THOR_AHU_OPT_MSG_BUFFER_SZ-1);
-		    _thor_def_static = atof(_arg_buff);
+		    _thor_def_static = atoi(_arg_buff);
 		    break;		    		    
 		case -1:
 		default:
@@ -396,10 +413,10 @@ static int _thor_parse_args(int argc, char** argv)
 	}while(_next_opt != -1);
 
     /* check values */
-    if(_thor_ahu_duct_dia <= 0.0)
+    if(_thor_ahu_duct_dia <= 0)
 	{
-	    printf("\nEnter Duct Diameter (200/600/1120): ");
-	    scanf("%f", (float*) &_thor_ahu_duct_dia);
+	    printf("\nEnter Duct Diameter (200/300/600/1120): ");
+	    scanf("%i", &_thor_ahu_duct_dia);
 	}
 
     if(_thor_num_sensors <= 0)
@@ -411,12 +428,13 @@ static int _thor_parse_args(int argc, char** argv)
     if(_thor_def_static <= 0)
 	{
 	    printf("\nEnter max external static pressure range : ");
-	    scanf("%f", (float*) &_thor_def_static);
+	    scanf("%i", &_thor_def_static);
 	}
 
     /* assign defaults if the vaules are still invalid */
     if(_thor_ahu_duct_dia <= 0.0)
-	_thor_ahu_duct_dia = _thor_ahu_duct_dia;
+	_thor_ahu_duct_dia = THOR_AHU_DUCT_DIA;
+    printf("Duct dia %i\n", _thor_ahu_duct_dia);
     if(_thor_num_sensors <= 0)
 	_thor_num_sensors = 4;
     if(_thor_def_static < 0)

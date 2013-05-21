@@ -22,6 +22,7 @@ static thahup* var_thahup = NULL;			/* ahu test object */
 #define THAHUP_DP2_IX 4
 #define THAHUP_DP3_IX 5
 #define THAHUP_DP4_IX 6
+#define THAHUP_SP_IX 7
 
 #define THAHUP_ACT_CTRL_CHANNEL "Dev1/ao0"
 #define THAHUP_ACT_FD_CHANNEL "Dev1/ai0"		/* actuator feedback channel */
@@ -33,6 +34,7 @@ static thahup* var_thahup = NULL;			/* ahu test object */
 #define THAHUP_VEL_DP2_CHANNEL "Dev1/ai4"		/* differential pressure velocity - ino 168 */
 #define THAHUP_VEL_DP3_CHANNEL "Dev1/ai5"		/* differential pressure velocity - ino 169 */
 #define THAHUP_VEL_DP4_CHANNEL "Dev1/ai6"		/* differential pressure velocity - ino 170 */
+#define THAHUP_VEL_SP_CHANNEL "Dev1/ai7"		/* speed sensor */
 
 
 #define THAHUP_MIN_RNG 0.0				/* default minimum range for velocity sensors */
@@ -42,11 +44,15 @@ static thahup* var_thahup = NULL;			/* ahu test object */
 #define THAHUP_BUFF_SZ 2048				/* message buffer */
 #define THAHUP_RATE 1000.0				/* actuator rate control */
 
-#define THAHUP_NUM_INPUT_CHANNELS 7			/* number of channels */
+#define THAHUP_NUM_INPUT_CHANNELS 8			/* number of channels */
 #define THAHUP_SAMPLES_PERSECOND 8			/* samples read second */
 #define THAHUP_UPDATE_RATE 3
 #define THAHUP_MIN_FEEDBACK_VOLT 2.1			/* minimum feedback voltage */
 #define THAHUP_ACT_START_VOLTAGE 10.0			/* actuator starting voltage */
+
+#define THAHUP_MIN_DP 0.0
+#define THAHUP_MIN_ST 0.0
+#define THAHUP_SP_CONV 60.0				/* frequency to speed conversion */
 
 #define THAHUP_CHECK_VSENSOR(obj)			\
     obj? (obj->var_flg? obj->var_val : 0.0) : 0.0
@@ -142,15 +148,15 @@ static inline void thahup_clear_tasks()
 /* create an array of output signals */
 static inline void thahup_actout_signals()
 {
+    int i = 0;
     /* alloc memory for actuator control array */
     var_thahup->var_actout = (double*)
 	calloc(THAHUP_RATE, sizeof(double));
 
-    int i = 0;
     for(; i<THAHUP_RATE; i++)
 	{
 	    var_thahup->var_actout[i] =
-		9.98 * sin((double) i * M_PI / (2 * THAHUP_RATE));
+		9.98 * cos((double) i * M_PI / (2 * THAHUP_RATE));
 	}
 }
 
@@ -168,11 +174,12 @@ static inline void thahup_set_values()
 
     /* add values to array */
     var_thahup->var_t_arr[s_counter] = (val_buff[THAHUP_TMP_IX]>0? val_buff[THAHUP_TMP_IX] : 0.0);
-    var_thahup->var_v0_arr[s_counter] = (val_buff[THAHUP_DP1_IX]>0? val_buff[THAHUP_DP1_IX] : 0.0);
-    var_thahup->var_v1_arr[s_counter] = (val_buff[THAHUP_DP2_IX]>0? val_buff[THAHUP_DP2_IX] : 0.0);
-    var_thahup->var_v2_arr[s_counter] = (val_buff[THAHUP_DP3_IX]>0? val_buff[THAHUP_DP3_IX] : 0.0);
-    var_thahup->var_v3_arr[s_counter] = (val_buff[THAHUP_DP4_IX]>0? val_buff[THAHUP_DP4_IX] : 0.0);    
-    var_thahup->var_s_arr[s_counter] = (val_buff[THAHUP_ST_IX]>0? val_buff[THAHUP_ST_IX] : 0.0);
+    var_thahup->var_v0_arr[s_counter] = (val_buff[THAHUP_DP1_IX]>THAHUP_MIN_DP? val_buff[THAHUP_DP1_IX] : 0.0);
+    var_thahup->var_v1_arr[s_counter] = (val_buff[THAHUP_DP2_IX]>THAHUP_MIN_DP? val_buff[THAHUP_DP2_IX] : 0.0);
+    var_thahup->var_v2_arr[s_counter] = (val_buff[THAHUP_DP3_IX]>THAHUP_MIN_DP? val_buff[THAHUP_DP3_IX] : 0.0);
+    var_thahup->var_v3_arr[s_counter] = (val_buff[THAHUP_DP4_IX]>THAHUP_MIN_DP? val_buff[THAHUP_DP4_IX] : 0.0);    
+    var_thahup->var_s_arr[s_counter] = (val_buff[THAHUP_ST_IX]>THAHUP_MIN_ST? val_buff[THAHUP_ST_IX] : 0.0);
+    var_thahup->var_sp_arr[s_counter] = (val_buff[THAHUP_SP_IX]>THAHUP_MIN_ST? val_buff[THAHUP_SP_IX] : 0.0);
 
     /* call averaging functions */
     /* set values temperature */
@@ -217,8 +224,13 @@ static inline void thahup_set_values()
     thgsens_add_value(var_thahup->var_stsensor,
 		      Mean(var_thahup->var_s_arr,
 			   (max_flg? THAHUP_SAMPLES_PERSECOND * THAHUP_UPDATE_RATE :
-			    s_counter)));	
-
+			    s_counter)));
+    
+    thgsens_add_value(var_thahup->var_speed,
+		      Mean(var_thahup->var_sp_arr,
+			   (max_flg? THAHUP_SAMPLES_PERSECOND * THAHUP_UPDATE_RATE :
+			    s_counter)));
+    
     if(s_counter == 0)
 	{
 	    var_thahup->var_act_fd_val =
@@ -247,24 +259,13 @@ static inline void thahup_set_values()
     else
 	var_thahup->var_volflow_val = 0.0;
 
+    /* motor or fan speed */
+    var_thahup->var_speed_val =
+	thgsens_get_value(var_thahup->var_speed) * THAHUP_SP_CONV;
+
     if(var_thahup->var_volupdate)
 	var_thahup->var_volupdate(var_thahup->var_sobj, &var_thahup->var_volflow_val);
 
-    /* record calibration results on zero counter and
-     * calibration flag false */
-    /*     if(gcounter == 0 && var_thahup->var_calflg == 0) */
-    /* 	{ */
-    /* 	    thahup_add_xy_to_list(); */
-    /* 	    if(var_thahup->var_act_fd_val > 9.9) */
-    /* 		{ */
-    /* 		    var_thahup->var_calflg = 1; */
-    /* #if defined (WIN32) || defined (_WIN32) */
-    /* 		    ReleaseSemaphore(var_sem, 1, NULL); */
-    /* #else */
-    /* 		    sem_post(&var_sem); */
-    /* #endif */
-    /* 		} */
-    /* 	} */
 #if defined (WIN32) || defined (_WIN32)
     ReleaseMutex(mutex);
 #else    
@@ -301,6 +302,7 @@ static inline void thahup_write_results()
 	    var_thahup->var_result_buff[THAHUP_RESULT_BUFF_VEL_IX] = var_thahup->var_velocity_val;
 	    var_thahup->var_result_buff[THAHUP_RESULT_BUFF_VOL_IX] = var_thahup->var_volflow_val;
 	    var_thahup->var_result_buff[THAHUP_RESULT_BUFF_TMP_IX] = var_thahup->var_temp_val;
+	    var_thahup->var_result_buff[THAHUP_RESULT_BUFF_SP_IX] = var_thahup->var_speed_val;
 	}
 }
 
@@ -313,7 +315,7 @@ DWORD WINAPI thahup_async_start(LPVOID obj)
 #endif    
 {
 
-    int32 spl_write = 0;		/* number of samples written */
+    int32 spl_write = 0;	/* number of samples written */
     
     counter = 0;		/* reset counter */
     gcounter = 0;		/* reset counter */
@@ -342,7 +344,6 @@ DWORD WINAPI thahup_async_start(LPVOID obj)
 	    if(var_thahup->var_stctrl == thahup_auto)
 		{
 		    /* comment */
-		    printf("pid control\n");
 		    var_thahup->var_actsignal[0] =
 			var_thahup->var_actout[counter];
 
@@ -354,10 +355,10 @@ DWORD WINAPI thahup_async_start(LPVOID obj)
 			}
 
 		    /* call PID controller set the volate output */
-		    thpid_pid_control(&var_thpid,
-				      var_thahup->var_stopval,
-				      var_thahup->var_static_val,
-				      &var_thahup->var_actsignal[0]);
+		    /* thpid_pid_control(&var_thpid, */
+		    /* 		      var_thahup->var_stopval, */
+		    /* 		      var_thahup->var_static_val, */
+		    /* 		      &var_thahup->var_actsignal[0]); */
 				      
 		}
 
@@ -371,17 +372,6 @@ DWORD WINAPI thahup_async_start(LPVOID obj)
 					       &spl_write,
 					       NULL)))
 		break;
-
-	    /* wait for semaphore */
-	    /* 	    if(var_thahup->var_calflg == 0) */
-	    /* 		{ */
-	    /* #if defined (WIN32) || defined (_WIN32) */
-	    /* 		    WaitForSingleObject(var_sem, INFINITE); */
-	    /* #else		     */
-	    /* 		    sem_wait(&var_sem); */
-	    /* #endif */
-	    /* 		    thahup_linreg(); */
-	    /* 		} */
 
 #if defined(WIN32) || defined(_WIN32)
 	    Sleep(500);
@@ -456,7 +446,7 @@ int thahup_initialise(thahup_stopctrl ctrl_st,		/* start control */
     var_thahup->var_velocity_val = 0.0;
     var_thahup->var_static_val = 0.0;
     var_thahup->var_temp_val = 0.0;
-    
+    var_thahup->var_speed_val = 0.0;
     var_thahup->var_smplerate = 0.0;
 
     var_thahup->var_thrid = 0;
@@ -477,6 +467,7 @@ int thahup_initialise(thahup_stopctrl ctrl_st,		/* start control */
     var_thahup->var_v3_arr = NULL;
     var_thahup->var_s_arr = NULL;
     var_thahup->var_t_arr = NULL;
+    var_thahup->var_sp_arr = NULL;
     var_thahup->var_result_buff = NULL;
     /* create output channel for actuator control */
     if(ERR_CHECK(NICreateAOVoltageChan(var_thahup->var_outask,
@@ -576,6 +567,18 @@ int thahup_initialise(thahup_stopctrl ctrl_st,		/* start control */
     			   THAHUP_MIN_RNG,
     			   THAHUP_MAX_RNG);
 
+    /* create temperature sensor */
+    if(!thgsens_new(&var_thahup-> var_speed,
+		    THAHUP_VEL_SP_CHANNEL,
+		    &var_thahup->var_intask,
+		    NULL,
+		    sobj))
+	{
+	    printf ("%s\n","error creating speed sensor");
+	    thahup_clear_tasks();
+	    return 1;
+	}    
+
     /* Configure timing */
     if(ERR_CHECK(NICfgSampClkTiming(var_thahup->var_intask,
 				    "OnboardClock",
@@ -642,11 +645,6 @@ int thahup_initialise(thahup_stopctrl ctrl_st,		/* start control */
     /* initialise semaphore */
     sem_init(&var_sem, 0, 0);
 #endif
-    /* enable all sensors by default */
-    thvelsen_enable_sensor(var_thahup->var_velocity, 0);
-    thvelsen_enable_sensor(var_thahup->var_velocity, 1);
-    thvelsen_enable_sensor(var_thahup->var_velocity, 2);
-    thvelsen_enable_sensor(var_thahup->var_velocity, 3);
     return 0;
 }
 
@@ -755,6 +753,8 @@ int thahup_start(thahup* obj)
 					     sizeof(double));
     var_thahup->var_t_arr = (double*) calloc(THAHUP_SAMPLES_PERSECOND * THAHUP_UPDATE_RATE,
 					     sizeof(double));    
+    var_thahup->var_sp_arr = (double*) calloc(THAHUP_SAMPLES_PERSECOND * THAHUP_UPDATE_RATE,
+					     sizeof(double));
     /* initialise array values */
     for(i=0;i<(THAHUP_SAMPLES_PERSECOND * THAHUP_UPDATE_RATE);i++)
 	{
@@ -764,6 +764,7 @@ int thahup_start(thahup* obj)
 	    var_thahup->var_v3_arr[i] = 0.0;
 	    var_thahup->var_s_arr[i] = 0.0;
 	    var_thahup->var_t_arr[i] = 0.0;
+	    var_thahup->var_sp_arr[i] = 0.0;
 	}
 
     /* initialise thread attributes */
@@ -799,6 +800,7 @@ int thahup_stop(thahup* obj)
     free(var_thahup->var_v3_arr);
     free(var_thahup->var_s_arr);
     free(var_thahup->var_t_arr);
+    free(var_thahup->var_sp_arr);
     /* set stop flag and join thread */
 
     /* lock mutex */
@@ -910,6 +912,7 @@ int thahup_reset_sensors(thahup* obj)
     
     thgsens_reset_all(var_thahup->var_stsensor);
     thgsens_reset_all(var_thahup->var_tmpsensor);
+    thgsens_reset_all(var_thahup->var_speed);
 
     return 0;
 }
