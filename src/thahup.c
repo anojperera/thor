@@ -46,7 +46,7 @@ static thahup* var_thahup = NULL;			/* ahu test object */
 #define THAHUP_SAMPLES_PERSECOND 8			/* samples read second */
 #define THAHUP_UPDATE_RATE 3
 #define THAHUP_MIN_FEEDBACK_VOLT 2.1			/* minimum feedback voltage */
-#define THAHUP_ACT_START_VOLTAGE 10.0			/* actuator starting voltage */
+#define THAHUP_ACT_START_VOLTAGE 0.0			/* actuator starting voltage */
 
 #define THAHUP_MIN_DP 0.0
 #define THAHUP_MIN_ST 0.0
@@ -153,7 +153,7 @@ static inline void thahup_actout_signals()
     for(; i<THAHUP_RATE; i++)
 	{
 	    var_thahup->var_actout[i] =
-		9.98 * cos((double) i * M_PI / (2 * THAHUP_RATE));
+		9.98 * sin((double) i * M_PI / (2 * THAHUP_RATE));
 	}
 }
 
@@ -760,7 +760,7 @@ int thahup_start(thahup* obj)
 /* stop the test */
 int thahup_stop(thahup* obj)
 {
-    float64 var_act_st_val[1] = {10.0};	/* actuator stop val */
+    float64 var_act_st_val[1] = {0.0};	/* actuator stop val */
     int32 spl_write = 0;
     fprintf(stderr, "closing initialised\n");
     /* free buffers */
@@ -847,7 +847,7 @@ int thahup_set_actctrl_volt(double percen)
 #else
     pthread_mutex_lock(&mutex);
 #endif
-    var_thahup->var_actsignal[0] = 9.95 * (100-percen) / 100;
+    var_thahup->var_actsignal[0] = 9.95 * percen / 100;
 
     /* write to out channel */
     ERR_CHECK(NIWriteAnalogArrayF64(var_thahup->var_outask,
