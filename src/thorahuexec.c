@@ -21,7 +21,7 @@
 #define THOR_AHU_TEMP_RNG_MAX 40.0							/* maximum temperature */
 
 #define THOR_AHU_MIN_FZ_RNG 0.0								/* minimum frequency range */
-#define THOR_AHU_MAX_FZ_RNG 99.99							/* maximum frequency range */
+#define THOR_AHU_MAX_FZ_RNG 99.00							/* maximum frequency range */
 
 #define THOR_AHU_INIT_PROG 105								/* i */
 #define THOR_AHU_QUIT_CODE1 81								/* Q */
@@ -209,7 +209,7 @@ static int _thor_update_msg_buff(char* buff, char* opts)
 		    _thor_result_buffer[THAHUP_RESULT_BUFF_VEL_IX],			/* velocity */
 		    _thor_result_buffer[THAHUP_RESULT_BUFF_VOL_IX],			/* volume flow */
 		    _thor_result_buffer[THAHUP_RESULT_BUFF_TMP_IX],			/* temp */
-		    (int) _thor_result_buffer[THAHUP_RESULT_BUFF_SP_IX]),		/* speed (rpm) */
+		    (int) _thor_result_buffer[THAHUP_RESULT_BUFF_SP_IX]);		/* speed (rpm) */
 	}
 #if defined (WIN32) || defined (_WIN32)
     ReleaseMutex(_thor_mutex);
