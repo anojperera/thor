@@ -26,6 +26,7 @@
 #define THAHUP_RESULT_BUFF_VEL_IX 5
 #define THAHUP_RESULT_BUFF_VOL_IX 6
 #define THAHUP_RESULT_BUFF_TMP_IX 7
+#define THAHUP_RESULT_BUFF_SP_IX 8
 
 /* object conversion macros */
 #define AHUP_GET_VELOCITYDT(obj) \
@@ -52,6 +53,7 @@ struct _thahup
     thgsens* var_stsensor;		/* static pressure sensor */
     thvelsen* var_velocity;		/* velocity sensor collection */
     thgsens* var_tmpsensor;		/* ambient temperature sensor */
+    thgsens* var_speed;			/* speed sensor */
 
     double var_ductdia;			/* duct diameter */
     gthsen_fptr var_volupdate;		/* update volume flow */
@@ -64,6 +66,7 @@ struct _thahup
     double* var_v3_arr;			/* array for smoothing v3 */
     double* var_s_arr;			/* array for smoothing static */
     double* var_t_arr;			/* array for smoothing temperature */
+    double* var_sp_arr;			/* array for smoothing RPM */
     double* var_result_buff;		/* result buffer to be populated */
     float64 var_actsignal[1];		/* actuator control signal */
     double var_stopval;			/* value to idle test */
@@ -72,6 +75,7 @@ struct _thahup
     double var_static_val;		/* static pressure */
     double var_temp_val;		/* temperature value */
     double var_act_fd_val;		/* actuator feedback */
+    double var_speed_val;		/* speed value */
 
     double var_act_fd_minval;		/* minimum val */
     
