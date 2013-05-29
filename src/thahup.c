@@ -260,7 +260,7 @@ static inline void thahup_set_values()
 	var_thahup->var_volflow_val = 0.0;
 
     /* motor or fan speed */
-    var_thahup->var_speed_val =
+    var_thahup->var_speed_val = 
 	thgsens_get_value(var_thahup->var_speed) * THAHUP_SP_CONV;
 
     if(var_thahup->var_volupdate)
