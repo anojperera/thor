@@ -32,6 +32,7 @@
 #define THOR_AHU_PRG_STOP_CODE 115							/* s */
 #define THOR_AHU_ACT_INCRF_CODE 42							/* * */
 #define THOR_AHU_ACT_DECRF_CODE 47							/* / */
+#define THOR_AHU_PAUSE_CODE 112								/* p */
 
 #define THOR_AHU_MAIN_MSG_FORMAT "%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%i\r\r"
 #define THOR_AHU_MAIN_OPTMSG_FORMAT "%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%i\r\r%s\r"
@@ -51,6 +52,7 @@
 #define THOR_AHU_LOG_FILE_NAME "Log.txt"
 static unsigned int _init_flg = 0;							/* initialise flag */
 static unsigned int _start_flg = 0;							/* start test flag */
+static unsigned int _pause_flg = 0;							/* pause flag */
 static int _ctrl_ix;									/* control flag */
 static int _quit_flg = 1;								/* quit flag */
 
@@ -183,6 +185,11 @@ static int _thor_update_msg_buff(char* buff, char* opts)
     /* lock mutex */
 #if defined (WIN32) || defined (_WIN32)
     WaitForSingleObject(_thor_mutex, INFINITE);
+    if(_pause_flg > 0)
+	{
+	    ReleaseMutex(_thor_mutex);
+	    return 0;
+	}
 #endif
     if(opts != NULL)
 	{
@@ -268,7 +275,13 @@ DWORD WINAPI _thor_msg_handler(LPVOID obj)
 		    break;
 		case THOR_AHU_ACT_DECRF_CODE:
 		    _thor_adjust_act(-1*THOR_AHU_ACT_ADJT_FINE);
-		    break;		    
+		    break;
+		case THOR_AHU_PAUSE_CODE:
+		    if(_pause_flg > 0)
+			_pause_flg = 0;
+		    else
+			_pause_flg = 1;
+		    break;
 		}
 #if defined (WIN32) || defined (_WIN32)
 	    ReleaseMutex(_thor_mutex);
