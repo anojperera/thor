@@ -27,6 +27,7 @@
 #define THAHUP_RESULT_BUFF_VOL_IX 6
 #define THAHUP_RESULT_BUFF_TMP_IX 7
 #define THAHUP_RESULT_BUFF_SP_IX 8
+#define THAHUP_RESULT_BUFF_MSP_IX 9
 
 /* object conversion macros */
 #define AHUP_GET_VELOCITYDT(obj) \
@@ -69,6 +70,7 @@ struct _thahup
     double* var_sp_arr;			/* array for smoothing RPM */
     double* var_result_buff;		/* result buffer to be populated */
     float64 var_actsignal[1];		/* actuator control signal */
+    double var_p_ratio;			/* pulley ratio */
     double var_stopval;			/* value to idle test */
     double var_volflow_val;		/* volume flow */
     double var_velocity_val;		/* velocity */
@@ -76,6 +78,7 @@ struct _thahup
     double var_temp_val;		/* temperature value */
     double var_act_fd_val;		/* actuator feedback */
     double var_speed_val;		/* speed value */
+    double var_mspeed_val;		/* motor speed */
 
     double var_act_fd_minval;		/* minimum val */
     
@@ -154,6 +157,10 @@ extern "C" {
 	(obj)->var_stctrl = thahup_man;		\
     else					\
 	(obj)->var_stctrl = thahup_auto
+
+    /* Set pulley ratio */
+#define thahup_set_pulley_ratio(obj, val) \
+    (obj)->var_p_ratio = val
 
     
 #ifdef __cplusplus

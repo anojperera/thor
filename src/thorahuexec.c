@@ -34,12 +34,12 @@
 #define THOR_AHU_ACT_DECRF_CODE 47							/* / */
 #define THOR_AHU_PAUSE_CODE 112								/* p */
 
-#define THOR_AHU_MAIN_MSG_FORMAT "%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%i\r\r"
-#define THOR_AHU_MAIN_OPTMSG_FORMAT "%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%i\r\r%s\r"
+#define THOR_AHU_MAIN_MSG_FORMAT "%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%i\t%i\r\r"
+#define THOR_AHU_MAIN_OPTMSG_FORMAT "%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%i\t%i\r\r%s\r"
 #define THOR_AHU_ACTUATOR_PST "\rACTUATOR: ======= %.2f =======\r"
 #define THOR_AHU_MSG_BUFFER_SZ 2048							/* main buffer size */
 #define THOR_AHU_OPT_MSG_BUFFER_SZ 64							/* optional buffer size */
-#define THOR_AHU_RESULT_BUFF_SZ 9							/* result buffer size */
+#define THOR_AHU_RESULT_BUFF_SZ 10							/* result buffer size */
 
 #define THOR_AHU_WAIT_TIME 500								/* waiting time for the main loop */
 #define THOR_AHU_WAIT_TIME_UNIX_CORRECTION 1000						/* correction for unix */
@@ -203,6 +203,7 @@ static int _thor_update_msg_buff(char* buff, char* opts)
 		    _thor_result_buffer[THAHUP_RESULT_BUFF_VOL_IX],			/* volume flow */
 		    _thor_result_buffer[THAHUP_RESULT_BUFF_TMP_IX],			/* temp */
 		    (int) _thor_result_buffer[THAHUP_RESULT_BUFF_SP_IX],		/* speed (rpm) */
+		    (int) _thor_result_buffer[THAHUP_RESULT_BUFF_MSP_IX],		/* motor (rpm) */
 		    opts);
 	}
     else
@@ -216,7 +217,8 @@ static int _thor_update_msg_buff(char* buff, char* opts)
 		    _thor_result_buffer[THAHUP_RESULT_BUFF_VEL_IX],			/* velocity */
 		    _thor_result_buffer[THAHUP_RESULT_BUFF_VOL_IX],			/* volume flow */
 		    _thor_result_buffer[THAHUP_RESULT_BUFF_TMP_IX],			/* temp */
-		    (int) _thor_result_buffer[THAHUP_RESULT_BUFF_SP_IX]);		/* speed (rpm) */
+		    (int) _thor_result_buffer[THAHUP_RESULT_BUFF_SP_IX],		/* speed (rpm) */
+		    (int) _thor_result_buffer[THAHUP_RESULT_BUFF_MSP_IX]);		/* motor (rpm) */
 	}
 #if defined (WIN32) || defined (_WIN32)
     ReleaseMutex(_thor_mutex);

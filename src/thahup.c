@@ -262,6 +262,7 @@ static inline void thahup_set_values()
     /* motor or fan speed */
     var_thahup->var_speed_val = 
 	thgsens_get_value(var_thahup->var_speed) * THAHUP_SP_CONV;
+    var_thahup->var_mspeed_val = var_thahup->var_speed_val * var_thahup->var_p_ratio;
 
     if(var_thahup->var_volupdate)
 	var_thahup->var_volupdate(var_thahup->var_sobj, &var_thahup->var_volflow_val);
@@ -280,7 +281,7 @@ static inline void thahup_write_results()
     /* check if file pointer was assigned */
     if(var_thahup->var_fp)
 	{
-	    fprintf(var_thahup->var_fp, "%i,%f,%f,%f,%f,%f,%f,%f,%f,%i\n",
+	    fprintf(var_thahup->var_fp, "%i,%f,%f,%f,%f,%f,%f,%f,%f,%i,%i\n",
 		    gcounter,
 		    THAHUP_CHECK_VSENSOR(var_thahup->var_velocity->var_v1),
 		    THAHUP_CHECK_VSENSOR(var_thahup->var_velocity->var_v2),
@@ -290,7 +291,8 @@ static inline void thahup_write_results()
 		    var_thahup->var_velocity_val,
 		    var_thahup->var_volflow_val,
 		    var_thahup->var_temp_val,
-		    (int) var_thahup->var_speed_val);
+		    (int) var_thahup->var_speed_val,
+		    (int) var_thahup->var_mspeed_val);
 	}
 
     if(var_thahup->var_result_buff)
@@ -304,6 +306,7 @@ static inline void thahup_write_results()
 	    var_thahup->var_result_buff[THAHUP_RESULT_BUFF_VOL_IX] = var_thahup->var_volflow_val;
 	    var_thahup->var_result_buff[THAHUP_RESULT_BUFF_TMP_IX] = var_thahup->var_temp_val;
 	    var_thahup->var_result_buff[THAHUP_RESULT_BUFF_SP_IX] = var_thahup->var_speed_val;
+	    var_thahup->var_result_buff[THAHUP_RESULT_BUFF_MSP_IX] = var_thahup->var_mspeed_val;
 	}
 }
 
@@ -442,12 +445,14 @@ int thahup_initialise(thahup_stopctrl ctrl_st,		/* start control */
     var_thahup->var_actout = NULL;
     var_thahup->var_actsignal[0] = THAHUP_ACT_START_VOLTAGE;
     var_thahup->var_stopval = 0.0;
-
+    var_thahup->var_p_ratio = 1;
+    
     var_thahup->var_volflow_val = 0.0;
     var_thahup->var_velocity_val = 0.0;
     var_thahup->var_static_val = 0.0;
     var_thahup->var_temp_val = 0.0;
     var_thahup->var_speed_val = 0.0;
+    var_thahup->var_mspeed_val = 0.0;
     var_thahup->var_smplerate = 0.0;
 
     var_thahup->var_thrid = 0;
