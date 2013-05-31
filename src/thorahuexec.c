@@ -469,8 +469,8 @@ static int _thor_parse_args(int argc, char** argv)
 	    printf("\nMotor pulley diameter (mm): ");
 	    scanf("%i", &_m_dia);
 
-	    if(_f_dia > 0)
-		_thor_p_ratio = _m_dia / _f_dia;
+	    if(_m_dia > 0)
+		_thor_p_ratio = _f_dia / _m_dia;
 	}
 
     /* assign defaults if the vaules are still invalid */
