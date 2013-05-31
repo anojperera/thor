@@ -33,6 +33,8 @@
 #define THOR_AHU_ACT_INCRF_CODE 42							/* * */
 #define THOR_AHU_ACT_DECRF_CODE 47							/* / */
 #define THOR_AHU_PAUSE_CODE 112								/* p */
+#define THOR_AHU_YES_CODE 121								/* y */
+#define THOR_AHU_YES2_CODE 89								/* Y */
 
 #define THOR_AHU_MAIN_MSG_FORMAT "%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%i\t%i\r\r"
 #define THOR_AHU_MAIN_OPTMSG_FORMAT "%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%i\t%i\r\r%s\r"
@@ -59,7 +61,8 @@ static int _quit_flg = 1;								/* quit flag */
 static char _thor_msg_buff[THOR_AHU_MSG_BUFFER_SZ];					/* main message buffer */
 static char _thor_optmsg_buff[THOR_AHU_OPT_MSG_BUFFER_SZ];				/* optional buffer size */
 
- static double _thor_act_pos = THOR_AHU_ACT_FLOOR;					/* actuator percentage */
+static double _thor_act_pos = THOR_AHU_ACT_FLOOR;					/* actuator percentage */
+static double _thor_p_ratio = 1.0;							/* pulley ratio */
 static int _thor_ahu_duct_dia = THOR_AHU_DUCT_DIA;
 static int _thor_def_static = THOR_AHU_DEFAULT_MAX_STATIC;
 static double _thor_result_buffer[THOR_AHU_OPT_MSG_BUFFER_SZ];
@@ -122,7 +125,7 @@ int thorahuexec_main(int argc, char** argv)
 		fclose(_thor_result_fp);
 	    return 1;
 	}
-    printf("DP1\tDP2\tDP3\tDP4\tStatic\tVel\tVol\tTemp\tRPM\n");
+    printf("DP1\tDP2\tDP3\tDP4\tStatic\tVel\tVol\tTemp\tRPM\tM_RPM\n");
     _thhandle = CreateThread(NULL, 0, _thor_msg_handler, NULL, 0, NULL);
     /* exit and clean up if failes */
     if(_thhandle == NULL)
@@ -361,6 +364,8 @@ static int _thor_ahu_init(void)
     thahup_set_stop_val(thahup_obj, (double) _thor_def_static);
     thahup_set_ductdia(thahup_obj, (double) _thor_ahu_duct_dia);
     thahup_set_result_buffer(thahup_obj, _thor_result_buffer);
+    thahup_set_pulley_ratio(thahup_obj, _thor_p_ratio);
+    
     /* set sensor range */
     printf("%s\n","setting sensor range..");
     thgsens_set_range(thahup_obj->var_stsensor,
@@ -382,7 +387,9 @@ static int _thor_ahu_init(void)
 /* Parse argument */
 static int _thor_parse_args(int argc, char** argv)
 {
+    char _dec_flg;
     int _next_opt;
+    int _f_dia, _m_dia;
     char _arg_buff[THOR_AHU_OPT_MSG_BUFFER_SZ];
     const char* const _short_opts = ":D:N:S:";
     const struct option _long_opts[] = {
@@ -428,28 +435,47 @@ static int _thor_parse_args(int argc, char** argv)
 	}while(_next_opt != -1);
 
     /* check values */
+    fflush(stdin);
     if(_thor_ahu_duct_dia <= 0)
 	{
 	    printf("\nEnter Duct Diameter (200/300/600/1120): ");
 	    scanf("%i", &_thor_ahu_duct_dia);
 	}
-
+    fflush(stdin);
     if(_thor_num_sensors <= 0)
 	{
 	    printf("\nEnter number of sensors (4/2): ");
 	    scanf("%i", &_thor_num_sensors);
 	}
-
+    fflush(stdin);
     if(_thor_def_static <= 0)
 	{
 	    printf("\nEnter max external static pressure range : ");
 	    scanf("%i", &_thor_def_static);
 	}
 
+    /* Ask to add pulley ratio to work out the motor rpm.
+     * Since fan speed is measured, motor speed shall be worked out
+     * from fan speed */
+    fflush(stdin);
+    printf("\nAdd pulley ratio for motor speed? (Y/n): ");
+    fscanf(stdin, "%c", &_dec_flg);
+    if(_dec_flg == THOR_AHU_YES_CODE || _dec_flg == THOR_AHU_YES2_CODE)
+	{
+	    fflush(stdin);
+	    printf("\nFan pulley diameter (mm): ");
+	    scanf("%i", &_f_dia);
+	    fflush(stdin);
+	    printf("\nMotor pulley diameter (mm): ");
+	    scanf("%i", &_m_dia);
+
+	    if(_f_dia > 0)
+		_thor_p_ratio = _m_dia / _f_dia;
+	}
+
     /* assign defaults if the vaules are still invalid */
     if(_thor_ahu_duct_dia <= 0.0)
 	_thor_ahu_duct_dia = THOR_AHU_DUCT_DIA;
-    printf("Duct dia %i\n", _thor_ahu_duct_dia);
     if(_thor_num_sensors <= 0)
 	_thor_num_sensors = 4;
     if(_thor_def_static < 0)
