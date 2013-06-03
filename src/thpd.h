@@ -12,6 +12,17 @@
 #include <stdio.h>
 #include "thornifix.h"
 
+/* Result buffer index */
+#define THPD_RESULT_VDP1_IX 0
+#define THPD_RESULT_VDP2_IX 1
+#define THPD_RESULT_DP1_IX 2
+#define THPD_RESULT_DP2_IX 3
+#define THPD_RESULT_VEL_IX 4
+#define THPD_RESULT_VOL_IX 5
+#define THPD_RESULT_DP_IX 6
+#define THPD_RESULT_TMP_IX 7
+
+
 /* forward declaration of class */
 typedef struct _thpd thpd;
 

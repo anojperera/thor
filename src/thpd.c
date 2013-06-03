@@ -12,8 +12,15 @@
 #endif
 #include <math.h>
 
+#define THPD_TMP_IX 0
+#define THPD_ST_IX 1
+#define THPD_DP1_IX 2
+#define THPD_DP2_IX 3
+#define THPD_DP3_IX 4
+#define THPD_DP4_IX 5
+
 #define THPD_NUM_OUT_CHANNELS 1					/* output channels */
-#define THPD_NUM_INPUT_CHANNELS 4				/* input channels */
+#define THPD_NUM_INPUT_CHANNELS 6				/* input channels */
 
 #define THPD_FAN_CTRL_CHANNEL "Dev1/ao0"			/* fan control channel */
 
@@ -35,6 +42,7 @@
 #define THPD_ACT_RATE 1000					/* actuator rate */
 #define THPD_SAMPLES_PERSECOND 8
 #define THPD_UPDATE_RATE 3
+#define THPD_SLEEP_TIME 1000
 
 /* class implementation */
 struct _thpd
@@ -42,6 +50,7 @@ struct _thpd
     unsigned int var_int_flg;					/* internal flag */
     unsigned int var_gcount;					/* generic counter */
     unsigned int var_scount;					/* sample counter */
+    unsigned int var_stflg;					/* start flag */
 
     /* Diff flag is set to on, by default. This shall read a differential
      * reading by each differential pressure sensor. If the flag was set to off,
@@ -54,8 +63,8 @@ struct _thpd
     FILE* var_fp;
     double var_static;
     double var_temp;
-    double var_v1;
-    double var_v2;
+    double var_v0;				/* duct velocity */
+    double var_v1;				/* damper velocity */
     double var_p1;
     double var_p2;
     double var_air_flow;
@@ -78,7 +87,8 @@ struct _thpd
     /* result buffer */
     double* var_result_buff;
     double* var_fan_ctrl_buff;
-
+    double var_out_v[THPD_NUM_OUT_CHANNELS];
+    
     /* Settling and reading times are control timers.
      * Readin time is used reading number of samples
      * and use moving average to smooth it */
@@ -110,7 +120,7 @@ static unsigned int _set_flg = 0;				/* flag to indicate file headers added */
 static struct _thpd var_thpid;					/* object */
 static double _var_st_x[] = THORNIFIX_ST_X;
 static double _var_st_y[] = THORNIFIX_ST_Y;
-static double _var_val_buff[THACTST_NUM_INPUT_CHANNELS];	/* read buffer */
+static double _var_val_buff[THPD_NUM_INPUT_CHANNELS];		/* read buffer */
 #if defined (WIN32) || defined (_WIN32)
 static HANDLE _mutex = NULL;
 static HANDLE _thread = NULL;
@@ -143,6 +153,14 @@ static int _thpd_actout_signal();
     thgsens_delete(&var_thpd.var_p2_sen);	\
     _thpd_clear_tasks()	        
 
+/* macro for checking the value */
+#define THPD_CHK_VAL(val)			\
+    (val>0.0? val : 0.0)
+
+/* Max value for array */
+#define THPD_MAX_MEAN \
+    (_max_flg? (THPD_SAMPLES_PERSECOND * THPD_UPDATE_RATE) : _s_counter)
+
 /* Constructor */
 thpd* thpd_initialise(thpd* obj, void* sobj)
 {
@@ -164,12 +182,13 @@ thpd* thpd_initialise(thpd* obj, void* sobj)
     var_thpd.var_gcount = 0;
     var_thpd.var_scount = 0;
     var_thpd.var_diff_flg = 0;
+    var_thpd.var_stflg = 0;
 
     var_thpd.var_fp = NULL;
     var_thpd.var_static = 0.0;
     var_thpd.var_temp = 0.0;
+    var_thpd.var_v0 = 0.0;
     var_thpd.var_v1 = 0.0;
-    var_thpd.var_v2 = 0.0;
     var_thpd.var_p1 = 0.0;
     var_thpd.var_p2 = 0.0;
     var_thpd.var_air_flow = 0.0;
@@ -187,6 +206,7 @@ thpd* thpd_initialise(thpd* obj, void* sobj)
     var_thpd.var_tmp_sen = NULL;
     var_thpd.var_v_sen = NULL;
     var_thpd.var_fan_ctrl_buff = NULL;
+    var_thpd.var_out_v[0] = 0.0;
     var_thpd.var_p1_sen = NULL;
     var_thpd.var_p2_sen = NULL;
 
@@ -462,6 +482,52 @@ int thpd_start(void)
     return 0;
 }
 
+
+/* Stop test */
+int thpd_stop(void)
+{
+    int i;
+    int32 _spl_write = 0;
+#if defined (WIN32) || defined (_WIN32)
+    WaitForSingleObject(_mutex, INFINITE);
+    if(!var_thpd.var_stflg)
+	{
+	    ReleaseMutex(_mutex);
+	    return 0;
+	}
+#endif
+    var_thpd.var_stflg = 0;
+#if defined (WIN32) || defined (_WIN32)
+    ReleaseMutex(_mutex);
+    /* Call to terminate thread */
+    TerminateThread(_thread, 0);
+    CloseHandle(_thread);
+#endif
+
+    /* stop fan */
+    var_thpd.var_out_v[0] = 0.0;
+
+    if(ERR_CHECK(NIWriteAnalogArrayF64(var_thpd.var_outtask,
+				       1,
+				       0,
+				       10.0,
+				       DAQmx_Val_GroupByChannel,
+				       var_thpd.var_out_v
+				       &_spl_write,
+				       NULL)))
+	fprintf(stderr, "Unable to stop fan\n");    
+    /* stop running tasks */
+    ERR_CHECK(NIStopTask(var_thpd.var_outtask));
+    ERR_CHECK(NIStopTask(var_thpd.var_intask));
+
+    free(var_thpd.var_st_arr);
+    free(var_thpd.var_v0_arr);
+    free(var_thpd.var_v1_arr);
+    free(var_thpd.var_p0_arr);
+    free(var_thpd.var_p1_arr);
+    free(var_thpd.var_tmp_arr);
+    return 0;
+}
 /*====================================================================================================*/
 /****************************************** Private Methods *******************************************/
 
@@ -472,3 +538,219 @@ static void _thpd_clear_tasks()					/* clear tasks */
     ERR_CHECK(NIClearTask(var_thpd.var_intask));
     return;
 }
+
+/* Set values */
+static void _thpd_set_value()
+{
+    /* wrap in mutex */
+#if defined (WIN32) || defined (_WIN32)
+    WaitForSingleObject(_mutex, INFINITE);
+#endif
+    var_thpd.var_tmp_arr[_s_counter] = THPD_CHK_VAL(_var_val_buff[THPD_TMP_IX]);
+    var_thpd.var_st_arr[_s_counter] = THPD_CHK_VAL(_var_val_buff[THPD_ST_IX]);
+    var_thpd.var_v0_arr[_s_counter] = THPD_CHK_VAL(_var_val_buff[THPD_DP1_IX]);
+    var_thpd.var_v1_arr[_s_counter] = THPD_CHK_VAL(_var_val_buff[THPD_DP2_IX]);
+    var_thpd.var_p0_arr[_s_counter] = THPD_CHK_VAL(_var_val_buff[THPD_DP3_IX]);
+    var_thpd.var_p1_arr[_s_counter] = THPD_CHK_VAL(_var_val_buff[THPD_DP4_IX]);
+
+    thgsens_add_value(var_thpd.var_tmp_sen, Mean(var_thpd.var_tmp_arr, THPD_MAX_MEAN));
+    thgsens_add_value(var_thpd.var_st_sen, Mean(var_thpd.var_st_arr, THPD_MAX_MEAN));
+    if(var_thpd.var_v_sen->var_v1->var_flg > 0)
+	thgsens_add_value(var_thpd.var_v_sen->var_v1, Mean(var_thpd.var_v0_arr, THPD_MAX_MEAN));
+    if(var_thpd.var_v_sen->var_v2->var_flg > 0)
+	thgsens_add_value(var_thpd.var_v_sen->var_v2, Mean(var_thpd.var_v1_arr, THPD_MAX_MEAN));
+    thgsens_add_value(var_thpd.var_p1_sen, Mean(var_thpd.var_p0_arr, THPD_MAX_MEAN));
+    thgsens_add_value(var_thpd.var_p2_sen, Mean(var_thpd.var_p1_arr, THPD_MAX_MEAN));
+
+    /* Get values */
+    var_thpd.var_static = thgsens_get_value2(var_thpd.var_tmp_sen);
+    var_thpd.var_temp = thgsens_get_value2(var_thpd.var_st_sen);
+    var_thpd.var_v0 = thvelsen_get_velocity(var_thpd.var_v_sen);
+    
+    var_thpd.var_air_flow = var_thpd.var_v0 * var_thpd.var_darea;
+    /* check if damper area was set if not set velocity at target 
+     * same as duct velocity */
+    if(var_thpd.var_farea > 0.0)
+	var_thpd.var_v1 = var_thpd.var_air_flow / var_thpd.var_farea;
+    else
+	var_thpd.var_v1 = var_thpd.var_v0;
+    var_thpd.var_p1 = thgsens_get_value2(var_thpd.var_p1_sen);
+    var_thpd.var_p2 = thgsens_get_value2(var_thid.var_p2_sen);
+
+#if defined (WIN32) || defined (_WIN32)
+    ReleaseMutex(_mutex);
+#endif
+    return;
+    
+}
+
+/* Write values to buffer */
+static void _thpd_write_results()
+{
+#if defined (WIN32) || defined (_WIN32)
+    WaitForSingleObject(_mutex, INFINITE);
+#endif
+    /* if file pointer was set write results to file */
+    /* IX	V_DP1	V_DP2	DP1	DP2	V	VOL	DP	TMP */
+    if(var_thid.var_fp)
+	{
+	    fprintf(var_thpd.var_fp, "%i\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\n",
+		    _g_counter,
+		    thgsens_get_value2(var_thpd.var_v_sen->var_v1),
+		    thgsens_get_value2(var_thpd.var_v_sen->var_v2),
+		    var_thpd.var_p1,
+		    var_thpd.var_p2,
+		    var_thpd.var_v0,
+		    var_thpd.var_air_flow,
+		    var_thpd.var_p1 - var_thpd.var_p2,
+		    var_thpd.var_temp);
+	}
+
+    if(var_thpd.var_result_buff)
+	{
+	    var_thpd.var_result_buff[THPD_RESULT_VDP1_IX] = thgsens_get_value2(var_thpd.var_v_sen->var_v1);
+	    var_thpd.var_result_buff[THPD_RESULT_VDP2_IX] = thgsens_get_value2(var_thpd.var_v_sen->var_v2);
+	    var_thpd.var_result_buff[THPD_RESULT_DP1_IX] = thgsens_get_value2(var_thpd.var_p1_sen);
+	    var_thpd.var_result_buff[THPD_RESULT_DP2_IX] = thgsens_get_value2(var_thid.var_p2_sen);
+	    var_thpd.var_result_buff[THPD_RESULT_VEL_IX] = thvelsen_get_velocity(var_thpd.var_v_sen);
+	    var_thpd.var_result_buff[THPD_RESULT_VOL_IX] = var_thid.var_air_flow;
+	    var_thpd.var_result_buff[THPD_RESULT_DP_IX] = var_thpd.var_result_buff[THPD_RESULT_DP1_IX] -
+		var_thpd.var_result_buff[THPD_RESULT_DP2_IX];
+	    var_thpd.var_result_buff[THPD_RESULT_TMP_IX] = thgsens_get_value2(var_thpd.var_tmp_sen);
+
+	}
+#if defined (WIN32) || defined (_WIN32)
+    ReleaseMutex(_mutex);
+#endif
+}
+
+/* Async start function */
+#if defined (WIN32) || defined (_WIN32)
+DWORD WINAPI _thpd_async_start(LPVOID obj)
+#else
+void* _thpd_async_start(void* obj)
+#endif
+{
+    int _counter;
+    int32 _spl_write;
+    _g_counter = 0;
+    _max_flg = 0;
+    var_thpd.var_stflg = 1;
+    _set_flg = 0;
+
+    /* start both tasks */
+    if(ERR_CHECK(NIStartTask(var_thpd.var_outtask)))
+#if defined (WIN32) || defined (_WIN32)
+	return FALSE;
+#else
+    return NULL;
+#endif
+
+    if(ERR_CHECK(NIStartTask(var_thpd.var_intask)))
+	{
+	    NIStopTask(var_thpd.var_outtask);
+#if defined (WIN32) || defined (_WIN32)
+	    return FALSE;
+#else
+	    return NULL;
+#endif
+	}
+
+    /* use software timing */
+    _counter = 0;
+    var_thid.var_out_v[0] = 0.0;
+    while(1)
+	{
+#if defined (WIN32) || defined (_WIN32)
+	    WaitForSingleObject(_mutex, INFINITE);
+	    if(var_thid.var_stflg == 0)
+		{
+		    ReleaseMutex(_mutex);
+		    break;
+		}
+	    ReleaseMutex(_mutex);
+#endif
+	    /* write to out channel */
+	    if(ERR_CHECK(NIWriteAnalogArrayF64(var_thpd.var_outtask,
+					       1,
+					       0,
+					       10.0,
+					       DAQmx_Val_GroupByChannel,
+					       var_thpd.var_out_v,
+					       &_spl_write,
+					       NULL)))
+		break;
+
+#if defined (WIN32) || defined (_WIN32)
+	    Sleep(THPD_SLEEP_TIME);
+#endif
+	    if(++_counter < THPD_ACT_RATE)
+		{
+		    var_thid.var_out_v[0] = var_thid.var_fan_ctrl_buff[_counter];
+		    _thpd_write_results();
+		    
+		}
+	    _g_counter++;
+	}
+
+#if defined (WIN32) || defined (_WIN32)
+    return FALSE;
+#else
+    return NULL;
+}
+
+int32 CVICALLBACK _every_n_callback(TaskHandle taskHandle,
+				    int32 everyNsamplesEventType,
+				    uInt32 nSamples,
+				    void *callbackData)
+{
+    int32 _spl_read = 0;		/* samples read */
+    
+    /* Read data into buffer */
+    if(ERR_CHECK(NIReadAnalogF64(var_thpd.var_intask,
+				 1,
+				 10.0,
+				 DAQmx_Val_GroupByScanNumber,
+				 _var_val_buff,
+				 THPD_NUM_INPUT_CHANNELS,
+				 &_spl_read,
+				 NULL)))
+	return 1;
+
+    /* Call to set values */
+    _thpd_set_value();
+    if(++_s_counter >= (THPD_SAMPLES_PERSECOND * THPD_UPDATE_RATE))
+	{
+	    _s_counter = 0;
+	    _max_flg = 1;
+	}    
+    return 0;
+}
+
+/* DoneCallback */
+int32 CVICALLBACK _done_callback(TaskHandle taskHandle,
+				 int32 status,
+				 void *callbackData)
+{
+    /* Check if data accquisition was stopped
+     * due to error */
+    if(ERR_CHECK(status))
+	return 0;
+
+    return 0;
+}
+
+
+/* Generate signals for fan control */
+static int _thpd_actout_signal()
+{
+    int i;
+    var_thpd.var_fan_ctrl_buff = (double*)
+	calloc(THPD_ACT_RATE, sizeof(double));
+    for(i=0; i<THPD_ACT_RATE; i++)
+	{
+	    var_thpd.var_fan_ctrl_buff[i] =
+		9.98 * sin((double) i * M_PI / (2 * THPD_ACT_RATE));
+	}
+    return 0;
+}    
