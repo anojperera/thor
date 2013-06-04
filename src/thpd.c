@@ -534,7 +534,6 @@ int thpd_stop(void)
     free(var_thpd.var_p0_arr);
     free(var_thpd.var_p1_arr);
     free(var_thpd.var_tmp_arr);
-    fprintf(stderr, "\nTest Stopped\n");
     return 0;
 }
 
