@@ -611,7 +611,7 @@ static void _thpd_write_results()
 {
 #if defined (WIN32) || defined (_WIN32)
     if(var_thpd.var_mutex != NULL)
-	WaitForSingleObject(var_thpd.var_mutex);
+	WaitForSingleObject(var_thpd.var_mutex, INFINITE);
 #endif    
     /* if file pointer was set write results to file */
     /* IX	V_DP1	V_DP2	DP1	DP2	V	VOL	DP	TMP */
