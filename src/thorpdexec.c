@@ -18,6 +18,7 @@
 #define THOR_PD_DUCT_DIA 300.0
 #define THOR_PD_D_WIDTH 500.0
 #define THOR_PD_D_HEIGHT 500.0
+#define THOR_PD_RESULT_BUFF_SZ 8
 #define THOR_PD_MSG_BUFFER_SZ 2048
 #define THOR_PD_FILE_NAME_SZ 64
 
@@ -37,8 +38,9 @@ static unsigned int _ctrl_ix = 0;
 
 static char _thor_msg_buff[THOR_PD_MSG_BUFFER_SZ];					/* main message buffer */
 static double _duct_dia = THOR_PD_DUCT_DIA;						/* duct diameter */
-static doulbe _d_width = THOR_PD_D_WIDTH;						/* damper width */
+static double _d_width = THOR_PD_D_WIDTH;						/* damper width */
 static double _d_height = THOR_PD_D_HEIGHT;						/* damper height */
+static double _thor_result_buff[THOR_PD_RESULT_BUFF_SZ];				/* result buffer */
 static FILE* _thor_result_fp = NULL;							/* result file pointer */
 static thpd* _var_thpd = NULL;
 
@@ -93,7 +95,7 @@ int thorpdexec_main(int argc, char** argv)
 	    return 1;
 	}
 
-    printf ("V_DP1\tV_DP2\tDP1\t\DP2\t\Vel\tVol\tDP\tTemp\n");
+    printf ("V_DP1\tV_DP2\tDP1\tDP2\tVel\tVol\tDP\tTemp\n");
     _thhandle = CreateThread(NULL, 0, _thor_msg_handler, NULL, 0, NULL);
     /* exit and clean up if failed */
     if(_thhandle == NULL)
@@ -125,10 +127,10 @@ int thorpdexec_main(int argc, char** argv)
 	}
 
     if(_start_flg)
-	thpd_stop(NULL);
+	thpd_stop();
 
     /* delete pressure drop program */
-    thpd_delete(NULL);
+    thpd_delete();
 
 #if defined (WIN32) || defined (_WIN32)
     WaitForSingleObject(_thhandle, INFINITE);
@@ -139,7 +141,7 @@ int thorpdexec_main(int argc, char** argv)
 }
 
 /* initialise variables */
-static int _thor_init(void)
+static int _thor_init_var(void)
 {
     int i=0;
     for(i=0; i<THOR_PD_MSG_BUFFER_SZ; i++)
@@ -155,12 +157,12 @@ static int _thor_pd_init(void)
     if(_var_thpd == NULL)
 	return 1;
 
-    thpd_set_buffer(_thor_msg_buff);
+    thpd_set_buffer(_thor_result_buff);
     thpd_set_file_pointer(_thor_result_fp);
 
     thpd_set_damper_size(_d_width, _d_height);
     thpd_set_duct_dia(_duct_dia);
-
+    _init_flg = 1;
     return 0;
 }
 
@@ -171,7 +173,7 @@ static int _thor_update_msg_buff(char* buff, char* opts)
     WaitForSingleObject(_thor_mutex, INFINITE);
 #endif
     sprintf(buff, THOR_PD_MAIN_MSG_FORMAT,
-	    _thor_result_buff[THPD_RESULT_VDP1_IX].
+	    _thor_result_buff[THPD_RESULT_VDP1_IX],
 	    _thor_result_buff[THPD_RESULT_VDP2_IX],
 	    _thor_result_buff[THPD_RESULT_DP1_IX],
 	    _thor_result_buff[THPD_RESULT_DP2_IX],
@@ -191,19 +193,19 @@ static int _thor_parse_args(int argc, char** argv)
     /* Flush standard input */
     fflush(stdin);
     printf("\nEnter Duct Diameter (200/300): ");
-    scanf("%f", &_duct_dia);
+    scanf("%f", (float*) &_duct_dia);
     if(_duct_dia < 0.0)
 	_duct_dia = THOR_PD_DUCT_DIA;
 
     fflush(stdin);
     printf("\nEnter Damper Width (mm): ");
-    scanf("%f", &_d_width);
+    scanf("%f", (float*) &_d_width);
     if(_d_width < 0.0)
 	_d_width = THOR_PD_D_WIDTH;
 
     fflush(stdin);
     printf("\nEnter Damper Height (mm): ");
-    scanf("%f", &_d_height);
+    scanf("%f", (float*) &_d_height);
     if(_d_height < 0.0)
 	_d_height = THOR_PD_D_HEIGHT;
 
@@ -240,6 +242,11 @@ void* _thor_msg_handler(void* obj)
 	    switch(_ctrl_ix)
 		{
 		case THOR_PD_PRG_START_CODE:
+		    if(_init_flg == 0)
+			{
+			    fprintf(stderr, "Program not initialised\n");
+			    break;
+			}
 		    thpd_start();
 		    _start_flg = 1;
 		    break;
