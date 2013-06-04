@@ -300,7 +300,9 @@ thpd* thpd_initialise(thpd* obj, void* sobj)
 	    _thpd_clear_tasks();
 	    return 1;
 	}
-
+    thgsens_set_calibration_buffers(var_thpd.var_p1_sen, THORNIFIX_S3_X, THORNIFIX_S3_Y, THORNIFIX_S_CAL_SZ);
+    thgsens_set_range(var_thpd.var_p1_sen, THPD_MIN_RNG, THPD_MAX_RNG);
+    
     /* Create LP static sensor */
     if(!thgsens_new(&var_thpd.var_p2_sen,
 		    THPD_VEL_DP4_CHANNEL,
@@ -315,7 +317,9 @@ thpd* thpd_initialise(thpd* obj, void* sobj)
 	    _thpd_clear_tasks();
 	    return 1;
 	}
-
+    thgsens_set_calibration_buffers(var_thpd.var_p2_sen, THORNIFIX_S4_X, THORNIFIX_S4_Y, THORNIFIX_S_CAL_SZ);
+    thgsens_set_range(var_thpd.var_p2_sen, THPD_MIN_RNG, THPD_MAX_RNG);
+    
     fprintf(stderr, "All sensors configured\nConfiguring timer..\n");
     /* Configure timing */
     if(ERR_CHECK(NICfgSampClkTiming(var_thpd.var_intask,
