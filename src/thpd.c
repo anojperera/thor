@@ -534,6 +534,7 @@ int thpd_stop(void)
     free(var_thpd.var_p0_arr);
     free(var_thpd.var_p1_arr);
     free(var_thpd.var_tmp_arr);
+    fprintf(stderr, "\nTest Stopped\n");
     return 0;
 }
 
@@ -610,8 +611,9 @@ static void _thpd_set_value()
 static void _thpd_write_results()
 {
 #if defined (WIN32) || defined (_WIN32)
-    WaitForSingleObject(_mutex, INFINITE);
-#endif
+    if(var_thpd.var_mutex != NULL)
+	WaitForSingleObject(var_thpd.var_mutex);
+#endif    
     /* if file pointer was set write results to file */
     /* IX	V_DP1	V_DP2	DP1	DP2	V	VOL	DP	TMP */
     if(var_thpd.var_fp)
@@ -642,8 +644,9 @@ static void _thpd_write_results()
 
 	}
 #if defined (WIN32) || defined (_WIN32)
-    ReleaseMutex(_mutex);
-#endif
+    if(var_thpd.var_mutex != NULL)
+	ReleaseMutex(var_thpd.var_mutex);
+#endif    
 }
 
 /* Async start function */
