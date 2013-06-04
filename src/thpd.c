@@ -162,18 +162,18 @@ static int _thpd_actout_signal();
     (_max_flg? (THPD_SAMPLES_PERSECOND * THPD_UPDATE_RATE) : _s_counter)
 
 /* Constructor */
-thpd* thpd_initialise(thpd* obj, void* sobj)
+thpd* thpd_initialise(void* sobj)
 {
     /* create output task */
     fprintf(stderr, "Creating and initialising tasks\n");
     if(ERR_CHECK(NICreateTask("", &var_thpd.var_outtask)))
-	return 1;
+	return NULL;
 
     /* create input tasks */
     if(ERR_CHECK(NIClearTask("", &var_thpd.var_intask)))
 	{
 	    _thpd_clear_tasks();
-	    return 1;
+	    return NULL;
 	}
 
     /* initialising variables */
@@ -226,7 +226,7 @@ thpd* thpd_initialise(thpd* obj, void* sobj)
 	{
 	    fprintf(stderr, "create output channel failed!\n");
 	    _thactst_clear_tasks();
-	    return 1;
+	    return NULL;
 	}
     fprintf(stderr, "Output channels configure complete..\n");
 
@@ -239,7 +239,7 @@ thpd* thpd_initialise(thpd* obj, void* sobj)
 	{
 	    fprintf(stderr, "Error creating temperature sensor\n");
 	    _thpd_clear_tasks();
-	    return 1;
+	    return NULL;
 	}
     thgsens_set_range(var_thpd.var_tmp_sen, THPD_MIN_TMP_RNG, THPD_MAX_TMP_RNG);
 
@@ -253,7 +253,7 @@ thpd* thpd_initialise(thpd* obj, void* sobj)
 	    fprintf(stderr, "Error creating static sensor\n");
 	    thgsens_delete(&var_thpd.var_tmp_sen);
 	    _thpd_clear_tasks();
-	    return 1;
+	    return NULL;
 	}
     thgsens_set_range(var_thpd.var_st_sen, THPD_MIN_ST_RNG, THPD_MAX_ST_RNG);
     thgsens_set_calibration_buffers(var_thpd.var_st_sen, _var_st_x, _var_st_y, THORNIFIX_S_CAL_SZ);
@@ -268,7 +268,7 @@ thpd* thpd_initialise(thpd* obj, void* sobj)
 	    thgsens_delete(&var_thpd.var_tmp_sen);
 	    thgsens_delete(&var_thpd.var_st_sen);
 	    _thpd_clear_tasks();
-	    return 1;
+	    return NULL;
 	}
 
     fprintf(stderr, "Configuring velocity sensors...\n");
@@ -298,7 +298,7 @@ thpd* thpd_initialise(thpd* obj, void* sobj)
 	    thgsens_delete(&var_thpd.var_st_sen);
 	    thvelsen_delete(&var_thpd.var_v_sen);
 	    _thpd_clear_tasks();
-	    return 1;
+	    return NULL;
 	}
     thgsens_set_calibration_buffers(var_thpd.var_p1_sen, THORNIFIX_S3_X, THORNIFIX_S3_Y, THORNIFIX_S_CAL_SZ);
     thgsens_set_range(var_thpd.var_p1_sen, THPD_MIN_RNG, THPD_MAX_RNG);
@@ -315,7 +315,7 @@ thpd* thpd_initialise(thpd* obj, void* sobj)
 	    thvelsen_delete(&var_thpd.var_v_sen);
 	    thgsens_delete(&var_thpd.var_p1_sen);
 	    _thpd_clear_tasks();
-	    return 1;
+	    return NULL;
 	}
     thgsens_set_calibration_buffers(var_thpd.var_p2_sen, THORNIFIX_S4_X, THORNIFIX_S4_Y, THORNIFIX_S_CAL_SZ);
     thgsens_set_range(var_thpd.var_p2_sen, THPD_MIN_RNG, THPD_MAX_RNG);
@@ -330,7 +330,7 @@ thpd* thpd_initialise(thpd* obj, void* sobj)
 				    1)))
     	{
 	    THPD_DELETE_ALL;
-    	    return 1;
+    	    return NULL;
     	}
 
 #if defined (WIN32) || defined (_WIN32)
@@ -342,7 +342,7 @@ thpd* thpd_initialise(thpd* obj, void* sobj)
     					      NULL)))
     	{
 	    THACTST_DELETE_ALL;
-    	    return 1;
+    	    return NULL;
     	}
 
     if(ERR_CHECK(NIRegisterDoneEvent(var_thpd.var_intask,
@@ -351,7 +351,7 @@ thpd* thpd_initialise(thpd* obj, void* sobj)
     				     NULL)))
     	{
 	    THACTST_DELETE_ALL;
-    	    return 1;
+    	    return NULL;
     	}
     _mutex = CreateMutex(NULL, FALSE, NULL);    
 #endif
@@ -362,7 +362,7 @@ thpd* thpd_initialise(thpd* obj, void* sobj)
     _init_flg = 1;
 
     fprintf(stderr, "Initialisation complete..\n");
-    return 0;
+    return &var_thpd;
 }
 
 /* Delete object */

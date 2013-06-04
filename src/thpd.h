@@ -27,7 +27,7 @@
 typedef struct _thpd thpd;
 
 /* constructor and destructor */
-thpd* thpd_initialise(thpd* obj, void* sobj);
+thpd* thpd_initialise(void* sobj);
 void thpd_delete(void);
 
 /* start stop methods */
