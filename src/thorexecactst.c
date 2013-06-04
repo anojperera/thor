@@ -208,9 +208,9 @@ static int _thor_update_msg_buff(char* buff, char* opts)
 
 	    /* key press handler */
 #if defined (WIN32) || defined (_WIN32)
-	    DWORD WINAPI _thor_msg_handler(LPVOID obj)
+DWORD WINAPI _thor_msg_handler(LPVOID obj)
 #else
-		void* _thor_msg_handler(void* obj)
+void* _thor_msg_handler(void* obj)
 #endif
 	    {
 		while(1)
