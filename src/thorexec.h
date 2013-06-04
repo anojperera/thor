@@ -9,6 +9,7 @@ extern "C" {
     
     int thorahuexec_main(int argc, char** argv);
     int thoractstexec_main(int argc, char** argv);
+    int thorpdexec_main(int argc, char** argv);
 
 #ifdef __cplusplus
 }

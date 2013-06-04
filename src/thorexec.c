@@ -6,7 +6,7 @@
 #include <string.h>
 
 #include "thorexec.h"
-#define PROG_MSG "\nSelect Below Option: \nAHU Performance Test [1]\nDamper Close Test [2]\nOption [1/2]: "
+#define PROG_MSG "\nSelect Below Option: \nAHU Performance Test [1]\nDamper Close Test [2]\nPressure Drop Test [3]\nOption [1/2]: "
 int main(int argc, char** argv)
 {
     int _next_opt;
@@ -17,6 +17,7 @@ int main(int argc, char** argv)
     const struct option _long_opts[] = {
 	{"ahu", 0, NULL, 'a'},
 	{"damper", 0, NULL, 'd'},
+	{"pressure_drop", 0, NULL, 'P'},
 	{NULL, 0, NULL, 0}
     };
     
@@ -34,6 +35,9 @@ int main(int argc, char** argv)
 		    _prog_id = 2;
 		    _opt_st_flg = 1;
 		    break;
+		case 'P':
+		    _prog_id = 3;
+		    _opt_st_flg = 1;
 		case -1:
 		default:
 		    printf(PROG_MSG);
@@ -52,6 +56,9 @@ int main(int argc, char** argv)
 	    break;
 	case 2:
 	    thoractstexec_main(argc, argv);
+	    break;
+	case 3:
+	    thorpdexec_main(argc, argv);
 	    break;
 	default:
 	    fprintf(stderr, "\nInvalid Option\n");
