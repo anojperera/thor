@@ -8,6 +8,10 @@
 #ifndef __THPD__
 #define __THPD__
 
+#if defined (WIN32) || defined (_WIN32)
+#include <windows.h>
+#endif
+
 #include <stdlib.h>
 #include <stdio.h>
 #include "thornifix.h"
@@ -47,5 +51,9 @@ int thpd_set_file_pointer(FILE* fp);
 /* set duct and damper size */
 int thpd_set_damper_size(double width, double height);
 int thpd_set_duct_dia(double dia);
+
+#if defined (WIN32) || defined (_WIN32)
+int thpd_set_mutex(HANDLE mutex);
+#endif
 
 #endif	/* __THPD__  */

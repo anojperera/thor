@@ -3,9 +3,7 @@
 #include "thpd.h"
 #include "thgsens.h"
 #include "thvelsen.h"		/* velocity sensor */
-#if defined(WIN32) || defined(_WIN32)
-#include <windows.h>
-#else
+#if !defined(WIN32) || !defined(_WIN32)
 #include <unistd.h>
 #include <pthread.h>
 #include <semaphore.h>
@@ -106,6 +104,7 @@ struct _thpd
 
 #if defined (WIN32) || defined (_WIN32)
     DWORD var_thid;						/* thread id */
+    HANDLE var_mutex;						/* mutex for protecting result buffer */
 #else
     int var_thid;
 #endif
@@ -357,7 +356,8 @@ thpd* thpd_initialise(void* sobj)
 	    THPD_DELETE_ALL;
     	    return NULL;
     	}
-    _mutex = CreateMutex(NULL, FALSE, NULL);    
+    _mutex = CreateMutex(NULL, FALSE, NULL);
+    var_thpd.var_mutex = NULL;
 #endif
 
     /* enable all sensors by default */
@@ -391,9 +391,10 @@ void thpd_delete(void)
 	free(var_thpd.var_fan_ctrl_buff);
     var_thpd.var_fan_ctrl_buff = NULL;
 #if defined (WIN32) || defined (_WIN32)
+    var_thpd.var_mutex = NULL;
     CloseHandle(_mutex);
 #endif
-    printf("delete thor..\n");    
+    printf("\ndelete thor..\n");    
 }
 
 /* set settling time */
@@ -533,6 +534,20 @@ int thpd_stop(void)
     free(var_thpd.var_p0_arr);
     free(var_thpd.var_p1_arr);
     free(var_thpd.var_tmp_arr);
+    return 0;
+}
+
+/* File pointer */
+int thpd_set_file_pointer(FILE* fp)
+{
+    var_thpd.var_fp = fp;
+    return 0;
+}
+
+/* Set mutex for result buffer */
+int thpd_set_mutex(HANDLE mutex)
+{
+    var_thpd.var_mutex = mutex;
     return 0;
 }
 /*====================================================================================================*/
