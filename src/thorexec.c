@@ -6,7 +6,7 @@
 #include <string.h>
 
 #include "thorexec.h"
-#define PROG_MSG "\nSelect Below Option: \nAHU Performance Test [1]\nDamper Close Test [2]\nPressure Drop Test [3]\nOption [1/2]: "
+#define PROG_MSG "\nSelect Below Option: \nAHU Performance Test [1]\nDamper Close Test [2]\nPressure Drop Test [3]\nOption [1/2/3]: "
 int main(int argc, char** argv)
 {
     int _next_opt;
