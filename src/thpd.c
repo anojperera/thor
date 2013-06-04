@@ -117,9 +117,13 @@ static unsigned int _g_counter = 0;				/* general counter */
 static unsigned int _s_counter = 0;
 static unsigned int _max_flg = 0;				/* maximum flag for controlling averaging buffers */
 static unsigned int _set_flg = 0;				/* flag to indicate file headers added */
-static struct _thpd var_thpid;					/* object */
+static struct _thpd var_thpd;					/* object */
 static double _var_st_x[] = THORNIFIX_ST_X;
 static double _var_st_y[] = THORNIFIX_ST_Y;
+static double _var_p1_x[] = THORNIFIX_S3_X;
+static double _var_p1_y[] = THORNIFIX_S3_Y;
+static double _var_p2_x[] = THORNIFIX_S4_X;
+static double _var_p2_y[] = THORNIFIX_S4_Y;
 static double _var_val_buff[THPD_NUM_INPUT_CHANNELS];		/* read buffer */
 #if defined (WIN32) || defined (_WIN32)
 static HANDLE _mutex = NULL;
@@ -170,7 +174,7 @@ thpd* thpd_initialise(void* sobj)
 	return NULL;
 
     /* create input tasks */
-    if(ERR_CHECK(NIClearTask("", &var_thpd.var_intask)))
+    if(ERR_CHECK(NICreateTask("", &var_thpd.var_intask)))
 	{
 	    _thpd_clear_tasks();
 	    return NULL;
@@ -225,7 +229,7 @@ thpd* thpd_initialise(void* sobj)
 				       NULL)))
 	{
 	    fprintf(stderr, "create output channel failed!\n");
-	    _thactst_clear_tasks();
+	    _thpd_clear_tasks();
 	    return NULL;
 	}
     fprintf(stderr, "Output channels configure complete..\n");
@@ -279,14 +283,14 @@ thpd* thpd_initialise(void* sobj)
 			   THPD_MIN_RNG,
 			   THPD_MAX_RNG);
 
-    thvelsen_config_sensor(var_thpd.var_v_sen.
+    thvelsen_config_sensor(var_thpd.var_v_sen,
 			   1,
 			   THPD_VEL_DP2_CHANNEL,
 			   NULL,
 			   THPD_MIN_RNG,
 			   THPD_MAX_RNG);
 
-    fprintf(stderr "Velocity sensors configuration complete\nCreating DP sensors\n");
+    fprintf(stderr, "Velocity sensors configuration complete\nCreating DP sensors\n");
     /* Create HP static sensor */
     if(!thgsens_new(&var_thpd.var_p1_sen,
 		    THPD_VEL_DP3_CHANNEL,
@@ -300,7 +304,7 @@ thpd* thpd_initialise(void* sobj)
 	    _thpd_clear_tasks();
 	    return NULL;
 	}
-    thgsens_set_calibration_buffers(var_thpd.var_p1_sen, THORNIFIX_S3_X, THORNIFIX_S3_Y, THORNIFIX_S_CAL_SZ);
+    thgsens_set_calibration_buffers(var_thpd.var_p1_sen, _var_p1_x, _var_p1_y, THORNIFIX_S_CAL_SZ);
     thgsens_set_range(var_thpd.var_p1_sen, THPD_MIN_RNG, THPD_MAX_RNG);
     
     /* Create LP static sensor */
@@ -317,7 +321,7 @@ thpd* thpd_initialise(void* sobj)
 	    _thpd_clear_tasks();
 	    return NULL;
 	}
-    thgsens_set_calibration_buffers(var_thpd.var_p2_sen, THORNIFIX_S4_X, THORNIFIX_S4_Y, THORNIFIX_S_CAL_SZ);
+    thgsens_set_calibration_buffers(var_thpd.var_p2_sen, _var_p2_x, _var_p2_y, THORNIFIX_S_CAL_SZ);
     thgsens_set_range(var_thpd.var_p2_sen, THPD_MIN_RNG, THPD_MAX_RNG);
     
     fprintf(stderr, "All sensors configured\nConfiguring timer..\n");
@@ -341,7 +345,7 @@ thpd* thpd_initialise(void* sobj)
     					      _every_n_callback,
     					      NULL)))
     	{
-	    THACTST_DELETE_ALL;
+	    THPD_DELETE_ALL;
     	    return NULL;
     	}
 
@@ -350,7 +354,7 @@ thpd* thpd_initialise(void* sobj)
     				     _done_callback,
     				     NULL)))
     	{
-	    THACTST_DELETE_ALL;
+	    THPD_DELETE_ALL;
     	    return NULL;
     	}
     _mutex = CreateMutex(NULL, FALSE, NULL);    
@@ -366,7 +370,7 @@ thpd* thpd_initialise(void* sobj)
 }
 
 /* Delete object */
-void thpd_delete(void);
+void thpd_delete(void)
 {
     if(_init_flg == 0)
 	return;
@@ -456,12 +460,12 @@ int thpd_start(void)
 	}
 
     /* create moving average buffers */
-    var_thpd.var_st_arr = (double**) calloc(THPD_SAMPLES_PERSECOND * THPD_UPDATE_RATE, sizeof(double));
-    var_thpd.var_v0_arr = (double**) calloc(THPD_SAMPLES_PERSECOND * THPD_UPDATE_RATE, sizeof(double));
-    var_thpd.var_v1_arr = (double**) calloc(THPD_SAMPLES_PERSECOND * THPD_UPDATE_RATE, sizeof(double));
-    var_thpd.var_p0_arr = (double**) calloc(THPD_SAMPLES_PERSECOND * THPD_UPDATE_RATE, sizeof(double));
-    var_thpd.var_p1_arr = (double**) calloc(THPD_SAMPLES_PERSECOND * THPD_UPDATE_RATE, sizeof(double));
-    var_thpd.var_tmp_arr = (double**) calloc(THPD_SAMPLES_PERSECOND * THPD_UPDATE_RATE, sizeof(double));
+    var_thpd.var_st_arr = (double*) calloc(THPD_SAMPLES_PERSECOND * THPD_UPDATE_RATE, sizeof(double));
+    var_thpd.var_v0_arr = (double*) calloc(THPD_SAMPLES_PERSECOND * THPD_UPDATE_RATE, sizeof(double));
+    var_thpd.var_v1_arr = (double*) calloc(THPD_SAMPLES_PERSECOND * THPD_UPDATE_RATE, sizeof(double));
+    var_thpd.var_p0_arr = (double*) calloc(THPD_SAMPLES_PERSECOND * THPD_UPDATE_RATE, sizeof(double));
+    var_thpd.var_p1_arr = (double*) calloc(THPD_SAMPLES_PERSECOND * THPD_UPDATE_RATE, sizeof(double));
+    var_thpd.var_tmp_arr = (double*) calloc(THPD_SAMPLES_PERSECOND * THPD_UPDATE_RATE, sizeof(double));
 
     /* initialise buffers */
     for(i=0; i<THPD_SAMPLES_PERSECOND * THPD_UPDATE_RATE; i++)
@@ -490,7 +494,6 @@ int thpd_start(void)
 /* Stop test */
 int thpd_stop(void)
 {
-    int i;
     int32 _spl_write = 0;
 #if defined (WIN32) || defined (_WIN32)
     WaitForSingleObject(_mutex, INFINITE);
@@ -516,7 +519,7 @@ int thpd_stop(void)
 				       0,
 				       10.0,
 				       DAQmx_Val_GroupByChannel,
-				       var_thpd.var_out_v
+				       var_thpd.var_out_v,
 				       &_spl_write,
 				       NULL)))
 	fprintf(stderr, "Unable to stop fan\n");    
@@ -579,7 +582,7 @@ static void _thpd_set_value()
     else
 	var_thpd.var_v1 = var_thpd.var_v0;
     var_thpd.var_p1 = thgsens_get_value2(var_thpd.var_p1_sen);
-    var_thpd.var_p2 = thgsens_get_value2(var_thid.var_p2_sen);
+    var_thpd.var_p2 = thgsens_get_value2(var_thpd.var_p2_sen);
 
 #if defined (WIN32) || defined (_WIN32)
     ReleaseMutex(_mutex);
@@ -596,7 +599,7 @@ static void _thpd_write_results()
 #endif
     /* if file pointer was set write results to file */
     /* IX	V_DP1	V_DP2	DP1	DP2	V	VOL	DP	TMP */
-    if(var_thid.var_fp)
+    if(var_thpd.var_fp)
 	{
 	    fprintf(var_thpd.var_fp, "%i\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\n",
 		    _g_counter,
@@ -615,9 +618,9 @@ static void _thpd_write_results()
 	    var_thpd.var_result_buff[THPD_RESULT_VDP1_IX] = thgsens_get_value2(var_thpd.var_v_sen->var_v1);
 	    var_thpd.var_result_buff[THPD_RESULT_VDP2_IX] = thgsens_get_value2(var_thpd.var_v_sen->var_v2);
 	    var_thpd.var_result_buff[THPD_RESULT_DP1_IX] = thgsens_get_value2(var_thpd.var_p1_sen);
-	    var_thpd.var_result_buff[THPD_RESULT_DP2_IX] = thgsens_get_value2(var_thid.var_p2_sen);
+	    var_thpd.var_result_buff[THPD_RESULT_DP2_IX] = thgsens_get_value2(var_thpd.var_p2_sen);
 	    var_thpd.var_result_buff[THPD_RESULT_VEL_IX] = thvelsen_get_velocity(var_thpd.var_v_sen);
-	    var_thpd.var_result_buff[THPD_RESULT_VOL_IX] = var_thid.var_air_flow;
+	    var_thpd.var_result_buff[THPD_RESULT_VOL_IX] = var_thpd.var_air_flow;
 	    var_thpd.var_result_buff[THPD_RESULT_DP_IX] = var_thpd.var_result_buff[THPD_RESULT_DP1_IX] -
 		var_thpd.var_result_buff[THPD_RESULT_DP2_IX];
 	    var_thpd.var_result_buff[THPD_RESULT_TMP_IX] = thgsens_get_value2(var_thpd.var_tmp_sen);
@@ -662,12 +665,12 @@ void* _thpd_async_start(void* obj)
 
     /* use software timing */
     _counter = 0;
-    var_thid.var_out_v[0] = 0.0;
+    var_thpd.var_out_v[0] = 0.0;
     while(1)
 	{
 #if defined (WIN32) || defined (_WIN32)
 	    WaitForSingleObject(_mutex, INFINITE);
-	    if(var_thid.var_stflg == 0)
+	    if(var_thpd.var_stflg == 0)
 		{
 		    ReleaseMutex(_mutex);
 		    break;
@@ -690,7 +693,7 @@ void* _thpd_async_start(void* obj)
 #endif
 	    if(++_counter < THPD_ACT_RATE)
 		{
-		    var_thid.var_out_v[0] = var_thid.var_fan_ctrl_buff[_counter];
+		    var_thpd.var_out_v[0] = var_thpd.var_fan_ctrl_buff[_counter];
 		    _thpd_write_results();
 		    
 		}
@@ -701,6 +704,7 @@ void* _thpd_async_start(void* obj)
     return FALSE;
 #else
     return NULL;
+#endif
 }
 
 int32 CVICALLBACK _every_n_callback(TaskHandle taskHandle,
