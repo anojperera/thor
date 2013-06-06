@@ -366,6 +366,9 @@ int thactst_set_result_buff(double* val)
 int thactst_start(void)
 {
     int i;
+    /* If test is running return method */
+    if(var_thactst.var_stflg == 1)
+	return 0;
     /* check if sensor flags are set */
     if(!var_thactst.var_stsensor->var_okflg)
 	{

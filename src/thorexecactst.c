@@ -212,64 +212,66 @@ DWORD WINAPI _thor_msg_handler(LPVOID obj)
 #else
 void* _thor_msg_handler(void* obj)
 #endif
-	    {
-		while(1)
-		    {
+{
+    while(1)
+	{
 #if defined (WIN32) || defined (_WIN32)
-			_ctrl_ix = _getch();
+	    _ctrl_ix = _getch();
 #else
-			_ctrl_ix = getchar();
+	    _ctrl_ix = getchar();
 #endif
-			/* flush input buffer */
-			fflush(stdin);
-			if(_ctrl_ix == THOR_ACTST_QUIT_CODE1 || _ctrl_ix == THOR_ACTST_QUIT_CODE2)
-			    {
-				/* lock mutex */
+	    if(_ctrl_ix == THOR_ACTST_QUIT_CODE1 || _ctrl_ix == THOR_ACTST_QUIT_CODE2)
+		{
+		    /* lock mutex */
 #if defined (WIN32) || defined (_WIN32)
-				WaitForSingleObject(_thor_mutex, INFINITE);
+		    WaitForSingleObject(_thor_mutex, INFINITE);
 #endif
-				_quit_flg = 0;
+		    _quit_flg = 0;
 #if defined (WIN32) || defined (_WIN32)
-				ReleaseMutex(_thor_mutex);
+		    ReleaseMutex(_thor_mutex);
 #endif
-				break;
-			    }
-			switch(_ctrl_ix)
-			    {
-			    case THOR_ACTST_INIT_PROG:
-				_thor_init();
-				break;
-			    case THOR_ACTST_PRG_START_CODE:
-				thactst_start();
-				break;
-			    case THOR_ACTST_PRG_STOP_CODE:
-				thactst_stop();
-				break;
-			    case THOR_ACTST_INCRF_FAN_CODE:
-				_thor_adjust_fan(THOR_ACTST_ADJ_FINE);
-				break;
-			    case THOR_ACTST_DECRF_FAN_CODE:
-				_thor_adjust_fan(-1*THOR_ACTST_ADJ_FINE);
-				break;
-			    case THOR_ACTST_INCR_FAN_CODE:
-				_thor_adjust_fan(THOR_ACTST_ADJ);
-				break;
-			    case THOR_ACTST_DECR_FAN_CODE:
-				_thor_adjust_fan(-1*THOR_ACTST_ADJ);
-				break;
-			    case THOR_ACTST_PRG_DMPCLOSE_CODE:
-				thactst_close_act();
-				break;
-			    }
-			_ctrl_ix = -1;
-		    }
+		    break;
+		}
+	    switch(_ctrl_ix)
+		{
+		case THOR_ACTST_INIT_PROG:
+		    _thor_init();
+		    break;
+		case THOR_ACTST_PRG_START_CODE:
+		    thactst_start();
+		    break;
+		case THOR_ACTST_PRG_STOP_CODE:
+		    thactst_stop();
+		    break;
+		case THOR_ACTST_INCRF_FAN_CODE:
+		    _thor_adjust_fan(THOR_ACTST_ADJ_FINE);
+		    break;
+		case THOR_ACTST_DECRF_FAN_CODE:
+		    _thor_adjust_fan(-1*THOR_ACTST_ADJ_FINE);
+		    break;
+		case THOR_ACTST_INCR_FAN_CODE:
+		    _thor_adjust_fan(THOR_ACTST_ADJ);
+		    break;
+		case THOR_ACTST_DECR_FAN_CODE:
+		    _thor_adjust_fan(-1*THOR_ACTST_ADJ);
+		    break;
+		case THOR_ACTST_PRG_DMPCLOSE_CODE:
+		    thactst_close_act();
+		    break;
+		}
+	    
+	    _ctrl_ix = -1;
+	    /* flush input buffer */
+	    fflush(stdin);		    
+	}
 
 #if defined (WIN32) || defined (_WIN32)
-		return 0;
+    return 0;
 #else
-		return NULL;
+    return NULL;
 #endif
-	    }
+	
+}
 
 
 /* initiate program */

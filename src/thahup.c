@@ -723,6 +723,9 @@ inline void thahup_set_ductdia(thahup* obj,
 int thahup_start(thahup* obj)
 {
     int i = 0;
+    /* If the test is running return method */
+    if(var_thahup->var_stflg > 0)
+	return 0;
     /* check if sensor range is assigned */
     if(!var_thahup->var_stsensor->var_okflg)
 	{

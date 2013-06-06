@@ -241,8 +241,7 @@ DWORD WINAPI _thor_msg_handler(LPVOID obj)
 #else
 	    _ctrl_ix = getchar();
 #endif
-	    /* flush input buffer */
-	    fflush(stdin);
+
 	    if(_ctrl_ix == THOR_AHU_QUIT_CODE1 || _ctrl_ix == THOR_AHU_QUIT_CODE2)
 		{
 		    /* lock mutex */
@@ -291,7 +290,11 @@ DWORD WINAPI _thor_msg_handler(LPVOID obj)
 #if defined (WIN32) || defined (_WIN32)
 	    ReleaseMutex(_thor_mutex);
 #endif	    /* call to update the message buffer */
+	    
+	    /* flush input buffer */
+	    fflush(stdin);
 	}
+
     return 0;
 }
 
