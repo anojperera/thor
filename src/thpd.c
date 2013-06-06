@@ -439,6 +439,9 @@ int thpd_set_duct_dia(double dia)
 int thpd_start(void)
 {
     int i;
+    /* Test is running so return function */
+    if(var_thpd.var_stflg > 1)
+	return 0;
     if(_init_flg == 0)
 	{
 	    fprintf(stderr, "Object not initialised\n");
