@@ -162,6 +162,7 @@ static int _thor_pd_init(void)
 
     thpd_set_damper_size(_d_width, _d_height);
     thpd_set_duct_dia(_duct_dia);
+    thpd_set_mutex(_thor_mutex);
     _init_flg = 1;
     return 0;
 }
