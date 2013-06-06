@@ -423,6 +423,7 @@ int thpd_set_damper_size(double width, double height)
 {
     var_thpd.var_dwidth = width;
     var_thpd.var_dheight = height;
+    var_thpd.var_farea = (var_thpd.var_dwidth * var_thpd.var_dheight) / 1000000;
     return 0;
 }
 
@@ -430,6 +431,7 @@ int thpd_set_damper_size(double width, double height)
 int thpd_set_duct_dia(double dia)
 {
     var_thpd.var_ddia = dia;
+    var_thpd.var_darea = M_PI * pow((var_thpd.var_ddia/2), 2);
     return 0;
 }
 
