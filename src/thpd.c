@@ -108,6 +108,7 @@ struct _thpd
 #else
     int var_thid;
 #endif
+    int (*callback_complete)(void*) _complete;
 };
 
 /* local variables */
