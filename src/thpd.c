@@ -591,8 +591,8 @@ static void _thpd_set_value()
     thgsens_add_value(var_thpd.var_p2_sen, Mean(var_thpd.var_p1_arr, THPD_MAX_MEAN));
 
     /* Get values */
-    var_thpd.var_static = thgsens_get_value2(var_thpd.var_tmp_sen);
-    var_thpd.var_temp = thgsens_get_value2(var_thpd.var_st_sen);
+    var_thpd.var_temp = thgsens_get_value2(var_thpd.var_tmp_sen);
+    var_thpd.var_static = thgsens_get_value2(var_thpd.var_st_sen);
     var_thpd.var_v0 = thvelsen_get_velocity(var_thpd.var_v_sen);
     
     var_thpd.var_air_flow = var_thpd.var_v0 * var_thpd.var_darea;
