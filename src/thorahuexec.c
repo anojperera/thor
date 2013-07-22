@@ -224,6 +224,8 @@ static int _thor_init_var(void)
 /* update message buffer */
 static int _thor_update_msg_buff(char* buff, char* opts)
 {
+    thsvr_ahu_msg _msg;
+    char _msg_buff[THSVR_TBUFF_SZ];	
     /* lock mutex */
 #if defined (WIN32) || defined (_WIN32)
     WaitForSingleObject(_thor_mutex, INFINITE);
@@ -262,10 +264,26 @@ static int _thor_update_msg_buff(char* buff, char* opts)
 		    (int) _thor_result_buffer[THAHUP_RESULT_BUFF_SP_IX],		/* speed (rpm) */
 		    (int) _thor_result_buffer[THAHUP_RESULT_BUFF_MSP_IX]);		/* motor (rpm) */
 	}
+
+    _msg.th_ahu_dp0 = _thor_result_buffer[THAHUP_RESULT_BUFF_DP1_IX];
+    _msg.th_ahu_dp1 = _thor_result_buffer[THAHUP_RESULT_BUFF_DP2_IX];
+    _msg.th_ahu_dp2 = _thor_result_buffer[THAHUP_RESULT_BUFF_DP3_IX];
+    _msg.th_ahu_dp3 = _thor_result_buffer[THAHUP_RESULT_BUFF_DP4_IX];
+    _msg.th_ahu_vel = _thor_result_buffer[THAHUP_RESULT_BUFF_VEL_IX];
+    _msg.th_ahu_vol = _thor_result_buffer[THAHUP_RESULT_BUFF_VOL_IX];
+    _msg.th_ahu_st = _thor_result_buffer[THAHUP_RESULT_BUFF_ST_IX];
+    _msg.th_ahu_tmp = _thor_result_buffer[THAHUP_RESULT_BUFF_TMP_IX];
+    _msg.th_ahu_mrpm = (int) _thor_result_buffer[THAHUP_RESULT_BUFF_MSP_IX];
+    _msg.th_ahu_frpm = (int) _thor_result_buffer[THAHUP_RESULT_BUFF_SP_IX];
+
+    /* call to encode data */
+    thsvr_var_encode_ahu(&_msg, _msg_buff, THSVR_TBUFF_SZ);
+    
 #if defined (WIN32) || defined (_WIN32)
     ReleaseMutex(_thor_mutex);
 #endif
-
+    /* send message to the server */
+    thsvr_send_msg(&_thsvr_cmp, (void*) _msg_buff, THSVR_TBUFF_SZ);	       
     return 0;
 }
 
