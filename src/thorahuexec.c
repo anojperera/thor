@@ -87,6 +87,8 @@ static int _thor_adjust_act(double val);
 static int _thor_parse_args(int argc, char** argv);
 inline __attribute__ ((always_inline)) static int _thor_replace_newline(char* buff);
 inline __attribute__ ((always_inline)) static int _thor_open_file(void);
+static int _thsvr_callback(void* usr_obj, void* data, size_t sz);
+static int _thsvr_exit_callback(void* usr_obj, unsigned int flg);
 
 /* thread function for win32 */
 #if defined (WIN32) || defined (_WIN32)
@@ -174,7 +176,7 @@ int thorahuexec_main(int argc, char** argv)
 
     /* Stop message server and delete object */
     thsvr_stop_server(&_thsvr_cmp);
-    thsvr_delete(&th_prim);
+    thsvr_delete(&_thsvr_cmp);
 
     if(_thor_result_fp != NULL)
 	fclose(_thor_result_fp);
@@ -205,7 +207,17 @@ static int _thor_init_var(void)
 	{
 	    fprintf (stdout, "Unable to create comm server..\n");
 	    return 1;
-	}    
+	}
+
+    /* set attributes and start server */
+    thsvr_set_port_number(&_thsvr_cmp, THSVR_RECV_PORT);
+    _thsvr_cmp.th_exit_callback = _thsvr_exit_callback;
+    thsvr_set_callback(&_thsvr_cmp, _thsvr_callback);    
+    thsvr_set_filepointer(&_thsvr_cmp, _thor_log_fp);
+    thsvr_set_log_filepointer(&_thsvr_cmp, _thor_log_fp);
+    
+    thsvr_start_server(&_thsvr_cmp);
+    
     return 0;
 }
 
@@ -531,5 +543,17 @@ inline __attribute__ ((always_inline)) static int _thor_open_file(void)
     if((_thor_result_fp = fopen(_file_name, "w+")) == NULL)
 	return -1;
 
+    return 0;
+}
+
+/* Message callback on server mode */
+static int _thsvr_callback(void* usr_obj, void* data, size_t sz)
+{
+    return 0;
+}
+
+/* Exit callback on server mode */
+static int _thsvr_exit_callback(void* usr_obj, unsigned int flg)
+{
     return 0;
 }
