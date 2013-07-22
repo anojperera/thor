@@ -8,6 +8,8 @@
 #include <time.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <thsvr_var.h>
+#include <thsvr.h>									/* server component */
 
 #include "thorexec.h"
 #include "thahup.h"
@@ -51,7 +53,9 @@
 #define THOR_AHU_ACT_FLOOR 5.0								/* minimum actuator control percentage */
 #define THOR_AHU_ACT_CEIL 95.0								/* maximum acturator percentage voltage */
 #define THOR_AHU_MSG_DURATION 4								/* message duration */
-#define THOR_AHU_LOG_FILE_NAME "Log.txt"
+#define THOR_AHU_LOG_FILE_NAME "message_log.txt"
+#define THAHU_THSVR_SERVER_ADDR "192.168.254.56"
+
 static unsigned int _init_flg = 0;							/* initialise flag */
 static unsigned int _start_flg = 0;							/* start test flag */
 static unsigned int _pause_flg = 0;							/* pause flag */
@@ -68,7 +72,9 @@ static int _thor_def_static = THOR_AHU_DEFAULT_MAX_STATIC;
 static double _thor_result_buffer[THOR_AHU_OPT_MSG_BUFFER_SZ];
 static int _thor_num_sensors = 4;
 static FILE* _thor_result_fp = NULL;							/* result file pointer */
+static FILE* _thor_log_fp = NULL;							/* message log file */
 static thahup* thahup_obj = NULL;							/* AHU object */
+static thsvr _thsvr_cmp;								/* message server component */
 
 /* counters */
 static unsigned int _thor_msg_cnt = 0;							/* message counter */
@@ -121,8 +127,10 @@ int thorahuexec_main(int argc, char** argv)
     if(_thor_mutex == NULL)
 	{
 	    fprintf(stderr, "CreateMutex error\n");
-	    if(_thor_result_fp == NULL)
+	    if(_thor_result_fp != NULL)
 		fclose(_thor_result_fp);
+	    if(_thor_log_fp != NULL)
+		fclose(_thor_log_fp);
 	    return 1;
 	}
     printf("DP1\tDP2\tDP3\tDP4\tStatic\tVel\tVol\tTemp\tRPM\tM_RPM\n");
@@ -131,8 +139,10 @@ int thorahuexec_main(int argc, char** argv)
     if(_thhandle == NULL)
 	{
 	    CloseHandle(_thor_mutex);
-	    if(_thor_result_fp == NULL)
-		fclose(_thor_result_fp);	    
+	    if(_thor_result_fp != NULL)
+		fclose(_thor_result_fp);
+	    if(_thor_log_fp != NULL)
+		fclose(_thor_log_fp);
 	    return 0;
 	}
 #endif
@@ -159,9 +169,17 @@ int thorahuexec_main(int argc, char** argv)
     if(_start_flg)
 	thahup_stop(NULL);
     /* delete ahu program */
-    thahup_delete();
+    thahup_delete();    
     thahup_obj = NULL;
-    fclose(_thor_result_fp);
+
+    /* Stop message server and delete object */
+    thsvr_stop_server(&_thsvr_cmp);
+    thsvr_delete(&th_prim);
+
+    if(_thor_result_fp != NULL)
+	fclose(_thor_result_fp);
+    if(_thor_log_fp != NULL)
+	fclose(_thor_log_fp);
     /* wait for thread to closed */
 #if defined (WIN32) || defined (_WIN32)
     WaitForSingleObject(_thhandle, INFINITE);
@@ -179,6 +197,15 @@ static int _thor_init_var(void)
     memset((void*) _thor_msg_buff, 0, THOR_AHU_MSG_BUFFER_SZ);
     for(i=0; i<THOR_AHU_RESULT_BUFF_SZ; i++)
 	_thor_result_buffer[i] = 0.0;
+
+    /* create server component */
+    fprintf(stdout, "Contacting message server..\n");
+    /* Create the server component */
+    if(!thsvr_new(&_thsvr_cmp, thsvr_send, THAHU_THSVR_SERVER_ADDR))
+	{
+	    fprintf (stdout, "Unable to create comm server..\n");
+	    return 1;
+	}    
     return 0;
 }
 
@@ -492,6 +519,9 @@ inline __attribute__ ((always_inline)) static int _thor_open_file(void)
     char _file_name[THOR_AHU_OPT_MSG_BUFFER_SZ];
     time_t _tm;
     struct tm* _tm_info;
+
+    /* open log file for message logging */
+    _thor_log_fp = fopen(THOR_AHU_LOG_FILE_NAME, "w+");
 
     time(&_tm);
     _tm_info = localtime(&_tm);
