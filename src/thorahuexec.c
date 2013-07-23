@@ -578,11 +578,22 @@ static int _thsvr_cmd_handler(int cmd_ix)
 /* Message callback on server mode */
 static int _thsvr_callback(void* usr_obj, void* data, size_t sz)
 {
+    thsvr_ahu_msg _msg;
+    if(data != NULL)
+	{
+	    thsvr_var_decode_ahu((char*) data, sz, &_msg);
+#if defined (WIN32) || defined (_WIN32)
+	    WaitForSingleObject(_thor_mutex, INFINITE);
+	    _thsvr_cmd_handler(_msg.th_cmd);
+	    ReleaseMutex(_thor_mutex);	    
+#endif	    
+	}
     return 0;
 }
 
 /* Exit callback on server mode */
 static int _thsvr_exit_callback(void* usr_obj, unsigned int flg)
 {
+    
     return 0;
 }
