@@ -318,35 +318,8 @@ DWORD WINAPI _thor_msg_handler(LPVOID obj)
 #if defined (WIN32) || defined (_WIN32)
 	    WaitForSingleObject(_thor_mutex, INFINITE);
 #endif
-	    switch(_ctrl_ix)
-		{
- 		case THOR_AHU_ACT_INCR_CODE:
-		    _thor_adjust_act(THOR_AHU_ACT_INCR);
-		    break;
-		case THOR_AHU_ACT_DECR_CODE:
-    		    _thor_adjust_act(THOR_AHU_ACT_DECR);
-		    break;
-		case THOR_AHU_PRG_START_CODE:
-		    thahup_start(NULL);
-		    _start_flg = 1;
-		    break;
-		case THOR_AHU_PRG_STOP_CODE:
-		    thahup_stop(NULL);
-		    _start_flg = 0;
-		    break;
-		case THOR_AHU_ACT_INCRF_CODE:
-		    _thor_adjust_act(THOR_AHU_ACT_ADJT_FINE);
-		    break;
-		case THOR_AHU_ACT_DECRF_CODE:
-		    _thor_adjust_act(-1*THOR_AHU_ACT_ADJT_FINE);
-		    break;
-		case THOR_AHU_PAUSE_CODE:
-		    if(_pause_flg > 0)
-			_pause_flg = 0;
-		    else
-			_pause_flg = 1;
-		    break;
-		}
+	    _thsvr_cmd_handler(_ctrl_ix);
+
 #if defined (WIN32) || defined (_WIN32)
 	    ReleaseMutex(_thor_mutex);
 #endif	    /* call to update the message buffer */
