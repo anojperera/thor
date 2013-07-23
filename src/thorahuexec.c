@@ -504,7 +504,8 @@ static int _thor_parse_args(int argc, char** argv)
 	    fflush(stdin);
 	    printf("\nMotor pulley diameter (mm): ");
 	    scanf("%i", &_m_dia);
-
+	    fflush(stdin);
+	    
 	    if(_m_dia > 0)
 		_thor_p_ratio = _f_dia / _m_dia;
 	}
@@ -594,6 +595,5 @@ static int _thsvr_callback(void* usr_obj, void* data, size_t sz)
 /* Exit callback on server mode */
 static int _thsvr_exit_callback(void* usr_obj, unsigned int flg)
 {
-    
     return 0;
 }
