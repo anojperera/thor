@@ -89,6 +89,7 @@ inline __attribute__ ((always_inline)) static int _thor_replace_newline(char* bu
 inline __attribute__ ((always_inline)) static int _thor_open_file(void);
 static int _thsvr_callback(void* usr_obj, void* data, size_t sz);
 static int _thsvr_exit_callback(void* usr_obj, unsigned int flg);
+static int _thsvr_cmd_handler(int cmd_ix);						/* function to handle commands */
 
 /* thread function for win32 */
 #if defined (WIN32) || defined (_WIN32)
@@ -265,6 +266,8 @@ static int _thor_update_msg_buff(char* buff, char* opts)
 		    (int) _thor_result_buffer[THAHUP_RESULT_BUFF_MSP_IX]);		/* motor (rpm) */
 	}
 
+    /* set values for message struct */
+    THSVR_AHU_MSG_INIT(&_msg);
     _msg.th_ahu_dp0 = _thor_result_buffer[THAHUP_RESULT_BUFF_DP1_IX];
     _msg.th_ahu_dp1 = _thor_result_buffer[THAHUP_RESULT_BUFF_DP2_IX];
     _msg.th_ahu_dp2 = _thor_result_buffer[THAHUP_RESULT_BUFF_DP3_IX];
@@ -561,6 +564,41 @@ inline __attribute__ ((always_inline)) static int _thor_open_file(void)
     if((_thor_result_fp = fopen(_file_name, "w+")) == NULL)
 	return -1;
 
+    return 0;
+}
+
+/* Handler keyboard inputs */
+static int _thsvr_cmd_handler(int cmd_ix)
+{
+    switch(cmd_ix)
+	{
+	case THOR_AHU_ACT_INCR_CODE:
+	    _thor_adjust_act(THOR_AHU_ACT_INCR);
+	    break;
+	case THOR_AHU_ACT_DECR_CODE:
+	    _thor_adjust_act(THOR_AHU_ACT_DECR);
+	    break;
+	case THOR_AHU_PRG_START_CODE:
+	    thahup_start(NULL);
+	    _start_flg = 1;
+	    break;
+	case THOR_AHU_PRG_STOP_CODE:
+	    thahup_stop(NULL);
+	    _start_flg = 0;
+	    break;
+	case THOR_AHU_ACT_INCRF_CODE:
+	    _thor_adjust_act(THOR_AHU_ACT_ADJT_FINE);
+	    break;
+	case THOR_AHU_ACT_DECRF_CODE:
+	    _thor_adjust_act(-1*THOR_AHU_ACT_ADJT_FINE);
+	    break;
+	case THOR_AHU_PAUSE_CODE:
+	    if(_pause_flg > 0)
+		_pause_flg = 0;
+	    else
+		_pause_flg = 1;
+	    break;
+	}
     return 0;
 }
 
