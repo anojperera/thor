@@ -425,7 +425,7 @@ static int _thor_parse_args(int argc, char** argv)
 {
     char _dec_flg;
     int _next_opt;
-    int _f_dia, _m_dia;
+    float _f_dia, _m_dia;
     char _arg_buff[THOR_AHU_OPT_MSG_BUFFER_SZ];
     const char* const _short_opts = ":D:N:S:";
     const struct option _long_opts[] = {
@@ -498,16 +498,14 @@ static int _thor_parse_args(int argc, char** argv)
     fscanf(stdin, "%c", &_dec_flg);
     if(_dec_flg == THOR_AHU_YES_CODE || _dec_flg == THOR_AHU_YES2_CODE)
 	{
-	    fflush(stdin);
+	    fflush(stdin);	    
 	    printf("\nFan pulley diameter (mm): ");
-	    scanf("%i", &_f_dia);
-	    fflush(stdin);
+	    scanf("%f", &_f_dia);
 	    printf("\nMotor pulley diameter (mm): ");
-	    scanf("%i", &_m_dia);
-	    fflush(stdin);
-	    
+	    scanf("%f", &_m_dia);
 	    if(_m_dia > 0)
-		_thor_p_ratio = _f_dia / _m_dia;
+		_thor_p_ratio = (double) _f_dia / _m_dia;
+	    printf("\nPulley  Ratio: %f\n", (float) _thor_p_ratio);
 	}
 
     /* assign defaults if the vaules are still invalid */
