@@ -12,4 +12,4 @@ rm -v ../bin/*.o
 echo "compile thorexec"
 gcc -g -Wall -O0 -o ../bin/thorexec thorexec.c thlkg.c thahup.c thsov.c thactr.c thpd.c thgsens.c thvelsen.c thpid.c \
     thlinreg.c thbuff.c thornifix.c thactst.c thorexecactst.c thorahuexec.c thorpdexec.c \
-    c:/MinGW/lib/alist.a c:/MinGW/lib/NIDAQmx.lib
+    c:/MinGW/lib/alist.a c:/MinGW/lib/NIDAQmx.lib c:/MinGW/lib/libthsvr.a -lws2_32
