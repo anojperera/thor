@@ -37,6 +37,7 @@ struct _thgsensor
 {
     char var_ch_name[THGS_CH_NAME_SZ];		/* channel name */
     double var_ave_buff[THGS_CH_RBUFF_SZ];	/* averaging buffer */
+    double _var_ave_buff;
     
     TaskHandle* var_task;			/* pointer to task handle */
 
@@ -57,7 +58,8 @@ struct _thgsensor
     unsigned int _var_raw_set;			/* flag to indicate raw value set */    
     unsigned int var_flg;			/* flag to indicate enabled or disable state */    
     unsigned int var_okflg;			/* flag to indicate ranges has been set */
-    
+    unsigned int _count;			/* internal buffer counter */
+    unsigned int _count_flg;			/* count flag */
     void* sobj_ptr;				/* pointer to external object */
 };
 
@@ -72,7 +74,7 @@ extern "C" {
 		      void* data);		/* optional external object pointer */
 
     /* destructor */
-    void thgsensor_delete(thgsensor* obj);
+    void thgsensor_delete(thgsensor* obj); 
 
     /* set range */
     inline __attribute__ ((always_inline)) static int thgsensor_set_range(thgsensor* obj, double min, double max)
@@ -85,6 +87,7 @@ extern "C" {
 	/* calculate gradient and intercept */
 	THGS_CALC_GRAD(obj);
 	THGS_CALC_INTR(obj);
+	obj->var_flg = 1;
 	return 0;
     }
 
@@ -99,17 +102,17 @@ extern "C" {
     }
 
     /* get current value */
-    extern inline double thgsens_get_value(thgsens* obj);
+    double thgsens_get_value(thgsens* obj);
 
     /* get current value without calling callback
      * function */
-    extern inline double thgsens_get_value2(thgsens* obj);
+    double thgsens_get_value2(thgsens* obj);
 
     /* reset all */
-    extern inline int thgsens_reset_all(thgsens* obj);
+    int thgsens_reset_all(thgsens* obj);
 
     /* reset value */
-    extern inline int thgsens_reset_value(thgsens* obj);
+    int thgsens_reset_value(thgsens* obj);
 
     /* set buffer and buffer size */
     inline __attribute__ ((always_inline)) static int thgsens_set_calibration_buffers(thgsens* obj, const double* x, const double* y, int n)
