@@ -104,15 +104,8 @@ extern "C" {
     /* get current value */
     double thgsens_get_value(thgsens* obj);
 
-    /* get current value without calling callback
-     * function */
-    double thgsens_get_value2(thgsens* obj);
-
     /* reset all */
     int thgsens_reset_all(thgsens* obj);
-
-    /* reset value */
-    int thgsens_reset_value(thgsens* obj);
 
     /* set buffer and buffer size */
     inline __attribute__ ((always_inline)) static int thgsens_set_calibration_buffers(thgsens* obj, const double* x, const double* y, int n)
