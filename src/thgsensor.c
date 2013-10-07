@@ -2,8 +2,6 @@
 #include "thgsensor.h"
 #include <math.h>
 
-static int _get_value(thgsensor* obj);
-
 /* Constructor */
 int thgsensor_new(thgsensor* obj,			/* object pointer to initialise */
 		  const char* ch_name,			/* channel name */
@@ -65,10 +63,15 @@ void thgsensor_delete(thgsensor* obj)
     obj->sobj_ptr = NULL;
 }
 
-
-/* Private method for retrieving values */
-static int _get_value(thgsensor* obj)
+/* get value */
+double thgsens_get_value(thgsens* obj)
 {
+    if(obj == NULL)
+       return 0.0;
+    /* check if range is set */
+    if(!obj->var_flg)
+	return 0.0;
+    
     /* add to buffer */
     obj->var_ave_buff[obj->_count] = obj->var_grad * (double) var_raw + obj->var_intc;
     
@@ -82,5 +85,20 @@ static int _get_value(thgsensor* obj)
 	    obj->_count = 0;
 	    obj->_count_flg = 1;
 	}
-    return 0;
+    return obj->var_val;
+}
+
+/* reset all */
+int thgsens_reset_all(thgsens* obj)
+{
+    int i = 0;
+    if(obj == NULL)
+	return -1;
+    for(i=0; i<THGS_CH_RBUFF_SZ; i++)
+	obj->var_ave_buff[i] = 0.0;
+
+    obj->_var_ave_buff = 0.0;
+
+    obj->_count = 0;
+    obj->_count_flg = 0;
 }
