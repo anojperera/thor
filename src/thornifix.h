@@ -94,7 +94,7 @@ inline __attribute__ ((always_inline)) static int ERR_CHECK(int32 err)
 #else
 	    NIGetErrorString(err_msg, THOR_BUFF_SZ);
 #endif
-	    fprintf(stderr, "%s\n", err_msg);
+	    syslog (LOG_INFO, err_msg);
 	    return 1;
 	}
     else
