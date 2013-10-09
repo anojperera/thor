@@ -14,6 +14,7 @@ int main(int argc, char** argv)
 	    return -1;
 	}
 
+    openlog("thor_sys", LOG_PID, LOG_USER);
     thsys_set_sample_rate(&sys, 4);
     thsys_start(&sys);
     printf("\n");
@@ -27,5 +28,6 @@ int main(int argc, char** argv)
     printf("\nEnd\n");
     thsys_stop(&sys);
     thsys_delete(&sys);
+    closelog();
     return 0;
 }
