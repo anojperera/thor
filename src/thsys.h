@@ -24,22 +24,23 @@ struct _thsys
 {
     int var_flg;
     int var_client_count;
-    int var_run_flg;			/* flag to indicate system is running */
+    int var_run_flg;					/* flag to indicate system is running */
     
     /* Analog tasks */
-    TaskHandle var_a_outask;		/* analog output task */
-    TaskHandle var_a_intask;		/* analog input task */
+    TaskHandle var_a_outask;				/* analog output task */
+    TaskHandle var_a_intask;				/* analog input task */
 
     /* Digital tasks */
-    TaskHandle var_d_outask;		/* analog output task */    
-    TaskHandle var_d_intask;		/* analog input task */
+    TaskHandle var_d_outask;				/* analog output task */    
+    TaskHandle var_d_intask;				/* analog input task */
 
-    float64 var_sample_rate;		/* sample rate */
+    float64 var_sample_rate;				/* sample rate */
     float64 var_inbuff[THSYS_NUM_AI_CHANNELS];
     float64 var_outbuff[THSYS_NUM_AO_CHANNELS];
 
-    pthread_t var_thread;		/* thread id */
-    void* var_ext_obj;			/* external object */
+    pthread_t var_thread;				/* thread id */
+    void* var_ext_obj;					/* external object */
+    int (*var_callback_intrupt)(thsys*, void*);		/* interupt callback */
 };
 
 #ifdef __cplusplus
@@ -47,7 +48,7 @@ extern "C" {
 #endif
 
     /* initialise system struct */
-    int thsys_init(thsys* obj);
+    int thsys_init(thsys* obj, int(*callback) (void*));
     void thsys_delete(thsys* obj);
 
     /* start method */

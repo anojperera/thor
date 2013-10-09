@@ -6,7 +6,7 @@
 static void* _thsys_start_async(void* para);
 static void _thsys_thread_cleanup(void* para);
     
-int thsys_init(thsys* obj)
+int thsys_init(thsys* obj, int (*callback) (thsys*, void*))
 {
     int i;
     if(obj == NULL)
@@ -31,6 +31,8 @@ int thsys_init(thsys* obj)
     for(i=0; i<THSYS_NUM_AO_CHANNELS; i++)
 	obj->var_outbuff[i] = 0.0;
     obj->var_sample_rate = THSYS_DEFAULT_SAMPLE_RATE;
+    obj->var_callback_intrupt = callback;
+    obj->var_ext_obj = NULL;
     obj->var_flg = 1;
     return 0;
 }
@@ -50,7 +52,9 @@ void thsys_delete(thsys* obj)
     obj->var_flg = 0;
     obj->var_client_count = 0;
     obj->var_run_flg = 0;
-
+    obj->var_callback_intrupt = NULL;
+    obj->var_ext_obj = NULL;
+    
     syslog (LOG_INFO, "thor system stopped");
     return;
 }
@@ -120,7 +124,11 @@ static void* _thsys_start_async(void* para)
 	{
 	    /* test for cancel state */
 	    pthread_testcancel();
+	    /* if callback was set exec */
+	    if(_obj->var_callback_intrupt)
+		_obj->var_callback_intrupt(_obj, (_obj->var_ext_obj? _obj->var_ext_obj : NULL));
 	    ERR_CHECK(NIReadAnalogF64(_obj->var_a_intask, 1, 1.0, DAQmx_Val_GroupByChannel, _obj->var_inbuff, THSYS_NUM_AI_CHANNELS, _samples_read, NULL));
+	    pthread_testcancel();	    
 	    usleep(1000 /(_obj->var_sample_rate*THSYS_READ_WRITE_FACTOR));
 	}
     
