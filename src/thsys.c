@@ -35,6 +35,8 @@ int thsys_init(thsys* obj, int (*callback) (thsys*, void*))
     obj->var_ext_obj = NULL;
     obj->var_flg = 1;
     sem_init(&obj->var_sem, 0, 0);
+
+    syslog (LOG_INFO, "thor system initialised");
     return 0;
 }
 
@@ -124,6 +126,8 @@ static void _thsys_thread_cleanup(void* para)
     NIStopTask(_obj->var_a_intask);
     _obj->var_run_flg = 0;
     sem_post(&_obj->var_sem);
+        
+    syslog (LOG_INFO, "thor system cleaned up");
     return;
  }
 
@@ -140,6 +144,7 @@ static void* _thsys_start_async(void* para)
     /* set thread cancel state to cancellable */
     pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, &_old_state);
     _obj = (thsys*) para;
+    syslog (LOG_INFO, "thor system started");
     while(1)
     	{
     	    /* test for cancel state */
