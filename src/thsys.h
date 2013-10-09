@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <pthread.h>
+#include <semaphore.h>
 #include "thornifix.h"
 
 #define THSYS_AI_CHANNELS "Dev1/ai0:10"
@@ -39,6 +40,7 @@ struct _thsys
     float64 var_outbuff[THSYS_NUM_AO_CHANNELS];
 
     pthread_t var_thread;				/* thread id */
+    sem_t var_sem;
     void* var_ext_obj;					/* external object */
     int (*var_callback_intrupt)(thsys*, void*);		/* interupt callback */
 };

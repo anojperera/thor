@@ -14,7 +14,7 @@ int thsys_init(thsys* obj, int (*callback) (thsys*, void*))
 
     /* initialise flags */
     obj->var_flg = 0;
-    obj->var_client_count = 0;
+    obj->var_client_count = 1;
     obj->var_run_flg = 0;
 
     /* create tasks */
@@ -34,6 +34,7 @@ int thsys_init(thsys* obj, int (*callback) (thsys*, void*))
     obj->var_callback_intrupt = callback;
     obj->var_ext_obj = NULL;
     obj->var_flg = 1;
+    sem_init(&obj->var_sem, 0, 0);
     return 0;
 }
 
@@ -43,9 +44,12 @@ void thsys_delete(thsys* obj)
     if(!obj->var_flg || obj->var_client_count == 0)
 	return;
 
-    NIStopTask(obj->var_a_outask);
-    NIStopTask(obj->var_a_intask);
-
+    if(obj->var_run_flg)
+      {
+	sem_wait(&obj->var_sem);
+	NIStopTask(obj->var_a_outask);
+	NIStopTask(obj->var_a_intask);
+      }
     NIClearTask(obj->var_a_outask);
     NIClearTask(obj->var_a_intask);
 
@@ -54,7 +58,7 @@ void thsys_delete(thsys* obj)
     obj->var_run_flg = 0;
     obj->var_callback_intrupt = NULL;
     obj->var_ext_obj = NULL;
-    
+    sem_destroy(&obj->var_sem);
     syslog (LOG_INFO, "thor system stopped");
     return;
 }
@@ -113,13 +117,13 @@ static void _thsys_thread_cleanup(void* para)
     thsys* _obj;
     if(para == NULL)
 	return;
-
     _obj = (thsys*) para;
 
     /* stop tasks */
     NIStopTask(_obj->var_a_outask);
     NIStopTask(_obj->var_a_intask);
     _obj->var_run_flg = 0;
+    sem_post(&_obj->var_sem);
     return;
  }
 
@@ -142,9 +146,7 @@ static void* _thsys_start_async(void* para)
     	    pthread_testcancel();
     	    /* if callback was set exec */
     	    if(_obj->var_callback_intrupt)
-    		{
-    		    _obj->var_callback_intrupt(_obj, (_obj->var_ext_obj? _obj->var_ext_obj : NULL));
-    		}
+	        _obj->var_callback_intrupt(_obj, (_obj->var_ext_obj? _obj->var_ext_obj : NULL));
 	    
     	    ERR_CHECK(NIReadAnalogF64(_obj->var_a_intask, 1, 1.0, DAQmx_Val_GroupByChannel, _obj->var_inbuff, THSYS_NUM_AI_CHANNELS, &_samples_read, NULL));
     	    pthread_testcancel();
