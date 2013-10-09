@@ -15,15 +15,16 @@ int main(int argc, char** argv)
 	}
 
     thsys_set_sample_rate(&sys, 4);
+    thsys_start(&sys);
+    printf("\n");
     while(1)
 	{
-
-	    thsys_start(&sys);
+	    fprintf(stderr, "count: %i\r", count);
 	    sleep(1);
 	    if(count++ > MAX_TIME)
 		break;
 	}
-
+    printf("\nEnd\n");
     thsys_stop(&sys);
     thsys_delete(&sys);
     return 0;
