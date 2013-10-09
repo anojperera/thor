@@ -48,7 +48,7 @@ extern "C" {
 #endif
 
     /* initialise system struct */
-    int thsys_init(thsys* obj, int(*callback) (void*));
+    int thsys_init(thsys* obj, int(*callback) (thsys*, void*));
     void thsys_delete(thsys* obj);
 
     /* start method */

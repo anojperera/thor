@@ -40,7 +40,7 @@ int thsys_init(thsys* obj, int (*callback) (thsys*, void*))
 /* Delete object pointer */
 void thsys_delete(thsys* obj)
 {
-    if(!obj->var_flg || obj->var_client_coount == 0)
+    if(!obj->var_flg || obj->var_client_count == 0)
 	return;
 
     NIStopTask(obj->var_a_outask);
@@ -107,35 +107,6 @@ int thsys_stop(thsys* obj)
     return 0;
 }
 
-/* Thread function */
-static void* _thsys_start_async(void* para)
-{
-    int _old_state;
-    thsys* _obj;
-    int32 _samples_read = 0;
-
-    /* push cleanup handler */
-    pthread_cleanup_push(_thsys_thread_cleanup, para);
-    
-    /* set thread cancel state to cancellable */
-    pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, &_old_state);
-    _obj = (thsys*) obj;
-    while(1)
-	{
-	    /* test for cancel state */
-	    pthread_testcancel();
-	    /* if callback was set exec */
-	    if(_obj->var_callback_intrupt)
-		_obj->var_callback_intrupt(_obj, (_obj->var_ext_obj? _obj->var_ext_obj : NULL));
-	    ERR_CHECK(NIReadAnalogF64(_obj->var_a_intask, 1, 1.0, DAQmx_Val_GroupByChannel, _obj->var_inbuff, THSYS_NUM_AI_CHANNELS, _samples_read, NULL));
-	    pthread_testcancel();	    
-	    usleep(1000 /(_obj->var_sample_rate*THSYS_READ_WRITE_FACTOR));
-	}
-    
-    pthread_exit(para);
-    return NULL;
-}
-
 /* thread cleanup handler */
 static void _thsys_thread_cleanup(void* para)
 {
@@ -148,6 +119,39 @@ static void _thsys_thread_cleanup(void* para)
     /* stop tasks */
     NIStopTask(_obj->var_a_outask);
     NIStopTask(_obj->var_a_intask);
-    obj->var_run_flg = 0;
+    _obj->var_run_flg = 0;
     return;
  }
+
+/* Thread function */
+static void* _thsys_start_async(void* para)
+{
+    int _old_state;
+    thsys* _obj;
+    int32 _samples_read = 0;
+
+    /* push cleanup handler */
+    pthread_cleanup_push(_thsys_thread_cleanup, para);
+    
+    /* set thread cancel state to cancellable */
+    pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, &_old_state);
+    _obj = (thsys*) para;
+    while(1)
+    	{
+    	    /* test for cancel state */
+    	    pthread_testcancel();
+    	    /* if callback was set exec */
+    	    if(_obj->var_callback_intrupt)
+    		{
+    		    _obj->var_callback_intrupt(_obj, (_obj->var_ext_obj? _obj->var_ext_obj : NULL));
+    		}
+	    
+    	    ERR_CHECK(NIReadAnalogF64(_obj->var_a_intask, 1, 1.0, DAQmx_Val_GroupByChannel, _obj->var_inbuff, THSYS_NUM_AI_CHANNELS, &_samples_read, NULL));
+    	    pthread_testcancel();
+    	    usleep(1000 /(_obj->var_sample_rate*THSYS_READ_WRITE_FACTOR));
+    	}
+
+    pthread_cleanup_pop(1);
+    pthread_exit(para);
+    return NULL;
+}

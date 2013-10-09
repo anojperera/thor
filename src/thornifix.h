@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
+#include <syslog.h>
 
 #if defined (WIN32) || defined (_WIN32)
 #include <NIDAQmx.h>
