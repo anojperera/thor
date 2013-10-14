@@ -37,7 +37,7 @@ int thsys_init(thsys* obj, int (*callback) (thsys*, void*))
     obj->var_flg = 1;
     sem_init(&obj->var_sem, 0, 0);
 
-    syslog (LOG_INFO, "thor system initialised");
+    THOR_LOG_ERROR("thor system initialised");
     return 0;
 }
 
@@ -62,7 +62,7 @@ void thsys_delete(thsys* obj)
     obj->var_callback_intrupt = NULL;
     obj->var_ext_obj = NULL;
     sem_destroy(&obj->var_sem);
-    syslog (LOG_INFO, "thor system stopped");
+    THOR_LOG_ERROR("thor system stopped");
     return;
 }
 
@@ -125,7 +125,7 @@ static void _thsys_thread_cleanup(void* para)
     _obj->var_run_flg = 0;
     sem_post(&_obj->var_sem);
 
-    syslog (LOG_INFO, "thor system cleaned up");
+    THOR_LOG_ERROR("thor system cleaned up");
     return;
  }
 
@@ -144,12 +144,10 @@ static void* _thsys_start_async(void* para)
 
     /* set thread cancel state to cancellable */
     pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
-    pthread_setncanceltype(PTHREAD_CANCEL_DEFERRED, NULL);
-
+    pthread_setcanceltype(PTHREAD_CANCEL_DEFERRED, NULL);
     
     _obj = (thsys*) para;
-    syslog (LOG_INFO, "thor system started");
-    
+    THOR_LOG_ERROR("thor system started");
     while(1)
     	{
     	    /* test for cancel state */
@@ -161,9 +159,9 @@ static void* _thsys_start_async(void* para)
 
 	    /* change cancel state to protect read */
 	    pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &_old_state);
-    	    ERR_CHECK(NIReadAnalogF64(_obj->var_a_intask, 1, 1.0, DAQmx_Val_GroupByChannel, _obj->var_inbuff, THSYS_NUM_AI_CHANNELS, &_samples_read, NULL));
+    	    /* ERR_CHECK(NIReadAnalogF64(_obj->var_a_intask, 1, 1.0, DAQmx_Val_GroupByChannel, _obj->var_inbuff, THSYS_NUM_AI_CHANNELS, &_samples_read, NULL)); */
 	    
-	    pthread_setcancelstate(&_old_state, NULL);
+	    pthread_setcancelstate(_old_state, NULL);
 
 	    
     	    pthread_testcancel();
