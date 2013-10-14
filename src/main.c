@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include "thsys.h"
-#define MAX_TIME 10
+#define MAX_TIME 2
 int main(int argc, char** argv)
 {
     int count = 0;
@@ -14,6 +14,7 @@ int main(int argc, char** argv)
 	    return -1;
 	}
 
+    openlog("thor_sys", LOG_PID, LOG_USER);
     thsys_set_sample_rate(&sys, 4);
     thsys_start(&sys);
     printf("\n");
@@ -24,8 +25,10 @@ int main(int argc, char** argv)
 	    if(count++ > MAX_TIME)
 		break;
 	}
-    printf("\nEnd\n");
+
     thsys_stop(&sys);
     thsys_delete(&sys);
+    closelog();
+    printf("\nEnd\n");    
     return 0;
 }
