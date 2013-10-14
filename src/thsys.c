@@ -5,7 +5,7 @@
 /* thread function */
 static void* _thsys_start_async(void* para);
 static void _thsys_thread_cleanup(void* para);
-    
+
 int thsys_init(thsys* obj, int (*callback) (thsys*, void*))
 {
     int i;
@@ -18,18 +18,19 @@ int thsys_init(thsys* obj, int (*callback) (thsys*, void*))
     obj->var_run_flg = 0;
 
     /* create tasks */
-    ERR_CHECK(NICreateTask(THSYS_EMPTY_STR, &obj->var_a_outask));
-    ERR_CHECK(NICreateTask(THSYS_EMPTY_STR, &obj->var_a_intask));
+    /* ERR_CHECK(NICreateTask(THSYS_EMPTY_STR, &obj->var_a_outask)); */
+    /* ERR_CHECK(NICreateTask(THSYS_EMPTY_STR, &obj->var_a_intask)); */
 
     /* create channels in order */
-    ERR_CHECK(NICreateAOVoltageChan(obj->var_a_outask, THSYS_A0_CHANNELS, THSYS_EMPTY_STR, THSYS_MIN_VAL, THSYS_MAX_VAL, DAQmx_Val_Volts , NULL));    
-    ERR_CHECK(NICreateAIVoltageChan(obj->var_a_intask, THSYS_AI_CHANNELS, THSYS_EMPTY_STR,  DAQmx_Val_NRSE, THSYS_MIN_VAL, THSYS_MAX_VAL, DAQmx_Val_Volts, NULL));
+    /* ERR_CHECK(NICreateAOVoltageChan(obj->var_a_outask, THSYS_A0_CHANNELS, THSYS_EMPTY_STR, THSYS_MIN_VAL, THSYS_MAX_VAL, DAQmx_Val_Volts , NULL)); */
+    /* ERR_CHECK(NICreateAIVoltageChan(obj->var_a_intask, THSYS_AI_CHANNELS, THSYS_EMPTY_STR,  DAQmx_Val_NRSE, THSYS_MIN_VAL, THSYS_MAX_VAL, DAQmx_Val_Volts, NULL)); */
 
     /* initialise buffers */
     for(i=0; i<THSYS_NUM_AI_CHANNELS; i++)
 	obj->var_inbuff[i] = 0.0;
     for(i=0; i<THSYS_NUM_AO_CHANNELS; i++)
 	obj->var_outbuff[i] = 0.0;
+    
     obj->var_sample_rate = THSYS_DEFAULT_SAMPLE_RATE;
     obj->var_callback_intrupt = callback;
     obj->var_ext_obj = NULL;
@@ -49,11 +50,11 @@ void thsys_delete(thsys* obj)
     if(obj->var_run_flg)
       {
 	sem_wait(&obj->var_sem);
-	NIStopTask(obj->var_a_outask);
-	NIStopTask(obj->var_a_intask);
+	/* NIStopTask(obj->var_a_outask); */
+	/* NIStopTask(obj->var_a_intask); */
       }
-    NIClearTask(obj->var_a_outask);
-    NIClearTask(obj->var_a_intask);
+    /* NIClearTask(obj->var_a_outask); */
+    /* NIClearTask(obj->var_a_intask); */
 
     obj->var_flg = 0;
     obj->var_client_count = 0;
@@ -80,10 +81,7 @@ int thsys_start(thsys* obj)
 	return 0;
 
     /* configure timing and start tasks */
-    ERR_CHECK(NICfgSampClkTiming(obj->var_a_intask, THSYS_CLOCK_SOURCE, obj->var_sample_rate, DAQmx_Val_Rising, DAQmx_Val_ContSamps, 1));
-
-    ERR_CHECK(NIStartTask(obj->var_a_intask));
-    ERR_CHECK(NIStartTask(obj->var_a_outask));
+    /* ERR_CHECK(NICfgSampClkTiming(obj->var_a_intask, THSYS_CLOCK_SOURCE, obj->var_sample_rate, DAQmx_Val_Rising, DAQmx_Val_ContSamps, 1)); */
 
     /* initialise thread attribute */
     pthread_attr_init(&_attr);
@@ -104,7 +102,7 @@ int thsys_stop(thsys* obj)
 {
     if(obj == NULL)
 	return -1;
-    
+
     if(!obj->var_run_flg)
 	return -1;
 
@@ -122,11 +120,11 @@ static void _thsys_thread_cleanup(void* para)
     _obj = (thsys*) para;
 
     /* stop tasks */
-    NIStopTask(_obj->var_a_outask);
-    NIStopTask(_obj->var_a_intask);
+    /* NIStopTask(_obj->var_a_outask); */
+    /* NIStopTask(_obj->var_a_intask); */
     _obj->var_run_flg = 0;
     sem_post(&_obj->var_sem);
-        
+
     syslog (LOG_INFO, "thor system cleaned up");
     return;
  }
@@ -138,27 +136,40 @@ static void* _thsys_start_async(void* para)
     thsys* _obj;
     int32 _samples_read = 0;
 
+    /* ERR_CHECK(NIStartTask(obj->var_a_intask)); */
+    /* ERR_CHECK(NIStartTask(obj->var_a_outask)); */
+
     /* push cleanup handler */
     pthread_cleanup_push(_thsys_thread_cleanup, para);
-    
+
     /* set thread cancel state to cancellable */
-    pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, &_old_state);
+    pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
+    pthread_setncanceltype(PTHREAD_CANCEL_DEFERRED, NULL);
+
+    
     _obj = (thsys*) para;
     syslog (LOG_INFO, "thor system started");
+    
     while(1)
     	{
     	    /* test for cancel state */
     	    pthread_testcancel();
+	    
     	    /* if callback was set exec */
     	    if(_obj->var_callback_intrupt)
 	        _obj->var_callback_intrupt(_obj, (_obj->var_ext_obj? _obj->var_ext_obj : NULL));
-	    
+
+	    /* change cancel state to protect read */
+	    pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &_old_state);
     	    ERR_CHECK(NIReadAnalogF64(_obj->var_a_intask, 1, 1.0, DAQmx_Val_GroupByChannel, _obj->var_inbuff, THSYS_NUM_AI_CHANNELS, &_samples_read, NULL));
+	    
+	    pthread_setcancelstate(&_old_state, NULL);
+
+	    
     	    pthread_testcancel();
     	    usleep(1000 /(_obj->var_sample_rate*THSYS_READ_WRITE_FACTOR));
     	}
 
     pthread_cleanup_pop(1);
-    pthread_exit(para);
     return NULL;
 }
