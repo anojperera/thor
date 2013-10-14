@@ -9,6 +9,15 @@
 #include <math.h>
 #include <syslog.h>
 
+/* #define THOR_HEADLESS */
+#ifdef THOR_HEADLESS
+#define THOR_LOG_ERROR(msg)			\
+  syslog (LOG_INFO, msg)
+#else
+#define THOR_LOG_ERROR(msg)			\
+  fprintf(stderr, "%s\n", msg)
+#endif
+
 #if defined (WIN32) || defined (_WIN32)
 #include <NIDAQmx.h>
 /* get error string */
@@ -95,7 +104,7 @@ inline __attribute__ ((always_inline)) static int ERR_CHECK(int32 err)
 #else
 	    NIGetErrorString(err_msg, THOR_BUFF_SZ);
 #endif
-	    syslog (LOG_INFO, err_msg);
+	    THOR_LOG_ERROR(err_msg);
 	    return 1;
 	}
     else
