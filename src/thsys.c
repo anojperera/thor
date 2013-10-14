@@ -22,8 +22,8 @@ int thsys_init(thsys* obj, int (*callback) (thsys*, void*))
     ERR_CHECK(NICreateTask(THSYS_EMPTY_STR, &obj->var_a_intask));
 
     /* create channels in order */
+    ERR_CHECK(NICreateAOVoltageChan(obj->var_a_outask, THSYS_A0_CHANNELS, THSYS_EMPTY_STR, THSYS_MIN_VAL, THSYS_MAX_VAL, DAQmx_Val_Volts , NULL));    
     ERR_CHECK(NICreateAIVoltageChan(obj->var_a_intask, THSYS_AI_CHANNELS, THSYS_EMPTY_STR,  DAQmx_Val_NRSE, THSYS_MIN_VAL, THSYS_MAX_VAL, DAQmx_Val_Volts, NULL));
-    ERR_CHECK(NICreateAOVoltageChan(obj->var_a_outask, THSYS_A0_CHANNELS, THSYS_EMPTY_STR, DAQmx_Val_NRSE, THSYS_MIN_VAL, THSYS_MAX_VAL, NULL));
 
     /* initialise buffers */
     for(i=0; i<THSYS_NUM_AI_CHANNELS; i++)

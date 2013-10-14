@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include "thsys.h"
-#define MAX_TIME 10
+#define MAX_TIME 2
 int main(int argc, char** argv)
 {
     int count = 0;
