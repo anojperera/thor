@@ -7,6 +7,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netdb.h>
+#include <string.h>
 
 #define THCON_URL_BUFF_SZ 2048
 #define THCON_PORT_NAME_SZ 16
