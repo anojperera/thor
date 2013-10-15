@@ -42,7 +42,10 @@ struct _thsys
     pthread_t var_thread;				/* thread id */
     sem_t var_sem;
     void* var_ext_obj;					/* external object */
+
+    /* function pointers for  */
     int (*var_callback_intrupt)(thsys*, void*);		/* interupt callback */
+    int (*var_callback_update)(thsys*, void*, const float64*, const int);
 };
 
 #ifdef __cplusplus

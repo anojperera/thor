@@ -34,6 +34,7 @@ int thsys_init(thsys* obj, int (*callback) (thsys*, void*))
     
     obj->var_sample_rate = THSYS_DEFAULT_SAMPLE_RATE;
     obj->var_callback_intrupt = callback;
+    obj->var_callback_update = NULL;
     obj->var_ext_obj = NULL;
     obj->var_flg = 1;
     sem_init(&obj->var_sem, 0, 0);
@@ -62,6 +63,7 @@ void thsys_delete(thsys* obj)
     obj->var_client_count = 0;
     obj->var_run_flg = 0;
     obj->var_callback_intrupt = NULL;
+    obj->var_callback_update = NULL;
     obj->var_ext_obj = NULL;
     sem_destroy(&obj->var_sem);
     THOR_LOG_ERROR("thor system stopped");
@@ -164,6 +166,10 @@ static void* _thsys_start_async(void* para)
 	    /* change cancel state to protect read */
 	    pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &_old_state);
     	    ERR_CHECK(NIReadAnalogF64(_obj->var_a_intask, 1, 1.0, DAQmx_Val_GroupByChannel, _obj->var_inbuff, THSYS_NUM_AI_CHANNELS, &_samples_read, NULL));
+
+	    /* if a callback for update is hooked, this shall call the callback function */
+	    if(_obj->var_callback_update)
+	      _obj->var_callback_update(_obj, _obj->var_ext_obj, _obj->var_inbuff, THSYS_NUM_AI_CHANNELS);
 	    pthread_setcancelstate(_old_state, NULL);
 
 	    
