@@ -160,7 +160,6 @@ static void* _thsys_start_async(void* para)
 	    /* change cancel state to protect read */
 	    pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &_old_state);
     	    /* ERR_CHECK(NIReadAnalogF64(_obj->var_a_intask, 1, 1.0, DAQmx_Val_GroupByChannel, _obj->var_inbuff, THSYS_NUM_AI_CHANNELS, &_samples_read, NULL)); */
-	    
 	    pthread_setcancelstate(_old_state, NULL);
 
 	    
