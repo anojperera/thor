@@ -29,6 +29,7 @@ int main(int argc, char** argv)
     thsys_stop(&sys);
     thsys_delete(&sys);
     closelog();
+
     printf("\nEnd\n");    
     return 0;
 }

@@ -22,6 +22,7 @@ int thsys_init(thsys* obj, int (*callback) (thsys*, void*))
     ERR_CHECK(NICreateTask(THSYS_EMPTY_STR, &obj->var_a_intask));
 
     /* create channels in order */
+
     ERR_CHECK(NICreateAOVoltageChan(obj->var_a_outask, THSYS_A0_CHANNELS, THSYS_EMPTY_STR, THSYS_MIN_VAL, THSYS_MAX_VAL, DAQmx_Val_Volts , NULL));
     ERR_CHECK(NICreateAIVoltageChan(obj->var_a_intask, THSYS_AI_CHANNELS, THSYS_EMPTY_STR,  DAQmx_Val_NRSE, THSYS_MIN_VAL, THSYS_MAX_VAL, DAQmx_Val_Volts, NULL));
 
@@ -38,6 +39,7 @@ int thsys_init(thsys* obj, int (*callback) (thsys*, void*))
     sem_init(&obj->var_sem, 0, 0);
 
     THOR_LOG_ERROR("thor system initialised");
+
     return 0;
 }
 
@@ -140,6 +142,7 @@ static void* _thsys_start_async(void* para)
     pthread_cleanup_push(_thsys_thread_cleanup, para);
 
     /* set thread cancel state to cancellable */
+
     pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
     pthread_setcanceltype(PTHREAD_CANCEL_DEFERRED, NULL);
     
@@ -148,6 +151,7 @@ static void* _thsys_start_async(void* para)
 
     ERR_CHECK(NIStartTask(_obj->var_a_intask));
     ERR_CHECK(NIStartTask(_obj->var_a_outask));    
+
     while(1)
     	{
     	    /* test for cancel state */
