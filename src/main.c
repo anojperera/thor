@@ -2,7 +2,11 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include "thsys.h"
+
 #define MAX_TIME 2
+
+static int _update(thsys* obj, void* _ext_obj, const float64* buff, const int sz);
+
 int main(int argc, char** argv)
 {
     int count = 0;
@@ -15,6 +19,7 @@ int main(int argc, char** argv)
 	}
 
     openlog("thor_sys", LOG_PID, LOG_USER);
+    sys.var_callback_update = _update;
     thsys_set_sample_rate(&sys, 4);
     thsys_start(&sys);
     printf("\n");
@@ -32,4 +37,14 @@ int main(int argc, char** argv)
 
     printf("\nEnd\n");    
     return 0;
+}
+
+
+static int _update(thsys* obj, void* _ext_obj, const float64* buff, const int sz)
+{
+  int i = 0;
+  for(i=0; i<sz; i++)
+    fprintf(stderr, "\n%f\t", buff[i]);
+  fprintf(stderr, "\n=========================\n");
+  return 0;
 }
