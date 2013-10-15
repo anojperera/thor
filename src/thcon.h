@@ -29,20 +29,20 @@ struct thcon_host_info
     char _country[THCON_GEN_INFO_SZ];
 };
 
-    
+
 struct _thcon
 {
     int var_flg;					/* internal flag */
     int var_con_sock;					/* main connection socket */
     int var_acc_sock;					/* accept socket for server connection */
     int var_mode;					/* mode of operation (server / client) */
-    
+
     char var_port_name[THCON_PORT_NAME_SZ];
     char var_svr_name[THCON_SERVER_NAME_SZ];
 
     char var_ip_addr_url[THCON_URL_BUFF_SZ];		/* url for the ip address locator */
     char var_geo_addr_url[THCON_URL_BUFF_SZ];		/* url for the geo information */
-    
+
     struct addrinfo _var_info;				/* address info struct */
     struct thcon_buff _var_url_buff;			/* buffer to hold external url */
     struct thcon_host_info var_my_info;			/* information about the location */
@@ -64,12 +64,23 @@ extern "C" {
     /* contact admin and send local ip and geo location */
     int thcon_contact_admin(thcon* obj, const char* admin_url);
 
-
     /* server handling options */
     int thcon_start_local_server(thcon* obj);
     int thcon_stop_local_server(thcon* obj);
 
     int thcon_send_info(thcon* obj, void* data, sizt_t sz);
+
+    /* set server name */
+#define thcon_set_server_name(obj, name)				\
+    memset((void*) (obj)->var_svr_name, 0, THCON_SERVER_NAME_SZ);	\
+    strncpy((obj)->var_svr_name, name, THCON_SERVER_NAME_SZ-1);		\
+    (obj)->var_svr_name[THCON_SERVER_NAME_SZ-1] = '\0'
+    
+    /* set port name */
+#define thcon_set_port_name(obj, name) 					\
+    memset((void*) (obj)->var_port_name, 0, THCON_PORT_NAME_SZ);	\
+    strncpy((obj)->var_port_name, name, THCON_PORT_NAME_SZ-1);		\
+    (obj)->var_port_name[THCON_PORT_NAME_SZ-1] = '\0'
     
 #ifdef __cplusplus
 }
