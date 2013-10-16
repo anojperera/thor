@@ -95,9 +95,17 @@ const char* thcon_get_my_addr(thcon* obj)
 	    obj->_my_address[THCON_SERVER_NAME_SZ-1] = '\0';
 	}
 
-    
-  
-    
+
+    /* clean up memory */
+    curl_easy_cleanup(_url_handle);
+    if(_ip_buff.memory)
+	free(_ip_buff.memory);
+
+    curl_global_cleanup();
+    if(_res == CURLE_OK)
+	return obj->_my_address;
+    else
+	return NULL;
 }
 
 /*======================================================================*/
