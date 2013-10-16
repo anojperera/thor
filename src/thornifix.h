@@ -96,6 +96,8 @@ typedef unsigned int (*gthor_disb_fptr)(void*, int);
 /* Message handling methods and macros */
 #define THORNIFIX_MSG_ELM_NUM 16
 #define THORNIFIX_MSG_BUFF_ELM_SZ 8
+#define THORNIFIX_MSG_BUFF_SZ THORNIFIX_MSG_ELM_NUM*THORNIFIX_MSG_BUFF_ELM_SZ
+
 /* Message struct aligned - all members are eight byte alinged */
 struct thor_msg
 {
