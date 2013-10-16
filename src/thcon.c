@@ -38,6 +38,8 @@ int thcon_init(thcon* obj)
 
     obj->var_num_conns = 0;
     obj->_var_cons_fds = NULL;
+
+    obj->var_my_info._init_flg = 0;
     return 0;
 }
 
@@ -88,11 +90,12 @@ const char* thcon_get_my_addr(thcon* obj)
     curl_easy_setopt(_url_handle, CURLOPT_USERAGENT, "libcurl-agent/1.0");
 
     _res = curl_easy_perform(_url_handle);
-    memset(obj->_my_address, 0, THCON_SERVER_NAME_SZ);
+    memset(obj->var_my_info._my_address, 0, THCON_SERVER_NAME_SZ);
     if(_res == CURLE_OK)
 	{
-	    strncpy(obj->_my_address, _ip_buff.memory, THCON_SERVER_NAME_SZ-1);
-	    obj->_my_address[THCON_SERVER_NAME_SZ-1] = '\0';
+	    strncpy(obj->var_my_info._my_address, _ip_buff.memory, THCON_SERVER_NAME_SZ-1);
+	    obj->var_my_info._my_address[THCON_SERVER_NAME_SZ-1] = '\0';
+	    obj->var_my_info._init_flg = 1;
 	}
 
 

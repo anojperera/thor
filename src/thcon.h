@@ -25,6 +25,7 @@ struct thcon_buff
 
 struct thcon_host_info
 {
+    int _init_flg;					/* flag to indicate initialised */
     int _city_id;
     char _my_address[THCON_SERVER_NAME_SZ];
     char _long[THCON_GEN_INFO_SZ];
