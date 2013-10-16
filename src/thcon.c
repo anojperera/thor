@@ -23,6 +23,9 @@ static void _thcon_thread_cleanup(void* obj);
 static int _thcon_create_connection(thcon* obj, int _con_mode);
 static int _thcon_make_socket_nonblocking(int sock_id);
 
+/* send message (msg) of size (sz) to the socket pointed by fd */
+static int _thcon_send_info(int fd, void* msg, size_t sz);
+
 /* constructor */
 int thcon_init(thcon* obj)
 {
@@ -109,6 +112,18 @@ const char* thcon_get_my_addr(thcon* obj)
 	return obj->_my_address;
     else
 	return NULL;
+}
+
+/* get geo location */
+int thcon_get_my_geo(thcon* obj, const struct thcon_host_info* info)
+{
+
+    return 0;
+}
+
+int thcon_contact_admin(thcon* obj, const char* admin_url)
+{
+
 }
 
 /*======================================================================*/
