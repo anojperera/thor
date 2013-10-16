@@ -8,6 +8,8 @@
 #include <sys/socket.h>
 #include <netdb.h>
 #include <string.h>
+#include <pthread.h>
+#include <semaphore.h>
 
 #define THCON_URL_BUFF_SZ 2048
 #define THCON_PORT_NAME_SZ 16
@@ -30,6 +32,13 @@ struct thcon_host_info
     char _country[THCON_GEN_INFO_SZ];
 };
 
+/* connection status load */ 
+enum {
+    thcon_disconnected,
+    thcon_connected,
+    thcon_idle
+} thcon_stat;
+
 
 struct _thcon
 {
@@ -37,6 +46,8 @@ struct _thcon
     int var_con_sock;					/* main connection socket */
     int var_acc_sock;					/* accept socket for server connection */
     int var_mode;					/* mode of operation (server / client) */
+
+    unsigned int var_num_conns;
 
     char var_port_name[THCON_PORT_NAME_SZ];
     char var_svr_name[THCON_SERVER_NAME_SZ];
@@ -47,6 +58,10 @@ struct _thcon
     struct addrinfo _var_info;				/* address info struct */
     struct thcon_buff _var_url_buff;			/* buffer to hold external url */
     struct thcon_host_info var_my_info;			/* information about the location */
+
+    int* _var_cons_fds;					/* connection sockets */
+    pthread_t _var_run_thread;				/* internal running thread */
+    semt_t _var_sem;					/* semaphore for controlling the delete method */
 };
 
 #ifdef __cplusplus
@@ -58,9 +73,10 @@ extern "C" {
     void thcon_delete(thcon* obj);			/* free connection struct information */
 
     /* Methods for handling my information struct */
-    int thcon_reset_my_info(thcon* obj);
-    int thcon_get_my_addr(thcon* obj);
-    int thcon_get_my_geo(thcon* obj);
+#define thcon_reset_my_info(obj)					\
+    memset((obj)->var_my_info, 0, sizeof(struct thcon_host_info))
+    const char* thcon_get_my_addr(thcon* obj);
+    int thcon_get_my_geo(thcon* obj, const struct thcon_host_info* info);
 
     /* contact admin and send local ip and geo location */
     int thcon_contact_admin(thcon* obj, const char* admin_url);

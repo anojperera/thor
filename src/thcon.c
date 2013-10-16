@@ -1,8 +1,11 @@
-
 #include "thcon.h"
 #include "thornifix.h"
 
 #include <fcntl.h>
+
+/* thread methods for handling start and clean up process */
+static void* _thcon_thread_function(void* obj);
+static void _thcon_thread_cleanup(void* obj);
 
 /* create socket and for server mode bind to it */
 static int _thcon_create_connection(thcon* obj, int _con_mode);
@@ -20,15 +23,30 @@ int thcon_init(thcon* obj)
     obj->var_con_sock = 0;
     obj->var_acc_sock = 0;
     obj->var_flg = 1;
+
+    obj->var_num_conns = 0;
+    obj->_var_cons_fds = NULL;
     return 0;
 }
 
 /* Destructor */
 void thcon_delete(thcon* obj)
 {
-
+    /* delete socket fd array */
+    if(obj->var_num_conns)
+	free(obj->_var_cons_fds);
+    obj->_var_cons_fds = NULL;
 }
 
+/* Return external ip address of the host */
+const char* thcon_get_my_addr(thcon* obj)
+{
+    /* check for object connection */
+    if(!obj)
+	return NULL;
+
+    
+}
 
 
 /*======================================================================*/
