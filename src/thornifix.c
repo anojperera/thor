@@ -85,7 +85,8 @@ int thornifix_decode_msg(const char* buff, size_t size, struct thor_msg* msg)
     while(_tok != NULL)
 	{
 	    /* copy exact bytes to the char buffer */
-	    strncpy(_msg_buff[_cnt], _tok, THORNIFIX_MSG_BUFF_ELM_SZ);
+	    strncpy(_msg_buff[_cnt], _tok, THORNIFIX_MSG_BUFF_ELM_SZ-1);
+	    _msg_buff[_cnt][THORNIFIX_MSG_BUFF_ELM_SZ-1] = '\0';
 	    _tok = strtok(NULL, "|");
 	    if(++_cnt >= THORNIFIX_MSG_ELM_NUM)
 		break;
