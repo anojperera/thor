@@ -91,6 +91,94 @@
 typedef unsigned int (*gthor_fptr)(void*, void*);
 typedef unsigned int (*gthor_disb_fptr)(void*, int);
 
+
+/*===========================================================================*/
+/* Message handling methods and macros */
+#define THORNIFIX_MSG_ELM_NUM 16
+#define THORNIFIX_MSG_BUFF_ELM_SZ 8
+/* Message struct aligned - all members are eight byte alinged */
+struct thor_msg
+{
+    /* command to indicate read or write */
+    int _cmd __attribute__ ((aligned (8)));
+
+    /* analogue output channels */
+    /*--------------------------------------------*/
+    double _ai0_val __attribute__ ((aligned (8)));
+    double _ai1_val __attribute__ ((aligned (8)));
+    /*--------------------------------------------*/
+
+    /* analogue input channels */
+    /*--------------------------------------------*/    
+    double _ao0_val __attribute__ ((aligned (8)));
+    double _ao1_val __attribute__ ((aligned (8)));
+    double _ao2_val __attribute__ ((aligned (8)));
+    double _ao3_val __attribute__ ((aligned (8)));
+    double _ao4_val __attribute__ ((aligned (8)));
+    double _ao5_val __attribute__ ((aligned (8)));
+    double _ao6_val __attribute__ ((aligned (8)));
+    double _ao7_val __attribute__ ((aligned (8)));
+    double _ao8_val __attribute__ ((aligned (8)));
+    double _ao9_val __attribute__ ((aligned (8)));
+    double _ao10_val __attribute__ ((aligned (8)));
+    /*--------------------------------------------*/
+    
+    /* digital input channels */
+    /*--------------------------------------------*/
+    double _di0_val __attribute__ ((aligned (8)));
+    double _di1_val __attribute__ ((aligned (8)));
+    /*--------------------------------------------*/    
+};
+
+/* size of the message struct */
+#define THORINIFIX_MSG_SZ			\
+    sizeof(struct thor_msg)
+
+/* initialise message struct */
+#define thorinifix_init_msg(obj)		\
+    memset((void*) (obj), 0, THORINIFIX_MSG_SZ)
+
+#define thornifix_encode_msg(obj, buff, size) \
+    thorinifix_init_msg(obj); \
+    memset((void*) (buff), 0, size); \
+    sprintf((buff),		     \
+	    "%i|"		     \
+	    "%.2f|"		     \
+	    "%.2f|"		     \
+	    "%.2f|"		     \
+	    "%.2f|"		     \
+	    "%.2f|"		     \
+	    "%.2f|"		     \
+	    "%.2f|"		     \
+	    "%.2f|"		     \
+	    "%.2f|"		     \
+	    "%.2f|"		     \
+	    "%.2f|"		     \
+	    "%.2f|"		     \
+	    "%.2f|"		     \
+	    "%.2f|"		     \
+	    "%.2f|",		     \
+	    (obj)->_cmd,	     \
+	    (obj)->_a00,	     \
+	    (obj)->_a01,	     \
+	    (obj)->_ai0,	     \
+	    (obj)->_ai1,	     \
+	    (obj)->_ai2,	     \
+	    (obj)->_ai3,	     \
+	    (obj)->_ai4,	     \
+	    (obj)->_ai5,	     \
+	    (obj)->_ai6,	     \
+	    (obj)->_ai7,	     \
+	    (obj)->_ai8,	     \
+	    (obj)->_ai9,	     \
+	    (obj)->_ai10,	     \
+	    (obj)->_di0,	     \
+	    (obj)->_di1)
+
+/* decode message */
+int thornifix_decode_msg(const char* buff, size_t size, struct thor_msg* msg);
+
+/*===========================================================================*/
 /* error check function */
 inline __attribute__ ((always_inline)) static int ERR_CHECK(int32 err)
 {
