@@ -33,7 +33,7 @@ struct thcon_host_info
 };
 
 /* connection status load */ 
-enum {
+typedef enum {
     thcon_disconnected,
     thcon_connected,
     thcon_idle
@@ -46,6 +46,7 @@ struct _thcon
     int var_con_sock;					/* main connection socket */
     int var_acc_sock;					/* accept socket for server connection */
     int var_mode;					/* mode of operation (server / client) */
+    thcon_stat _var_con_stat;				/* connection status */
 
     unsigned int var_num_conns;
 
@@ -98,6 +99,10 @@ extern "C" {
     memset((void*) (obj)->var_port_name, 0, THCON_PORT_NAME_SZ);	\
     strncpy((obj)->var_port_name, name, THCON_PORT_NAME_SZ-1);		\
     (obj)->var_port_name[THCON_PORT_NAME_SZ-1] = '\0'
+
+    /* gets the connection status */
+#define thcon_get_conn_stat(obj)		\
+    (obj)->_var_con_stat
     
 #ifdef __cplusplus
 }
