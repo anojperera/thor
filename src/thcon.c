@@ -26,6 +26,8 @@ static int _thcon_make_socket_nonblocking(int sock_id);
 /* send message (msg) of size (sz) to the socket pointed by fd */
 static int _thcon_send_info(int fd, void* msg, size_t sz);
 
+static int _thcon_get_url_content(const char* ip_addr, struct _curl_mem* mem);
+
 /* constructor */
 int thcon_init(thcon* obj)
 {
@@ -55,7 +57,10 @@ void thcon_delete(thcon* obj)
     obj->_var_cons_fds = NULL;
 }
 
-/* Get external ip address of self */
+/* Get external ip address of self
+   Uses libcurl to contact ip address set from
+   configuration data to obtain the external
+   ip address */
 const char* thcon_get_my_addr(thcon* obj)
 {
     CURL* _url_handle;
@@ -121,9 +126,11 @@ int thcon_get_my_geo(thcon* obj, const struct thcon_host_info* info)
     return 0;
 }
 
+/* Contact admin, uses the admin url pointed and uses libcurl to
+ * submit self data as a form */
 int thcon_contact_admin(thcon* obj, const char* admin_url)
 {
-
+    
 }
 
 /*======================================================================*/
@@ -241,3 +248,46 @@ static _thcon_copy_to_mem(void* contents, size_t size, size_t memb, void* usr_ob
     return rel;
 }
 
+/* Get ip address content pointed to by ip_addr. The results are stored in
+   struct struct _curl_mem pointed to by mem */
+static int _thcon_get_url_content(const char* ip_addr, struct _curl_mem* mem)
+{
+    CURL* _url_handle;
+    CURLcode _res;
+    
+    /* check for ip address url */
+    if(ip_addr == NULL || mem == NULL)
+	return -1;
+
+    /* initialise the ip buffer */
+    mem->memory = (char*) malloc(1);
+    mem->size = 0;
+
+    /* initialise global variables of curl */
+    curl_global_init(CURL_GLOBAL_ALL);
+
+    _url_handle = curl_easy_init();
+
+    /* specify url to get */
+    curl_easy_setopt(_url_handle, CURLOPT_URL, ip_addr);
+
+    /* set all data to the function */
+    curl_easy_setopt(_url_handle, CURLOPT_WRITEFUNCTION, _thcon_copy_to_mem);
+
+    /* set write data */
+    curl_easy_setopt(_url_handle, CURLOPT_WRITEDATA, (void*) mem);
+
+    /* some servers don't like requests that are made without a user-agent
+     field, so we provide one */
+    curl_easy_setopt(_url_handle, CURLOPT_USERAGENT, "libcurl-agent/1.0");
+
+    _res = curl_easy_perform(_url_handle);
+
+    /* clean up memory */
+    curl_easy_cleanup(_url_handle);
+    curl_global_cleanup();
+    if(_res == CURLE_OK)
+	return 0;
+    else
+	return -1;
+}
