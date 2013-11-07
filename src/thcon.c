@@ -89,6 +89,9 @@ static int _thcon_send_info(int fd, void* msg, size_t sz);
 
 static int _thcon_get_url_content(const char* ip_addr, struct _curl_mem* mem);
 
+static int _parse_html_geo(const struct _curl_mem* _mem, struct thcon_host_info* info);
+static xmlNodePtr _get_html_tag_names(xmlNodePtr ptr, struct _html_parser_stack* stack);
+
 /* constructor */
 int thcon_init(thcon* obj)
 {
@@ -126,7 +129,7 @@ const char* thcon_get_my_addr(thcon* obj)
 {
     int _rt_val = 0;
     struct _curl_mem _ip_buff;
-    
+
     /* check for object */
     if(obj == NULL)
 	return NULL;
@@ -156,8 +159,22 @@ const char* thcon_get_my_addr(thcon* obj)
 }
 
 /* get geo location */
-int thcon_get_my_geo(thcon* obj, const struct thcon_host_info* info)
+int thcon_get_my_geo(thcon* obj)
 {
+    int _rt_val = 0;
+    struct _curl_mem _ip_buff;
+
+    /* check for object */
+    if(obj == NULL)
+	return -1;
+
+    if(obj->var_geo_addr_url[0] == '\0' || obj->var_geo_addr_url[0] == 0)
+	return -1;
+
+    _rt_val = _thcon_get_url_content(obj->var_geo_addr_url, &_ip_buff);
+    if(_rt_val)
+	return -1;
+    _parse_html_geo(&_ip_buff, &obj->var_my_info);
 
     return 0;
 }
@@ -290,7 +307,7 @@ static int _thcon_get_url_content(const char* ip_addr, struct _curl_mem* mem)
 {
     CURL* _url_handle;
     CURLcode _res;
-    
+
     /* check for ip address url */
     if(ip_addr == NULL || mem == NULL)
 	return -1;
@@ -326,4 +343,182 @@ static int _thcon_get_url_content(const char* ip_addr, struct _curl_mem* mem)
 	return 0;
     else
 	return -1;
+}
+
+/* parse html geo location data */
+static int _parse_html_geo(const struct _curl_mem* _mem, struct thcon_host_info* info)
+{
+    int i;
+    const char* _search;
+    xmlNodePtr _node, _node_ptr, _child_ptr;
+    xmlNodePtr _t_node;
+    htmlDocPtr _html_doc;
+    char* _elm_val;
+
+    struct _html_parser_stack _p_stack;
+    struct _html_parser_stack _p_stack_x;
+
+    _html_doc = htmlReadMemory(_mem->memory, _mem->size, "iplocation.net", NULL, HTML_PARSE_NOBLANKS | HTML_PARSE_NOERROR | HTML_PARSE_NOWARNING | HTML_PARSE_NONET);
+    _node = xmlDocGetRootElement(_html_doc);
+    memset(&_p_stack, 0, sizeof(struct _html_parser_stack));
+
+    _node_ptr = NULL;
+    if(_node != NULL)
+	_node_ptr = xmlFirstElementChild(_node);
+
+
+    /*----------------------------------------------------------------------*/
+    /*
+     * This section to be handled by the configuration file
+     *
+     */
+    
+    _p_stack.stack_ix = 0;
+    _p_stack.stack_count = 11;
+
+    _p_stack_x.stack_ix = 0;
+    _p_stack_x.stack_count = 1;
+
+    /* initialise elements */
+    HTML_PARSER_ELEM_INIT(&_p_stack);
+    HTML_PARSER_ELEM_INIT(&_p_stack_x);
+
+    /* set element values */
+    HTML_PARSER_ELEM_SET_DIR(&_p_stack, 0, _html_nav_side, 1);
+    HTML_PARSER_ELEM_SET_DIR(&_p_stack, 1, _html_nav_into, 1);
+    HTML_PARSER_ELEM_SET_DIR(&_p_stack, 2, _html_nav_side, 6);
+
+    HTML_PARSER_ELEM_SET_DIR(&_p_stack, 3, _html_nav_into, 3);
+    HTML_PARSER_ELEM_SET_DIR(&_p_stack, 4, _html_nav_side, 1);
+    HTML_PARSER_ELEM_SET_DIR(&_p_stack, 5, _html_nav_into, 4);
+    HTML_PARSER_ELEM_SET_DIR(&_p_stack, 6, _html_nav_side, 1);
+    HTML_PARSER_ELEM_SET_DIR(&_p_stack, 7, _html_nav_into, 6);
+    HTML_PARSER_ELEM_SET_DIR(&_p_stack, 8, _html_nav_side, 20);
+    HTML_PARSER_ELEM_SET_DIR(&_p_stack, 9, _html_nav_into, 1);
+    HTML_PARSER_ELEM_SET_DIR(&_p_stack, 10, _html_nav_side, 3);
+
+    HTML_PARSER_ELEM_SET_DIR(&_p_stack_x, 0, _html_nav_side, 7);
+    
+    /*----------------------------------------------------------------------*/
+    
+    /* iterate through the nodes */
+    _search = NULL;
+    while(_node_ptr)
+    	{
+	    /* check if the node is the body element */
+	    if(_node_ptr->name)
+	    	_search = strstr((char*) _node_ptr->name, "body");
+
+	    /* if its the body tag dive into the element and look for the first div */
+	    if(_search != NULL)
+		{
+		    /* Get first row of location */
+		    _t_node = _get_html_tag_names(_node_ptr, &_p_stack);
+		    if(_t_node)
+			{
+			    i = 0
+			    _child_ptr = xmlFirstElementChild(_t_node);
+
+			    while(_child_ptr)
+				{
+				    _elm_val = (char*) xmlNodeGetContent(_child_ptr);
+				    switch(i)
+					{
+					case 0:
+					    strncpy(info->_my_address, _elm_val, THCON_SERVER_NAME_SZ-1);
+					    info->_my_address[THCON_SERVER_NAME_SZ-1] = '\0';
+					    break;
+					case 1:
+					    strncpy(info->_country, _elm_val, THCON_GEN_INFO_SZ-1);
+					    info->_country[THCON_GEN_INFO_SZ-1] = '\0';
+					    break;
+					case 2:
+					    strncpy(info->_my_region, _elm_val, THCON_GEN_INFO_SZ-1);
+					    info->_my_region[THCON_GEN_INFO_SZ-1] = '\0';
+					    break;
+					case 3:
+					    strncpy(info->_my_city, _elm_val, THCON_GEN_INFO_SZ-1);
+					    info->_my_city[THCON_GEN_INFO_SZ-1] = '\0';
+					default:
+					    break;
+					}
+				    _child_ptr =  xmlNextElementSibling(_ptr);
+				    i++;
+				}
+			}
+
+		    /* Get second table information */
+		    _t_node = _get_html_tag_names(_t_node->parent, &_p_stack_x);
+		    if(_t_node)
+			{
+			    i = 0;
+			    _child_ptr = xmlFirstElementChild(_t_node);
+
+			    while(_child_ptr)
+				{
+				    _elm_val = (char*) xmlNodeGetContent(_child_ptr);
+				    switch(i)
+					{
+					case 1:
+					    strncpy(info->_long, _elm_val, THCON_GEN_INFO_SZ-1);
+					    info->_long[THCON_GEN_INFO_SZ-1] = '\0';
+					    break;
+					case 2:
+					    strncpy(info->_lat, _elm_val, THCON_GEN_INFO_SZ-1);
+					    info->_lat[THCON_GEN_INFO_SZ-1] = '\0';
+					    break;
+					default:
+					    break;
+					}
+
+				    _child_ptr =  xmlNextElementSibling(_ptr);
+				    i++;				    
+				}
+			}
+		    break;
+		}
+    	    _node_ptr = xmlNextElementSibling(_node_ptr);
+	    _search = NULL;
+    	}
+
+    xmlFreeDoc(_html_doc);
+    return 0;
+}
+
+/* get element based on stack */
+static xmlNodePtr _get_html_tag_names(xmlNodePtr ptr, struct _html_parser_stack* stack)
+{
+    static xmlNodePtr _ptr = NULL;
+    if(ptr == NULL || stack == NULL) return 0;
+    _ptr = xmlFirstElementChild(ptr);
+    while(_ptr)
+	{
+#if defined HTML_STACK_DEBUG_MODE
+	    printf ("Inside Child - %s\n", _ptr->name);
+	stack_check_dir:
+#endif
+	    if(HTML_PARSER_GET_DIR(stack) == _html_nav_into)
+		{
+		    if(HTML_PARSER_ELEM_INC_TRY(stack))
+			_get_html_tag_names(_ptr, stack);
+		    goto stack_pop;
+		}
+
+	    if(HTML_PARSER_ELEM_INC_TRY(stack))
+		{
+		    _ptr = xmlNextElementSibling(_ptr);
+		    continue;
+		}
+
+	stack_pop:
+	    /* Increment stack counter */
+	    if(HTML_PARSER_TRY_INCREMENT(stack))
+		break;
+#if defined HTML_STACK_DEBUG_MODE
+	    else
+		goto stack_check_dir;
+#endif
+	}
+
+    return _ptr;
 }

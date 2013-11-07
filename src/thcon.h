@@ -27,6 +27,8 @@ struct thcon_host_info
 {
     int _init_flg;					/* flag to indicate initialised */
     int _city_id;
+    char _my_region[THCON_GEN_INFO_SZ];
+    char _my_city[THCON_GEN_INFO_SZ];
     char _my_address[THCON_SERVER_NAME_SZ];
     char _long[THCON_GEN_INFO_SZ];
     char _lat[THCON_GEN_INFO_SZ];
@@ -78,7 +80,7 @@ extern "C" {
 #define thcon_reset_my_info(obj)					\
     memset((obj)->var_my_info, 0, sizeof(struct thcon_host_info))
     const char* thcon_get_my_addr(thcon* obj);
-    int thcon_get_my_geo(thcon* obj, const struct thcon_host_info* info);
+    int thcon_get_my_geo(thcon* obj);
 
     /* contact admin and send local ip and geo location */
     int thcon_contact_admin(thcon* obj, const char* admin_url);
