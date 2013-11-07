@@ -3,6 +3,67 @@
 
 #include <fcntl.h>
 #include <curl/curl.h>
+#include <libxml/HTMLparser.h>
+
+#define HTML_STACK_SZ 16
+/* #define HTML_STACK_DEBUG_MODE */
+
+/*---------------------------------------------------------------------------*/
+/*
+ *
+ * Struct for handling parsing awkward free geolocation service from http://www.iplocation.net/
+ * html from the site obtined by curl. Use libxml to parse the html. To narrow down to the GSP
+ * coords, a software stack was used.
+ * Stack to be allocated by parsing the configutaion file which should define how to navigate
+ * the html to get to the elementes containing geolocation */
+
+/* enumation to include what to do */
+enum _html_nav_dir {
+    _html_nav_into,
+    _html_nav_side
+};
+
+/* element containing direction and number of items to navigate */
+struct _html_nav_elm {
+    unsigned int num;
+    unsigned int act_cnt;
+    enum _html_nav_dir dir;
+};
+
+/* main struct containing all instructions */
+struct _html_parser_stack {
+    unsigned int stack_ix;
+    unsigned int stack_count;
+    struct _html_nav_elm stack_elms[HTML_STACK_SZ];
+};
+
+
+/* macros for handling parser stack */
+#define HTML_PARSER_TRY_INCREMENT(obj)			\
+    ++(obj)->stack_ix < (obj)->stack_count? 0 : 1
+#define HTML_PARSER_GET_DIR(obj)		\
+    (obj)->stack_elms[(obj)->stack_ix].dir
+#define HTML_PARSER_ELEM_INC_TRY(obj)					\
+    (obj)->stack_elms[(obj)->stack_ix].act_cnt++ < (obj)->stack_elms[(obj)->stack_ix].num? 1 : 0
+
+/* initialise elements in parser stack */
+#define HTML_PARSER_ELEM_INIT(obj)			\
+    for(i=0; i<(obj)->stack_count; i++)			\
+	{						\
+	    (obj)->stack_elms[i].num = 0;		\
+	    (obj)->stack_elms[i].act_cnt = 0;		\
+	    (obj)->stack_elms[i].dir = _html_nav_into;	\
+	}
+
+/* set element direction */
+#define HTML_PARSER_ELEM_SET_DIR(obj, ix, nav_dir, nav_num)	\
+    if(ix < (obj)->stack_count)					\
+	{							\
+	    (obj)->stack_elms[ix].dir = nav_dir;		\
+	    (obj)->stack_elms[ix].num = nav_num;		\
+	}
+
+/*---------------------------------------------------------------------------*/
 
 /* url memory struct */
 struct _curl_mem
@@ -63,8 +124,7 @@ void thcon_delete(thcon* obj)
    ip address */
 const char* thcon_get_my_addr(thcon* obj)
 {
-    CURL* _url_handle;
-    CURLcode _res;
+    int _rt_val = 0;
     struct _curl_mem _ip_buff;
     
     /* check for object */
@@ -75,45 +135,21 @@ const char* thcon_get_my_addr(thcon* obj)
     if(obj->var_ip_addr_url[0] == '\0' || obj->var_ip_addr_url[0] == 0)
 	return NULL;
 
-    /* initialise the ip buffer */
-    _ip_buff.memory = (char*) malloc(1);
-    _ip_buff.size = 0;
+    _rt_val = _thcon_get_url_content(obj->var_ip_addr_url, &_ip_buff);
 
-    /* initialise global variables of curl */
-    curl_global_init(CURL_GLOBAL_ALL);
-
-    _url_handle = curl_easy_init();
-
-    /* specify url to get */
-    curl_easy_setopt(_url_handle, CURLOPT_URL, obj->var_ip_addr_url);
-
-    /* set all data to the function */
-    curl_easy_setopt(_url_handle, CURLOPT_WRITEFUNCTION, _thcon_copy_to_mem);
-
-    /* set write data */
-    curl_easy_setopt(_url_handle, CURLOPT_WRITEDATA, (void*) &_ip_buff);
-
-    /* some servers don't like requests that are made without a user-agent
-     field, so we provide one */
-    curl_easy_setopt(_url_handle, CURLOPT_USERAGENT, "libcurl-agent/1.0");
-
-    _res = curl_easy_perform(_url_handle);
     memset(obj->var_my_info._my_address, 0, THCON_SERVER_NAME_SZ);
-    if(_res == CURLE_OK)
+    if(_rt_val == 0)
 	{
 	    strncpy(obj->var_my_info._my_address, _ip_buff.memory, THCON_SERVER_NAME_SZ-1);
 	    obj->var_my_info._my_address[THCON_SERVER_NAME_SZ-1] = '\0';
 	    obj->var_my_info._init_flg = 1;
 	}
 
-
     /* clean up memory */
-    curl_easy_cleanup(_url_handle);
     if(_ip_buff.memory)
 	free(_ip_buff.memory);
 
-    curl_global_cleanup();
-    if(_res == CURLE_OK)
+    if(_rt_val == 0)
 	return obj->_my_address;
     else
 	return NULL;
@@ -278,7 +314,7 @@ static int _thcon_get_url_content(const char* ip_addr, struct _curl_mem* mem)
     curl_easy_setopt(_url_handle, CURLOPT_WRITEDATA, (void*) mem);
 
     /* some servers don't like requests that are made without a user-agent
-     field, so we provide one */
+       field, so we provide one */
     curl_easy_setopt(_url_handle, CURLOPT_USERAGENT, "libcurl-agent/1.0");
 
     _res = curl_easy_perform(_url_handle);
