@@ -16,6 +16,14 @@
 #define THCON_SERVER_NAME_SZ 128
 #define THCON_GEN_INFO_SZ 64
 
+#define THCON_FORM_IP "ip_addr"
+#define THCON_GEO_COUNTRY "my_country"
+#define THCON_GEO_REGION "my_region"
+#define THCON_GEO_TOWN "my_town"
+#define THCON_GEO_LONG "my_long"
+#define THCON_GEO_LAT "my_lat"
+
+
 typedef struct _thcon thcon;
 struct thcon_buff
 {
@@ -52,6 +60,9 @@ struct _thcon
     thcon_stat _var_con_stat;				/* connection status */
 
     unsigned int var_num_conns;
+
+    unsigned int var_geo_flg;				/* indicate geo location is obtained */
+    unsigned int var_ip_flg;				/* indicate ip flag was obtained */
 
     char var_port_name[THCON_PORT_NAME_SZ];
     char var_svr_name[THCON_SERVER_NAME_SZ];

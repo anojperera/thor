@@ -106,6 +106,9 @@ int thcon_init(thcon* obj)
     obj->var_flg = 1;
 
     obj->var_num_conns = 0;
+    obj->var_geo_flg = 0;
+    obj->var_ip_flg; = 0;
+    
     obj->_var_cons_fds = NULL;
 
     obj->var_my_info._init_flg = 0;
@@ -176,6 +179,9 @@ int thcon_get_my_geo(thcon* obj)
 	return -1;
     _parse_html_geo(&_ip_buff, &obj->var_my_info);
 
+    obj->var_geo_flg = 1;
+    obj->var_ip_flg = 1;
+    
     return 0;
 }
 
@@ -183,7 +189,82 @@ int thcon_get_my_geo(thcon* obj)
  * submit self data as a form */
 int thcon_contact_admin(thcon* obj, const char* admin_url)
 {
+    CURL* _curl;
+    CURLcode _res;
+
+    struct curl_httppost* _form_post = NULL;
+    struct curl_httppost* _last_ptr = NULL;
+    struct curl_slist* _header_list = NULL;
+    static const char _buff[] = "Expect:";
     
+    if(obj == NULL || admin_url == NULL)
+	return -1;
+
+    if(!obj->var_geo_flg && !obj->var_ip_flg)
+	thcon_get_my_geo(obj);
+
+    /* initialise curl */
+    curl_global_init(CURL_GLOBAL_ALL);
+
+    /* fill form data */
+    curl_formadd(&_form_post,
+		 &_last_ptr,
+		 CURLFORM_COPYNAME, THCON_FORM_IP,
+		 CURLFORM_COPYCONTENTS, obj->var_my_info._my_address,
+		 CURLFORM_END);
+    
+    curl_formadd(&_form_post,
+		 &_last_ptr,
+		 CURLFORM_COPYNAME, THCON_GEO_COUNTRY,
+		 CURLFORM_COPYCONTENTS, obj->var_my_info._country,
+		 CURLFORM_END);
+
+    curl_formadd(&_form_post,
+		 &_last_ptr,
+		 CURLFORM_COPYNAME, THCON_GEO_REGION,
+		 CURLFORM_COPYCONTENTS, obj->var_my_info._my_region,
+		 CURLFORM_END);
+
+    curl_formadd(&_form_post,
+		 &_last_ptr,
+		 CURLFORM_COPYNAME, THCON_GEO_TOWN,
+		 CURLFORM_COPYCONTENTS, obj->var_my_info._my_city,
+		 CURLFORM_END);
+
+    curl_formadd(&_form_post,
+		 &_last_ptr,
+		 CURLFORM_COPYNAME, THCON_GEO_LONG,
+		 CURLFORM_COPYCONTENTS, obj->var_my_info._long,
+		 CURLFORM_END);
+
+    curl_formadd(&_form_post,
+		 &_last_ptr,
+		 CURLFORM_COPYNAME, THCON_GEO_LAT,
+		 CURLFORM_COPYCONTENTS, obj->var_my_info._lat,
+		 CURLFORM_END);
+
+    /* initialise easy interface */
+    _curl = curl_easy_init();
+
+    _header_list = curl_slist_append(_header_list, _buff);
+    if(!_curl)
+	goto contact_admin_cleanup;
+
+    /* set admin url */
+    curl_easy_setopt(_curl, CURLOPT_URL, admin_url);
+    curl_easy_setopt(_curl, CURLOPT_HTTPHEADER, _header_list);
+    curl_easy_setopt(_curl, CURLOPT_HTTPPOST, _form_post);
+    
+
+    _res = curl_easy_perform(_curl);
+
+    /* check for errors */
+    curl_easy_cleanup(_curl);
+    
+ contact_admin_cleanup:
+    curl_formfree(_form_post);
+    curl_slist_free_all(_header_list);
+
 }
 
 /*======================================================================*/
