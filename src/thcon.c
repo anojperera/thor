@@ -1,11 +1,14 @@
 #include "thcon.h"
 #include "thornifix.h"
 
+#include <unistd.h>
 #include <fcntl.h>
 #include <curl/curl.h>
 #include <libxml/HTMLparser.h>
 
+#define THCON_CLIENT_RECV_SLEEP_TIME 100000			/* wait time for receiving */
 #define HTML_STACK_SZ 16
+
 /* #define HTML_STACK_DEBUG_MODE */
 
 /*---------------------------------------------------------------------------*/
@@ -77,7 +80,8 @@ static _thcon_copy_to_mem(void* contents, size_t size, size_t memb, void* usr_ob
 
 
 /* thread methods for handling start and clean up process */
-static void* _thcon_thread_function(void* obj);
+static void* _thcon_thread_function_client(void* obj);
+static void* _thcon_thread_function_server(void* obj);
 static void _thcon_thread_cleanup(void* obj);
 
 /* create socket and for server mode bind to it */
@@ -93,7 +97,7 @@ static int _parse_html_geo(const struct _curl_mem* _mem, struct thcon_host_info*
 static xmlNodePtr _get_html_tag_names(xmlNodePtr ptr, struct _html_parser_stack* stack);
 
 /* constructor */
-int thcon_init(thcon* obj)
+int thcon_init(thcon* obj, thcon_mode mode)
 {
     if(obj == NULL)
 	return -1;
@@ -105,6 +109,9 @@ int thcon_init(thcon* obj)
     obj->var_acc_sock = 0;
     obj->var_flg = 1;
 
+    obj->_var_con_stat = thcon_disconnected;
+    obj->_var_con_mode = mode;
+
     obj->var_num_conns = 0;
     obj->var_geo_flg = 0;
     obj->var_ip_flg; = 0;
@@ -112,12 +119,22 @@ int thcon_init(thcon* obj)
     obj->_var_cons_fds = NULL;
 
     obj->var_my_info._init_flg = 0;
+    obj->_ext_obj = NULL;
+    obj->_thcon_recv_callback = NULL;
+
+    
     return 0;
 }
 
 /* Destructor */
 void thcon_delete(thcon* obj)
 {
+    obj->_ext_obj = NULL;
+    obj->_thcon_recv_callback = NULL;
+
+    /* check scope */
+    sem_destroy(obj->_var_sem);
+    
     /* delete socket fd array */
     if(obj->var_num_conns)
 	free(obj->_var_cons_fds);
@@ -267,6 +284,20 @@ int thcon_contact_admin(thcon* obj, const char* admin_url)
 
 }
 
+/* send information to the socket */
+int thcon_send_info(thcon* obj, void* data, sizt_t sz)
+{
+    if(obj == NULL || data == NULL)
+	return -1;
+
+    /* check if the connection was made*/
+    if(obj->_var_con_stat == thcon_disconnected)
+	return -1;
+    
+    /* call private method for sending the information */
+    return _thcon_send_info(obj->var_acc_sock, data, sz);
+}
+
 /*======================================================================*/
 /* Private methods */
 /* Connection mode 1 - server mode */
@@ -336,6 +367,9 @@ static int _thcon_create_connection(thcon* obj, int _con_mode)
 	    return -1;
 	}
 
+    /* client mode was selected set the accept socket same as connect socket */
+    obj->var_acc_sock = obj->var_con_sock;
+    obj->_var_con_stat = thcon_connected;
     return 0;
 }
 
@@ -602,4 +636,73 @@ static xmlNodePtr _get_html_tag_names(xmlNodePtr ptr, struct _html_parser_stack*
 	}
 
     return _ptr;
+}
+
+/*
+ * Thread function for client.
+ * This operation performed on non blocking sockets.
+ */
+static void* _thcon_thread_function_client(void* obj)
+{
+    thcon* _obj;
+    int _stat = 0;
+    int _cancel_state = 0;
+    char _t_buff[THORNIFIX_MSG_BUFF_SZ];
+    
+    /* check object pointer */
+    if(obj == NULL)
+	return NULL;
+
+    /* initialise buffer */
+    memset((void*) _t_buff, 0, THORNIFIX_MSG_BUFF_SZ);
+    
+    /* cast object pointer to connection type */
+    _obj = (thcon*) obj;
+    
+    pthread_testcancel(void);
+    
+    /* loop while connection is active and recieving messages */
+    do
+	{
+	    pthread_testcancel(void);
+	    _stat = recv(_obj->var_acc_sock, _t_buff, THORNIFIX_MSG_BUFF_SZ, MSG_DONTWAIT);
+
+
+	    /* disable thread cancel state */
+	    pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &_cancel_state);
+	    
+	    /*
+	     * If a callback pointer was set, it shall be called immediately.
+	     * Later on, the message should be queued and have the callback pop following
+	     * execution.
+	     */
+	    if(_obj->_thcon_recv_callback)
+		_obj->_thcon_recv_callback(_obj->_ext_obj, _t_buff, _stat);
+
+	    /* enable thread cancel state */
+	    pthread_setcancelstate(_cancel_state, NULL);
+	    
+	    pthread_testcancel(void);
+	    /* sleep for 100ms to save processor cycle time */
+	    usleep(THCON_CLIENT_RECV_SLEEP_TIME);
+	}while(_stat);
+
+    return NULL;
+}
+
+/* Send information to the socket pointed by data msg of size sz */
+static int _thcon_send_info(int fd, void* msg, size_t sz)
+{
+    size_t _buff_sent = 0;
+    
+    /*
+     * Send message in non blocking mode. Iterate until the message was sent.
+     *
+     */
+    do
+	{
+	    _buff_sent += send(fd, data+_buff_sent, sz, MSG_DONTWAIT);
+	}while(_buff_sent < sz);
+
+    return _buff_sent;
 }

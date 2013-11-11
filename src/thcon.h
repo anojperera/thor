@@ -50,14 +50,30 @@ typedef enum {
     thcon_idle
 } thcon_stat;
 
+/*
+ *  
+ * Connection mode for the server.
+ * Can make the connection as a client or server.
+ * If the connection was made as a client, hook, callback to
+ * recieve data. On server mode, connections are pooled using
+ * epol. Information is relayed between primary connection to
+ * sys object
+ *
+ */
+typedef enum {
+    thcon_mode_client,
+    thcon_mode_server
+} thcon_mode;
+
 
 struct _thcon
 {
     int var_flg;					/* internal flag */
     int var_con_sock;					/* main connection socket */
     int var_acc_sock;					/* accept socket for server connection */
-    int var_mode;					/* mode of operation (server / client) */
+
     thcon_stat _var_con_stat;				/* connection status */
+    thcon_mode _var_con_mode;				/* connection mode to the server */
 
     unsigned int var_num_conns;
 
@@ -77,6 +93,10 @@ struct _thcon
     int* _var_cons_fds;					/* connection sockets */
     pthread_t _var_run_thread;				/* internal running thread */
     semt_t _var_sem;					/* semaphore for controlling the delete method */
+    void* _ext_obj;					/* external object pointer */
+
+    /* set callback function to get a callback when data is recieve on the socket */
+    int (*_thcon_recv_callback)(void*, void*, size_t);
 };
 
 #ifdef __cplusplus
@@ -84,22 +104,24 @@ extern "C" {
 #endif
 
     /* initialise class */
-    int thcon_init(thcon* obj);				/* initialise connection object */
+    int thcon_init(thcon* obj, thcon_mode mode);	/* initialise connection object */
     void thcon_delete(thcon* obj);			/* free connection struct information */
 
     /* Methods for handling my information struct */
 #define thcon_reset_my_info(obj)					\
     memset((obj)->var_my_info, 0, sizeof(struct thcon_host_info))
+    
     const char* thcon_get_my_addr(thcon* obj);
     int thcon_get_my_geo(thcon* obj);
 
     /* contact admin and send local ip and geo location */
     int thcon_contact_admin(thcon* obj, const char* admin_url);
 
-    /* server handling options */
-    int thcon_start_local_server(thcon* obj);
-    int thcon_stop_local_server(thcon* obj);
+    /* Start stop methods */
+    int thcon_start(thcon* obj);
+    int thcon_stop(thcon* obj);
 
+    /* In the server mode, message is sent to all sockets */
     int thcon_send_info(thcon* obj, void* data, sizt_t sz);
 
     /* set server name */
