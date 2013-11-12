@@ -7,6 +7,8 @@
 #include <libxml/HTMLparser.h>
 
 #define THCON_CLIENT_RECV_SLEEP_TIME 100000			/* wait time for receiving */
+#define THCON_MAX_CLIENTS 10 					/* maximum connections */
+#define THCON_MAX_EVENTS 64					/* maximum events */
 #define HTML_STACK_SZ 16
 
 /* #define HTML_STACK_DEBUG_MODE */
@@ -95,6 +97,23 @@ static int _thcon_get_url_content(const char* ip_addr, struct _curl_mem* mem);
 
 static int _parse_html_geo(const struct _curl_mem* _mem, struct thcon_host_info* info);
 static xmlNodePtr _get_html_tag_names(xmlNodePtr ptr, struct _html_parser_stack* stack);
+
+/*
+ * Accept connection on listening socket and add to the epoll instance.
+ * connection socket will be created non blocking.
+ */
+static int _thcon_accept_conn(int list_sock, int epoll_inst, struct epoll_event* event);
+
+/*---------------------------------------------------------------------------*/
+/*
+ * Functions for reading and writing to the common buffer between test program and
+ * clients.
+ */
+static int _thcon_write_to_int_buff(thcon* obj, int socket_fd);
+static int _thcon_read_from_int_buff(thcon* obj, int socket_fd);
+/*
+ *
+/*---------------------------------------------------------------------------*/
 
 /* constructor */
 int thcon_init(thcon* obj, thcon_mode mode)
@@ -368,7 +387,9 @@ static int _thcon_create_connection(thcon* obj, int _con_mode)
 	}
 
     /* client mode was selected set the accept socket same as connect socket */
-    obj->var_acc_sock = obj->var_con_sock;
+    if(obj->_var_con_mode == thcon_mode_client)
+	obj->var_acc_sock = obj->var_con_sock;
+    
     obj->_var_con_stat = thcon_connected;
     return 0;
 }
@@ -705,4 +726,186 @@ static int _thcon_send_info(int fd, void* msg, size_t sz)
 	}while(_buff_sent < sz);
 
     return _buff_sent;
+}
+
+/*
+ * Thread function for handling the server side of the object.
+ * All connections are handled in a single thread using epoll.
+ *
+ */
+static void* _thcon_thread_function_server(void* obj)
+{
+    int _i = 0, _n = 0;										/* counters */
+    int _e_sock = 0;
+    int _stat = 0, _complete = 0;
+    thcon* _obj;
+    struct epoll_event _event, *_events;
+    
+    /* check for object pointer */
+    if(obj == NULL)
+	return NULL;
+
+    /* cast object pointer to the correct type */
+    _obj = (thcon*) obj;
+
+    /* create socket and bind */
+    if(_thcon_create_connection(_obj, thcon_mode_server))
+	return NULL;
+
+    /* make socket non blocking */
+    if(_thcon_make_socket_nonblocking(_obj->var_con_sock))
+	goto listening_sock_exit;
+
+    /* listen on socket */
+    if(listen(_obj->var_con_sock, THCON_MAX_CLIENTS))
+	goto listening_sock_exit;
+
+    /* create and epoll instance */
+    _e_sock = epoll_create1(0);
+
+    if(_e_sock == -1)
+	goto epoll_exit;
+
+    _event.data.fd = _obj->var_con_sock;
+    _event.events = EPOLLIN | EPOLLET;
+
+    if(epoll_ctl(_e_sock, EPOLL_CTL_ADD, _obj->var_con_sock, &_event))
+	goto epol_exit;
+
+    _events = calloc(THCON_MAX_EVENTS, sizeof(struct epoll_event));
+
+    /* main event loop */
+    while(1)
+	{
+	    _n = epoll_wait(_e_sock, _events, THCON_MAX_EVENTS, -1);
+	    for(_i = 0; _i < _n; _i++)
+		{
+		    _complete = 0;
+		    
+		    /* check for errors */
+		    if((_events[_i].events & EPOLLERR) ||
+		       (_events[_i].events & EPOLLHUP) ||
+		       (_events[_i].events & EPOLLIN))
+			{
+			    /* errors have occured */
+			    fprintf(stderr, "epoll error\n");
+			    close(_events[i].data.fd);
+			    continue;
+			}
+		    else if(_obj->var_con_sock == _events[_i].data.fd)
+			{
+			    /*
+			     * Information on listening socket, means we have a connection.
+			     * Call internal method to haddle the incomming connection and add
+			     * to the epoll instance.
+			     */
+			    _thcon_accept_conn(_obj->var_con_sock, _e_sock, &_event);
+			    continue;
+			}
+		    else
+			{
+			    /*
+			     * Data on socket waiting to be read. All data shall be read
+			     * in a single pass. Since we are running on edge triggered mode
+			     * in epoll, we wont get a notification again.
+			     */
+			    while(1)
+				{
+				    _stat = _thcon_write_to_int_buff(obj, _events[i].data.fd);
+				    if(_stat == -1)
+					{
+					    /*
+					     * if error is EAGAIN, we have read all data, go back to
+					     * the main loop.
+					     */
+					    if(errno != EAGAIN)
+						_complete = 1;
+					    
+					    break;
+					}
+				    else if(_stat == 0)
+					{
+					    _complete = 1;
+					    break;
+					}
+				}
+			    
+			}
+		    if(_complete)
+			{
+			    /* remote client has closed the connection */
+			    fprintf(stdout, "Connection closed on socket - %i\n", _event[i].data.fd);
+
+			    /* close connection so that epoll shall remove the watching descriptor */
+			    close(_event[i].data.fd);
+			}
+		}
+	}
+
+ epoll_exit:
+    if(_e_sock)
+	close(_e_sock);
+
+ listening_sock_exit:
+    if(_obj->var_con_sock)
+	close(_e_sock);
+
+    return NULL;
+}
+
+/* Accept connection */
+static int _thcon_accept_conn(int list_sock, int epoll_inst, struct epoll_event* event)
+{
+    struct sockaddr _in_addr;
+    socklen_t _in_len;
+    int _fd, _stat;
+    char _hbuf[NI_MAXHOST], _sbuf[NI_MAXSERV];
+    
+    while(1)
+	{
+	    _fd = accept(list_sock, &_in_addr, &_in_len);
+	    if(_fd == -1)
+		{
+		    if(errno == EAGAIN ||
+		       errno == EWOULDBLOCK)
+			{
+			    /*
+			     * Finished processing all incoming connections
+			     * break loop and exit.
+			     */
+
+			    break;
+			}
+		    else
+			{
+			    fprintf(stderr, "Accept handling error\n");
+			    break;
+			}
+		}
+
+	    /* get information about the connection and log */
+	    _stat = getnameinfo(&_in_addr, _in_len,
+				_hbuf, NI_MAXHOST,
+				_sbuf, NI_MAXSERV,
+				NI_NUMERICHOST | NI_NUMERICSERV);
+
+	    if(_stat == 0)
+		fprintf(stdout, "Accepted connection from %s on port %s\n", _hbuf, _sbuf);
+
+	    /* make the connection non blocking  and add to the epoll instance */
+	    _thcon_make_socket_nonblocking(_fd);
+
+	    event->data.fd = _fd;
+	    event->events = EPOLLIN | EPOLLET;
+	    epoll_ctl(list_sock, EPOLL_CTL_ADD, _fd, event);
+	}
+
+    return 0;
+}
+
+/* Write data on socket to the buffer */
+static int _thcon_write_to_int_buff(thcon* obj, int socket_fd)
+{
+    /* add mutex to lock the operation */
+    
 }
