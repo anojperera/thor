@@ -80,6 +80,15 @@ struct _thcon
     unsigned int var_geo_flg;				/* indicate geo location is obtained */
     unsigned int var_ip_flg;				/* indicate ip flag was obtained */
 
+    /*-----------------------------------------*/
+    /*
+     * Memory buffer to be used between read
+     * and write to the main programm.
+     */
+    char var_membuff_in[THORNIFIX_MSG_BUFF_SZ];
+    char var_membuff_out[THORNIFIX_MSG_BUFF_SZ];
+    /*-----------------------------------------*/    
+    
     char var_port_name[THCON_PORT_NAME_SZ];
     char var_svr_name[THCON_SERVER_NAME_SZ];
 
