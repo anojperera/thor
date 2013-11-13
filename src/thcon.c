@@ -3,6 +3,7 @@
 
 #include <unistd.h>
 #include <fcntl.h>
+#include <errno.h>
 #include <curl/curl.h>
 #include <libxml/HTMLparser.h>
 
@@ -102,7 +103,7 @@ static xmlNodePtr _get_html_tag_names(xmlNodePtr ptr, struct _html_parser_stack*
  * Accept connection on listening socket and add to the epoll instance.
  * connection socket will be created non blocking.
  */
-static int _thcon_accept_conn(int list_sock, int epoll_inst, struct epoll_event* event);
+static int _thcon_accept_conn(thcon* obj, int list_sock, int epoll_inst, struct epoll_event* event);
 
 /*---------------------------------------------------------------------------*/
 /*
@@ -114,6 +115,13 @@ static int _thcon_read_from_int_buff(thcon* obj, int socket_fd);
 /*
  *
 /*---------------------------------------------------------------------------*/
+
+/*
+ * Memory allocation function for storing socket descriptor.
+ *
+ */
+inline __attribute__ (always_inline) static int _thcon_alloc_fds(thcon* obj);
+
 
 /* constructor */
 int thcon_init(thcon* obj, thcon_mode mode)
@@ -155,7 +163,7 @@ void thcon_delete(thcon* obj)
     sem_destroy(obj->_var_sem);
     
     /* delete socket fd array */
-    if(obj->var_num_conns)
+    if(obj->var_num_conns && obj->_var_cons_fds)
 	free(obj->_var_cons_fds);
     obj->_var_cons_fds = NULL;
 }
@@ -735,7 +743,8 @@ static int _thcon_send_info(int fd, void* msg, size_t sz)
  */
 static void* _thcon_thread_function_server(void* obj)
 {
-    int _i = 0, _n = 0;										/* counters */
+    /* counters */    
+    int _i = 0, _n = 0;
     int _e_sock = 0;
     int _stat = 0, _complete = 0;
     thcon* _obj;
@@ -774,6 +783,8 @@ static void* _thcon_thread_function_server(void* obj)
 
     _events = calloc(THCON_MAX_EVENTS, sizeof(struct epoll_event));
 
+    /* allocate memory for the incomming connections */
+    obj->_var_cons_fds = (int*) calloc(THCON_MAX_CLIENTS, sizeof(int));
     /* main event loop */
     while(1)
 	{
@@ -799,7 +810,7 @@ static void* _thcon_thread_function_server(void* obj)
 			     * Call internal method to haddle the incomming connection and add
 			     * to the epoll instance.
 			     */
-			    _thcon_accept_conn(_obj->var_con_sock, _e_sock, &_event);
+			    _thcon_accept_conn(obj, _obj->var_con_sock, _e_sock, &_event);
 			    continue;
 			}
 		    else
@@ -854,7 +865,7 @@ static void* _thcon_thread_function_server(void* obj)
 }
 
 /* Accept connection */
-static int _thcon_accept_conn(int list_sock, int epoll_inst, struct epoll_event* event)
+static int _thcon_accept_conn(thcon* obj, int list_sock, int epoll_inst, struct epoll_event* event)
 {
     struct sockaddr _in_addr;
     socklen_t _in_len;
@@ -873,7 +884,6 @@ static int _thcon_accept_conn(int list_sock, int epoll_inst, struct epoll_event*
 			     * Finished processing all incoming connections
 			     * break loop and exit.
 			     */
-
 			    break;
 			}
 		    else
@@ -898,6 +908,12 @@ static int _thcon_accept_conn(int list_sock, int epoll_inst, struct epoll_event*
 	    event->data.fd = _fd;
 	    event->events = EPOLLIN | EPOLLET;
 	    epoll_ctl(list_sock, EPOLL_CTL_ADD, _fd, event);
+
+	    /*
+	     * Check if buffer needs expanding or not and set fd value.
+	     */
+	    _thcon_alloc_fds(obj);
+	    obj->_var_cons_fds[obj->var_num_conns++] = fd;
 	}
 
     return 0;
@@ -936,3 +952,53 @@ static int _thcon_read_from_int_buff(thcon* obj, int socket_fd)
     return _sz;
 }
 
+/* Alocate memory */
+inline __attribute__ (always_inline) static int _thcon_alloc_fds(thcon* obj)
+{
+    int _t_exs_sz;
+    int* _t_buff;
+    /*
+     * If the counter is 0, then its the first connection,
+     * set the initial size of the buffer and create it
+     */
+    if(obj->var_num_conns == 0)
+	{
+	    obj->_var_bf_sz = THCON_MAX_CLIENTS;
+	    obj->_var_cons_fds = (int*) calloc(obj->_var_bf_sz, sizeof(int));
+	}
+
+    /*
+     * Check if the number of connections has reached 80% of the buffer.
+     * If it has, create a new buffer of double the size of existing buffer
+     * and copy the contents of existing buffer to the new one. Subsequently
+     * detroy the existing buffer.
+     */
+    if(obj->var_num_conns > ((int) 0.8*obj->_var_bf_sz))
+	{
+	    /* Record existing size */
+	    _t_exs_sz = obj->_var_bf_sz;
+	    
+	    /* New buffer size */
+	    obj->_var_bf_sz += obj->_var_bf_sz;
+
+	    /*
+	     * Create a new temporary buffer and copy the contents of existing
+	     * buffer to the new one.
+	     */
+	    _t_buff = (int*) calloc(obj->_var_bf_sz, sizeof(int));
+	    memcpy(_t_buff, obj->_var_cons_fds, sizeof(int) * _t_exs_sz);
+
+	    /*--------------------------------------------------*/
+	    /************* Mutex Lock This Section **************/
+	    /*
+	     * Free the existing buffer and set the new pointer to object
+	     * buffer pointer
+	     */
+	    free(obj->_var_cons_fds);
+	    obj->_var_cons_fds = _t_buff;
+
+	    /*--------------------------------------------------*/	    
+	}
+
+    return 0;
+}
