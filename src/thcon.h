@@ -79,6 +79,7 @@ struct _thcon
 
     unsigned int var_geo_flg;				/* indicate geo location is obtained */
     unsigned int var_ip_flg;				/* indicate ip flag was obtained */
+    unsigned int _var_bf_sz;				/* dynamic buffer size holding */
 
     /*-----------------------------------------*/
     /*
