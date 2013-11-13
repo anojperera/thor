@@ -76,7 +76,6 @@ struct _thcon
     thcon_mode _var_con_mode;				/* connection mode to the server */
 
     unsigned int var_num_conns;
-
     unsigned int var_geo_flg;				/* indicate geo location is obtained */
     unsigned int var_ip_flg;				/* indicate ip flag was obtained */
     unsigned int _var_bf_sz;				/* dynamic buffer size holding */
@@ -105,8 +104,9 @@ struct _thcon
     semt_t _var_sem;					/* semaphore for controlling the delete method */
     void* _ext_obj;					/* external object pointer */
 
-    /* set callback function to get a callback when data is recieve on the socket */
+    /* set callback function to get a callback when data is recieve or write on the socket */
     int (*_thcon_recv_callback)(void*, void*, size_t);
+    int (*_thcon_write_callback)(void*, void*, size_t);
 };
 
 #ifdef __cplusplus

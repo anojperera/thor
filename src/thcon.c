@@ -85,7 +85,11 @@ static _thcon_copy_to_mem(void* contents, size_t size, size_t memb, void* usr_ob
 /* thread methods for handling start and clean up process */
 static void* _thcon_thread_function_client(void* obj);
 static void* _thcon_thread_function_server(void* obj);
-static void _thcon_thread_cleanup(void* obj);
+
+static void _thcon_thread_cleanup_server(void* obj);
+static void _thcon_thread_cleanup_client(void* obj);
+
+
 
 /* create socket and for server mode bind to it */
 static int _thcon_create_connection(thcon* obj, int _con_mode);
@@ -148,7 +152,7 @@ int thcon_init(thcon* obj, thcon_mode mode)
     obj->var_my_info._init_flg = 0;
     obj->_ext_obj = NULL;
     obj->_thcon_recv_callback = NULL;
-
+    obj->_thcon_write_callback = NULL;
     
     return 0;
 }
@@ -158,7 +162,8 @@ void thcon_delete(thcon* obj)
 {
     obj->_ext_obj = NULL;
     obj->_thcon_recv_callback = NULL;
-
+    obj->_thcon_write_callback = NULL;
+    
     /* check scope */
     sem_destroy(obj->_var_sem);
     
@@ -314,6 +319,7 @@ int thcon_contact_admin(thcon* obj, const char* admin_url)
 /* send information to the socket */
 int thcon_send_info(thcon* obj, void* data, sizt_t sz)
 {
+    int i = 0;
     if(obj == NULL || data == NULL)
 	return -1;
 
@@ -322,7 +328,8 @@ int thcon_send_info(thcon* obj, void* data, sizt_t sz)
 	return -1;
     
     /* call private method for sending the information */
-    return _thcon_send_info(obj->var_acc_sock, data, sz);
+    for(i = 0; i < obj->var_num_conns; i++)
+	_thcon_send_info(obj->_var_cons_fds[i], data, sz);
 }
 
 /*======================================================================*/
