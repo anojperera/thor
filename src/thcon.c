@@ -906,6 +906,33 @@ static int _thcon_accept_conn(int list_sock, int epoll_inst, struct epoll_event*
 /* Write data on socket to the buffer */
 static int _thcon_write_to_int_buff(thcon* obj, int socket_fd)
 {
-    /* add mutex to lock the operation */
-    
+    static int _sz;
+
+    _sz = 0;
+    do
+	{
+	    _sz += read(socket_fd, &obj->var_membuff_in[_sz], THORNIFIX_MSG_BUFF_SZ);
+
+	}while(_sz > 0);
+
+    return _sz;
 }
+
+/* Read from the buffer and write to the socket */
+static int _thcon_read_from_int_buff(thcon* obj, int socket_fd)
+{
+    int _max_length;
+    static int _sz;
+
+    _max_length = strlen(obj->var_membuff_out);
+
+    _sz = 0;
+    do
+	{
+	    _sz += write(socket_fd, obj->var_membuff_out[_sz], _max_length-_sz);
+
+	}while(_sz < _max_length);
+
+    return _sz;
+}
+
