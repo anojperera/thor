@@ -121,11 +121,10 @@ static int _thcon_read_from_int_buff(thcon* obj, int socket_fd);
 /*---------------------------------------------------------------------------*/
 
 /*
- * Memory allocation function for storing socket descriptor.
- *
+ * Internal file descriptor handling methods.
  */
 inline __attribute__ (always_inline) static int _thcon_alloc_fds(thcon* obj);
-
+inline __attribute__ ((always_inline)) static int _thcon_adjust_fds(thcon* obj, int fd);
 
 /* constructor */
 int thcon_init(thcon* obj, thcon_mode mode)
@@ -807,7 +806,12 @@ static void* _thcon_thread_function_server(void* obj)
 			{
 			    /* errors have occured */
 			    fprintf(stderr, "epoll error\n");
-			    close(_events[i].data.fd);
+			    if(_events[i].data.fd != _obj->var_con_sock)
+				{
+				    _thcon_adjust_fds(obj, _events[i].data.fd);
+				    close(_events[i].data.fd);
+				    obj->var_num_conns--;
+				}
 			    continue;
 			}
 		    else if(_obj->var_con_sock == _events[_i].data.fd)
@@ -853,7 +857,9 @@ static void* _thcon_thread_function_server(void* obj)
 			{
 			    /* remote client has closed the connection */
 			    fprintf(stdout, "Connection closed on socket - %i\n", _event[i].data.fd);
-
+			    _thcon_adjust_fds(obj, _event[i].data.fd);
+			    obj->var_num_conns--;
+			    
 			    /* close connection so that epoll shall remove the watching descriptor */
 			    close(_event[i].data.fd);
 			}
@@ -1007,5 +1013,41 @@ inline __attribute__ (always_inline) static int _thcon_alloc_fds(thcon* obj)
 	    /*--------------------------------------------------*/	    
 	}
 
+    return 0;
+}
+
+/*
+ * Adjust file descriptor internal buffer when connections are closed.
+ * When connections are closed, epoll instance will auto remove the descriptor
+ * from the queue. This method will remove the descriptor from the internal
+ * list and adjust the memory buffer if required.
+ */
+inline __attribute__ ((always_inline)) static int _thcon_adjust_fds(thcon* obj, int fd)
+{
+    int* _t_buff;
+    int i, a;
+    /* check if connection count is 0, exit method */
+    if(obj->var_num_conns < 1)
+	return 0;
+
+    /* allocate memory for the new buffer */
+    _t_buff = (int*) calloc((obj->var_num_conns-1), sizeof(int));
+
+    /* copy existing descriptors to the new buffer */
+    for(i=0,a=0; i<obj->var_num_conns; i++)
+	{
+	    /*
+	     * If the closing file descriptor was found,
+	     * do not copy it.
+	     */
+	    if(obj->_var_cons_fds[i] == fd)
+		continue;
+	    _t_buff[a++] = obj->_var_cons_fds[i];
+	}
+
+    /* free internal buffer and assign new buffer */
+    free(obj->_var_cons_fds);
+    obj->_var_cons_fds = _t_buff;
+    
     return 0;
 }
