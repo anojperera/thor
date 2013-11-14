@@ -85,6 +85,7 @@ static _thcon_copy_to_mem(void* contents, size_t size, size_t memb, void* usr_ob
 /* thread methods for handling start and clean up process */
 static void* _thcon_thread_function_client(void* obj);
 static void* _thcon_thread_function_server(void* obj);
+static void* _thcon_thread_function_write_server(void* obj);
 
 static void _thcon_thread_cleanup_server(void* obj);
 static void _thcon_thread_cleanup_client(void* obj);
@@ -126,6 +127,16 @@ static int _thcon_read_from_int_buff(thcon* obj, int socket_fd);
 inline __attribute__ (always_inline) static int _thcon_alloc_fds(thcon* obj);
 inline __attribute__ ((always_inline)) static int _thcon_adjust_fds(thcon* obj, int fd);
 
+/*---------------------------------------------------------------------------*/
+
+/*
+ * Callback method for queue destroy.
+ */
+static void _thcon_queue_del_helper(void* data);
+
+
+/*===========================================================================*/
+
 /* constructor */
 int thcon_init(thcon* obj, thcon_mode mode)
 {
@@ -152,6 +163,10 @@ int thcon_init(thcon* obj, thcon_mode mode)
     obj->_ext_obj = NULL;
     obj->_thcon_recv_callback = NULL;
     obj->_thcon_write_callback = NULL;
+
+    /* initialise queue */
+    sem_init(&obj->_var_sem, 0, 0);
+    gqueue_new(&obj->_msg_queue, _thcon_queue_del_helper);
     
     return 0;
 }
@@ -170,6 +185,9 @@ void thcon_delete(thcon* obj)
     if(obj->var_num_conns && obj->_var_cons_fds)
 	free(obj->_var_cons_fds);
     obj->_var_cons_fds = NULL;
+
+    /* delete queue */
+    gqueue_delete(&obj->_msg_queue);
 }
 
 /* Get external ip address of self
@@ -329,6 +347,35 @@ int thcon_send_info(thcon* obj, void* data, sizt_t sz)
     /* call private method for sending the information */
     for(i = 0; i < obj->var_num_conns; i++)
 	_thcon_send_info(obj->_var_cons_fds[i], data, sz);
+}
+
+/*
+ * Function duplicates data between all sockets.
+ * May be use vmsplice, tee and splice for performance
+ */
+int thcon_multicast(thcon* obj, void* data, size_t sz)
+{
+    struct _curl_mem* _msg;
+    int i;
+    
+    /* check for argument pointers */
+    if(!obj || !data || !sz)
+	return -1;
+    
+    /* check it its running in the server mode */
+    if(obj->_var_con_mode == thcon_disconnected)
+	return -1;
+    
+    _msg = (struct _curl_mem*) malloc(sizeof(struct _curl_mem));
+    _msg->memory = (char*) malloc(sz);
+    memcpy((void*) _msg->memory, data, sz);
+    _msg->size = sz;
+
+    /*--------------------------------------------------*/
+    /************* Mutex Lock This Section **************/
+    gqueue_in(&obj->_msg_queue, (void*) _msg);
+    /*--------------------------------------------------*/
+    return 0;
 }
 
 /*======================================================================*/
@@ -745,7 +792,6 @@ static int _thcon_send_info(int fd, void* msg, size_t sz)
 /*
  * Thread function for handling the server side of the object.
  * All connections are handled in a single thread using epoll.
- *
  */
 static void* _thcon_thread_function_server(void* obj)
 {
@@ -1046,8 +1092,57 @@ inline __attribute__ ((always_inline)) static int _thcon_adjust_fds(thcon* obj, 
 	}
 
     /* free internal buffer and assign new buffer */
+    /*--------------------------------------------------*/
+    /************* Mutex Lock This Section **************/    
     free(obj->_var_cons_fds);
     obj->_var_cons_fds = _t_buff;
-    
+    /*--------------------------------------------------*/    
     return 0;
+}
+
+
+/*
+ * The thread function peeks at the queue. If the messages exist in
+ * the queue, its written to the socket.
+ */
+static void* _thcon_thread_function_write_server(void* obj)
+{
+    int i;
+    thcon* _obj;
+    struct _curl_mem* _msg;
+    if(obj == NULL)
+	return NULL;
+
+    /* cast argument to correct object pointer */
+    _obj = (thcon*) obj;
+
+    while(1)
+	{
+	    /* wait on semaphore */
+	    sem_wait(&obj->_var_sem);
+
+	    /*
+	     * If the message queue is empty we continue the loop
+	     * and wait on semaphore until, posted from enqueu
+	     * method.
+	     */
+	    if(gqueue_count(&obj->_msg_queue) == 0)
+		continue;
+
+	    /* Pop message from queue */
+	    gqueue_out(&_obj->_msg_queue, (void**) &_msg);
+
+	    /* write to all sockets */
+	    /*--------------------------------------------------*/
+	    /************* Mutex Lock This Section **************/
+	    for(i = 0; i < _obj->var_num_conns; i++;)
+		_thcon_send_info(_obj->_var_cons_fds[i], _msg->memory, _msg->size);
+	    /*--------------------------------------------------*/
+
+	    /* free memory */
+	    free(_msg->memory);
+	    free(_msg);
+	}
+
+    return NULL;
 }
