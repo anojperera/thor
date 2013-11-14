@@ -10,6 +10,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <semaphore.h>
+#include <gqueue.h>
 
 #define THCON_URL_BUFF_SZ 2048
 #define THCON_PORT_NAME_SZ 16
@@ -103,6 +104,7 @@ struct _thcon
     pthread_t _var_run_thread;				/* internal running thread */
     semt_t _var_sem;					/* semaphore for controlling the delete method */
     void* _ext_obj;					/* external object pointer */
+    gqueue _msg_queue;					/* message queue */
 
     /* set callback function to get a callback when data is recieve or write on the socket */
     int (*_thcon_recv_callback)(void*, void*, size_t);
@@ -134,6 +136,12 @@ extern "C" {
     /* In the server mode, message is sent to all sockets */
     int thcon_send_info(thcon* obj, void* data, sizt_t sz);
 
+    /*
+     * Multicast message to all connected sockets.
+     * Only works on the server mode.
+     */
+    int thcon_multicast(thcon* obj, void* data, size_t sz);
+    
     /* set server name */
 #define thcon_set_server_name(obj, name)				\
     memset((void*) (obj)->var_svr_name, 0, THCON_SERVER_NAME_SZ);	\
