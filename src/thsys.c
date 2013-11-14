@@ -115,6 +115,24 @@ int thsys_stop(thsys* obj)
     return 0;
 }
 
+/* set write buffer */
+int thsys_set_write_buff(thsys* obj, float64* buff, size_t sz)
+{
+    int32 _samples;
+    /* check for object and buffer */
+    if(obj == NULL || !buff || !obj->var_run_flg)
+	return -1;
+
+    /* check size of buffer with internal */
+    if(sz != THSYS_NUM_AO_CHANNELS)
+	return 1;
+
+    /* Write buffer to the device */
+    ERR_CHECK(NIWriteAnalogArrayF64(obj->var_a_outask, 1, 0, 1.0, DAQmx_Val_GroupByChannel, buff, &_samples, NULL));
+
+    return _samples;
+}
+
 /* thread cleanup handler */
 static void _thsys_thread_cleanup(void* para)
 {

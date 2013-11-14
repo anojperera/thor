@@ -60,6 +60,10 @@ extern "C" {
     int thsys_start(thsys* obj);
     int thsys_stop(thsys* obj);
 
+    /* set write buffer value */
+    /* the buffer shall be THSYS_NUM_AO_CHANNELS */
+    int thsys_set_write_buff(thsys* obj, float64* buff, size_t sz);
+
     /* set sampling rate */
 #define thsys_set_sample_rate(obj, val)		\
     (obj)->var_sample_rate = (val>0.0? val : THSYS_DEFAULT_SAMPLE_RATE)
