@@ -333,6 +333,36 @@ int thcon_contact_admin(thcon* obj, const char* admin_url)
 
 }
 
+/* Start program */
+int thcon_start(thcon* obj)
+{
+    if(obj == NULL)
+	return -1;
+
+    /*
+     * If it runs in the server mode
+     * 1. Create listening socket,
+     * 2. make it non blocking,
+     * 3. start epoll instance and listen for connections.
+     */
+
+     if(obj->_var_con_mode == thcon_mode_server)
+     {
+	 /* Create listening socket */
+	 if(_thcon_create_connection(obj, thcon_mode_server))
+	     return -1;
+
+	 /* make the socket non blocking */
+	 if(_thcon_make_socket_nonblocking(obj->var_con_sock))
+	     return -1;
+
+	 /* start server */
+	 pthread_create(&obj->_var_run_thread, NULL, _thcon_thread_function_server, (void*) obj);
+     }
+
+     return 0;
+}
+
 /* send information to the socket */
 int thcon_send_info(thcon* obj, void* data, sizt_t sz)
 {
