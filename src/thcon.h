@@ -102,6 +102,9 @@ struct _thcon
 
     int* _var_cons_fds;					/* connection sockets */
     pthread_t _var_run_thread;				/* internal running thread */
+    pthread_t _var_svr_write_thread;			/* server writing thread */
+    pthread_mutex_t _var_mutex;				/* mutex for controlling file descriptor array */
+    pthread_mutex_t _var_mutex_q;			/* mutex for protecting the queue */
     semt_t _var_sem;					/* semaphore for controlling the delete method */
     void* _ext_obj;					/* external object pointer */
     gqueue _msg_queue;					/* message queue */

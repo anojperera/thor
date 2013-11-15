@@ -166,6 +166,8 @@ int thcon_init(thcon* obj, thcon_mode mode)
 
     /* initialise queue */
     sem_init(&obj->_var_sem, 0, 0);
+    pthread_mutex_init(&obj->_var_mutex, NULL);
+    pthread_mutex_init(&obj->_var_mutex_q, NULL);
     gqueue_new(&obj->_msg_queue, _thcon_queue_del_helper);
     
     return 0;
@@ -180,6 +182,8 @@ void thcon_delete(thcon* obj)
     
     /* check scope */
     sem_destroy(obj->_var_sem);
+    pthread_mutex_destroy(&obj->_var_mutex);
+    pthread_mutex_destroy(&obj->_var_mutex_q);
     
     /* delete socket fd array */
     if(obj->var_num_conns && obj->_var_cons_fds)
@@ -346,20 +350,22 @@ int thcon_start(thcon* obj)
      * 3. start epoll instance and listen for connections.
      */
 
-     if(obj->_var_con_mode == thcon_mode_server)
-     {
-	 /* Create listening socket */
-	 if(_thcon_create_connection(obj, thcon_mode_server))
-	     return -1;
+    /* start server */
+    pthread_create(&obj->_var_run_thread,
+		   NULL,
+		   (obj->_var_con_mode == thcon_mode_server? _thcon_thread_function_server : _thcon_thread_function_client),
+		   (void*) obj);
 
-	 /* make the socket non blocking */
-	 if(_thcon_make_socket_nonblocking(obj->var_con_sock))
-	     return -1;
-
-	 /* start server */
-	 pthread_create(&obj->_var_run_thread, NULL, _thcon_thread_function_server, (void*) obj);
-     }
-
+    /*
+     * If we are running in the server mode, call the write methods.
+     */
+    if(obj->_var_con_mode == thcon_mode_server)
+	{
+	    pthread_create(&obj->_var_svr_write_thread,
+			   NULL,
+			   _thcon_thread_function_write_server,
+			   (void*) obj);
+	}
      return 0;
 }
 
@@ -403,7 +409,9 @@ int thcon_multicast(thcon* obj, void* data, size_t sz)
 
     /*--------------------------------------------------*/
     /************* Mutex Lock This Section **************/
+    pthread_mutex_lock(&obj->_var_mutex_q);
     gqueue_in(&obj->_msg_queue, (void*) _msg);
+    pthread_mutex_unlock(&obj->_var_mutex_q);
     /*--------------------------------------------------*/
     return 0;
 }
@@ -1083,9 +1091,10 @@ inline __attribute__ (always_inline) static int _thcon_alloc_fds(thcon* obj)
 	     * Free the existing buffer and set the new pointer to object
 	     * buffer pointer
 	     */
+	    pthread_mutex_lock(&obj->_var_mutex);
 	    free(obj->_var_cons_fds);
 	    obj->_var_cons_fds = _t_buff;
-
+	    pthread_mutex_unlock(&obj->_var_mutex);
 	    /*--------------------------------------------------*/	    
 	}
 
