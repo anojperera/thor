@@ -158,6 +158,7 @@ int thcon_init(thcon* obj, thcon_mode mode)
     obj->var_ip_flg; = 0;
     
     obj->_var_cons_fds = NULL;
+    obj->_var_epol_inst = NULL;
 
     obj->var_my_info._init_flg = 0;
     obj->_ext_obj = NULL;
@@ -189,6 +190,7 @@ void thcon_delete(thcon* obj)
     if(obj->var_num_conns && obj->_var_cons_fds)
 	free(obj->_var_cons_fds);
     obj->_var_cons_fds = NULL;
+    obj->_var_epol_inst = NULL;
 
     /* delete queue */
     gqueue_delete(&obj->_msg_queue);
@@ -864,7 +866,7 @@ static void* _thcon_thread_function_server(void* obj)
 
     if(_e_sock == -1)
 	goto epoll_exit;
-
+    _obj->_var_epol_inst = &_e_sock;
     _event.data.fd = _obj->var_con_sock;
     _event.events = EPOLLIN | EPOLLET;
 
@@ -874,7 +876,7 @@ static void* _thcon_thread_function_server(void* obj)
     _events = calloc(THCON_MAX_EVENTS, sizeof(struct epoll_event));
 
     /* allocate memory for the incomming connections */
-    obj->_var_cons_fds = (int*) calloc(THCON_MAX_CLIENTS, sizeof(int));
+    _obj->_var_cons_fds = (int*) calloc(THCON_MAX_CLIENTS, sizeof(int));
     /* main event loop */
     while(1)
 	{
@@ -892,9 +894,12 @@ static void* _thcon_thread_function_server(void* obj)
 			    fprintf(stderr, "epoll error\n");
 			    if(_events[i].data.fd != _obj->var_con_sock)
 				{
-				    _thcon_adjust_fds(obj, _events[i].data.fd);
+				    _thcon_adjust_fds(_obj, _events[i].data.fd);
 				    close(_events[i].data.fd);
-				    obj->var_num_conns--;
+				    
+				    pthread_mutex_lock(_obj->_var_mutex);
+				    _obj->var_num_conns--;
+				    pthread_mutex_unlock(_obj->_var_mutex);
 				}
 			    continue;
 			}
@@ -905,7 +910,7 @@ static void* _thcon_thread_function_server(void* obj)
 			     * Call internal method to haddle the incomming connection and add
 			     * to the epoll instance.
 			     */
-			    _thcon_accept_conn(obj, _obj->var_con_sock, _e_sock, &_event);
+			    _thcon_accept_conn(_obj, _obj->var_con_sock, _e_sock, &_event);
 			    continue;
 			}
 		    else
@@ -917,7 +922,7 @@ static void* _thcon_thread_function_server(void* obj)
 			     */
 			    while(1)
 				{
-				    _stat = _thcon_write_to_int_buff(obj, _events[i].data.fd);
+				    _stat = _thcon_write_to_int_buff(_obj, _events[i].data.fd);
 				    if(_stat == -1)
 					{
 					    /*
@@ -941,8 +946,12 @@ static void* _thcon_thread_function_server(void* obj)
 			{
 			    /* remote client has closed the connection */
 			    fprintf(stdout, "Connection closed on socket - %i\n", _event[i].data.fd);
-			    _thcon_adjust_fds(obj, _event[i].data.fd);
-			    obj->var_num_conns--;
+			    _thcon_adjust_fds(_obj, _event[i].data.fd);
+
+			    /* decrement counter in a mutex */
+			    pthread_mutex_lock(_obj->_var_mutex);
+			    _obj->var_num_conns--;
+			    pthread_mutex_unlock(_obj->_var_mutex);
 			    
 			    /* close connection so that epoll shall remove the watching descriptor */
 			    close(_event[i].data.fd);
@@ -1010,7 +1019,11 @@ static int _thcon_accept_conn(thcon* obj, int list_sock, int epoll_inst, struct 
 	     * Check if buffer needs expanding or not and set fd value.
 	     */
 	    _thcon_alloc_fds(obj);
+
+	    /* counter incremented in a mutex */
+	    pthread_mutex_lock(obj->_var_mutex);
 	    obj->_var_cons_fds[obj->var_num_conns++] = fd;
+	    pthread_mutex_unlock(obj->_var_mutex);
 	}
 
     return 0;
@@ -1054,6 +1067,13 @@ inline __attribute__ (always_inline) static int _thcon_alloc_fds(thcon* obj)
 {
     int _t_exs_sz;
     int* _t_buff;
+
+    /*
+     * Mutex is locked for the entire session. This is due to the
+     * num connection variable being accessed in different places.
+     */
+    pthread_mutex_lock(&obj->_var_mutex);
+    
     /*
      * If the counter is 0, then its the first connection,
      * set the initial size of the buffer and create it
@@ -1091,13 +1111,11 @@ inline __attribute__ (always_inline) static int _thcon_alloc_fds(thcon* obj)
 	     * Free the existing buffer and set the new pointer to object
 	     * buffer pointer
 	     */
-	    pthread_mutex_lock(&obj->_var_mutex);
 	    free(obj->_var_cons_fds);
 	    obj->_var_cons_fds = _t_buff;
-	    pthread_mutex_unlock(&obj->_var_mutex);
 	    /*--------------------------------------------------*/	    
 	}
-
+    pthread_mutex_unlock(&obj->_var_mutex);
     return 0;
 }
 
@@ -1111,9 +1129,11 @@ inline __attribute__ ((always_inline)) static int _thcon_adjust_fds(thcon* obj, 
 {
     int* _t_buff;
     int i, a;
+    
     /* check if connection count is 0, exit method */
+    pthread_mutex_lock(obj->_var_mutex);
     if(obj->var_num_conns < 1)
-	return 0;
+	goto _thcon_adjust_fds_exit;
 
     /* allocate memory for the new buffer */
     _t_buff = (int*) calloc((obj->var_num_conns-1), sizeof(int));
@@ -1135,7 +1155,10 @@ inline __attribute__ ((always_inline)) static int _thcon_adjust_fds(thcon* obj, 
     /************* Mutex Lock This Section **************/    
     free(obj->_var_cons_fds);
     obj->_var_cons_fds = _t_buff;
-    /*--------------------------------------------------*/    
+    /*--------------------------------------------------*/
+
+ _thcon_adjust_fds_exit:
+    pthread_mutex_unlock(obj->_var_mutex);    
     return 0;
 }
 
@@ -1169,13 +1192,17 @@ static void* _thcon_thread_function_write_server(void* obj)
 		continue;
 
 	    /* Pop message from queue */
+	    pthread_mutex_lock(obj->_var_mutex_q);
 	    gqueue_out(&_obj->_msg_queue, (void**) &_msg);
+	    pthread_mutex_unlock(obj->_var_mutex_q);
 
 	    /* write to all sockets */
 	    /*--------------------------------------------------*/
 	    /************* Mutex Lock This Section **************/
+	    pthread_mutex_lock(obj->_var_mutex);
 	    for(i = 0; i < _obj->var_num_conns; i++;)
 		_thcon_send_info(_obj->_var_cons_fds[i], _msg->memory, _msg->size);
+	    pthread_mutex_unlock(obj->_var_mutex);
 	    /*--------------------------------------------------*/
 
 	    /* free memory */
