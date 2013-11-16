@@ -88,8 +88,6 @@ static void* _thcon_thread_function_server(void* obj);
 static void* _thcon_thread_function_write_server(void* obj);
 
 static void _thcon_thread_cleanup_server(void* obj);
-static void _thcon_thread_cleanup_client(void* obj);
-
 
 
 /* create socket and for server mode bind to it */
@@ -1070,7 +1068,9 @@ static int _thcon_accept_conn(thcon* obj, int list_sock, int epoll_inst, struct 
 			}
 		    else
 			{
+#ifdef HTML_STACK_DEBUG_MODE			    
 			    fprintf(stderr, "Accept handling error\n");
+#endif
 			    break;
 			}
 		}
@@ -1080,9 +1080,11 @@ static int _thcon_accept_conn(thcon* obj, int list_sock, int epoll_inst, struct 
 				_hbuf, NI_MAXHOST,
 				_sbuf, NI_MAXSERV,
 				NI_NUMERICHOST | NI_NUMERICSERV);
-
+#ifdef HTML_STACK_DEBUG_MODE
 	    if(_stat == 0)
 		fprintf(stdout, "Accepted connection from %s on port %s\n", _hbuf, _sbuf);
+#endif
+	    
 
 	    /* make the connection non blocking  and add to the epoll instance */
 	    _thcon_make_socket_nonblocking(_fd);
@@ -1245,7 +1247,7 @@ inline __attribute__ ((always_inline)) static int _thcon_adjust_fds(thcon* obj, 
  */
 static void* _thcon_thread_function_write_server(void* obj)
 {
-    int i;
+    int i, _old_state;
     thcon* _obj;
     struct _curl_mem* _msg;
     if(obj == NULL)
@@ -1256,9 +1258,13 @@ static void* _thcon_thread_function_write_server(void* obj)
 
     while(1)
 	{
+	    pthread_testcancel(void);
+	    
 	    /* wait on semaphore */
 	    sem_wait(&obj->_var_sem);
-
+	    
+	    pthread_testcancel(void);
+	    
 	    /*
 	     * If the message queue is empty we continue the loop
 	     * and wait on semaphore until, posted from enqueu
@@ -1267,12 +1273,16 @@ static void* _thcon_thread_function_write_server(void* obj)
 	    if(gqueue_count(&obj->_msg_queue) == 0)
 		continue;
 
+    	    pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &_old_state);
+	    
 	    /* Pop message from queue */
 	    pthread_mutex_lock(obj->_var_mutex_q);
 	    gqueue_out(&_obj->_msg_queue, (void**) &_msg);
 	    pthread_mutex_unlock(obj->_var_mutex_q);
 
-	    /* write to all sockets */
+	    /*
+	     * Write to all sockets. Cancellation state is disable between the write.
+	     */
 	    /*--------------------------------------------------*/
 	    /************* Mutex Lock This Section **************/
 	    pthread_mutex_lock(obj->_var_mutex);
@@ -1284,6 +1294,10 @@ static void* _thcon_thread_function_write_server(void* obj)
 	    /* free memory */
 	    free(_msg->memory);
 	    free(_msg);
+	    _msg->memory = NULL;
+	    _msg = NULL;
+	    
+   	    pthread_setcancelstate(_old_state, NULL);	    
 	}
 
     return NULL;
