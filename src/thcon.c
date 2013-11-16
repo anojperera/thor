@@ -372,6 +372,44 @@ int thcon_start(thcon* obj)
 	}
      return 0;
 }
+/*
+ * Stop connection and close all socekts.
+ * On server mode write method is closed first and thread is joined.
+ * Subsequently, reader method is joined to the main thread.
+ * This is to prevent possible race conditions on socket descriptor
+ * array and number of connection variables.
+ */
+int thcon_stop(thcon* obj)
+{
+    if(obj == NULL)
+	return -1;
+    
+    /* If there is not server running, exit method */
+    if(obj->_var_con_stat == thcon_disconnected)
+	return -1;
+
+    /* indicate server is stopped */
+    obj->_var_con_stat = thcon_disconnected;
+    
+    /* post sem to proceed with quit */
+    semt_post(&obj->_var_sem);
+    
+    /*
+     * In the server mode, first stop and join the write operations.
+     */
+    pthread_cancel(obj->_var_svr_write_thread);
+    pthread_join(obj->_var_svr_write_thread, NULL);
+
+    /*
+     * Stop connection handling mode and join to the main thread.
+     */
+    pthread_cancel(obj->_var_run_thread);
+    pthread_join(obj->_var_run_thread, NULL);
+    
+       
+    return 0;
+    
+}
 
 /* send information to the socket */
 int thcon_send_info(thcon* obj, void* data, sizt_t sz)
@@ -890,10 +928,15 @@ static void* _thcon_thread_function_server(void* obj)
     /* allocate memory for the incomming connections */
     _obj->_var_cons_fds = (int*) calloc(THCON_MAX_CLIENTS, sizeof(int));
     
+    /* indicate server is idling */
+    _obj->_var_con_stat = thcon_connected;
+    
     /* main event loop */
     while(1)
 	{
+	    /* check for cancel here */
 	    pthread_testcancel(void);
+	    
 	    _n = epoll_wait(_e_sock, _events, THCON_MAX_EVENTS, -1);
 	    for(_i = 0; _i < _n; _i++)
 		{
@@ -1251,6 +1294,7 @@ static void* _thcon_thread_function_write_server(void* obj)
  */
 static void _thcon_thread_cleanup_server(void* obj)
 {
+    int i;
     thcon* _obj;
     
     if(obj == NULL)
@@ -1262,6 +1306,18 @@ static void _thcon_thread_cleanup_server(void* obj)
     if(_obj->_var_event_col != NULL)
 	free(_obj->_var_event_col);
     _obj->_var_event_col = NULL;
+
+    /* close open connections */
+    for(i=0; i<_obj->var_num_conns; i++)
+	close(_obj->_var_cons_fds[i]);
+    /*
+     * All open file descriptors are closed.
+     * This thread join should proceed, closing the write method.
+     */
+    free(_obj->_var_cons_fds);
+    _obj->_var_num_conns = 0;
+    
+    
     if(_obj->_var_epol_inst)
 	close(*_obj->_var_epol_inst);
     _obj->_var_epol_inst = NULL;
