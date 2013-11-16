@@ -388,6 +388,7 @@ int thcon_stop(thcon* obj)
 
     /* indicate server is stopped */
     obj->_var_con_stat = thcon_disconnected;
+
     
     /* post sem to proceed with quit */
     semt_post(&obj->_var_sem);
@@ -395,8 +396,11 @@ int thcon_stop(thcon* obj)
     /*
      * In the server mode, first stop and join the write operations.
      */
-    pthread_cancel(obj->_var_svr_write_thread);
-    pthread_join(obj->_var_svr_write_thread, NULL);
+    if(obj->_var_con_mode != thcon_mode_client)
+	{
+	    pthread_cancel(obj->_var_svr_write_thread);
+	    pthread_join(obj->_var_svr_write_thread, NULL);
+	}
 
     /*
      * Stop connection handling mode and join to the main thread.
