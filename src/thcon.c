@@ -164,11 +164,12 @@ int thcon_init(thcon* obj, thcon_mode mode)
     obj->_thcon_recv_callback = NULL;
     obj->_thcon_write_callback = NULL;
 
-    /* initialise queue */
+    /* initialise queue and locks */
+    gqueue_new(&obj->_msg_queue, _thcon_queue_del_helper);
     sem_init(&obj->_var_sem, 0, 0);
     pthread_mutex_init(&obj->_var_mutex, NULL);
     pthread_mutex_init(&obj->_var_mutex_q, NULL);
-    gqueue_new(&obj->_msg_queue, _thcon_queue_del_helper);
+
     
     return 0;
 }
