@@ -1344,3 +1344,25 @@ static void _thcon_thread_cleanup_server(void* obj)
     
 }
 
+/*
+ * Delete helper method for clearing queue.
+ */
+static void _thcon_queue_del_helper(void* data)
+{
+    struct _curl_mem* _mem;
+    if(!data)
+	return;
+
+    /* cast data object to */
+    _mem = (struct _curl_mem*) data;
+
+    /* check and free buffers */
+    if(_mem->memory && _mem->size)
+	free(_mem->memory);
+    _mem->memory = NULL;
+
+    /* free object itself */
+    free(_mem);
+    
+    return;
+}
