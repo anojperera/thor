@@ -159,6 +159,7 @@ int thcon_init(thcon* obj, thcon_mode mode)
     
     obj->_var_cons_fds = NULL;
     obj->_var_epol_inst = NULL;
+    obj->_var_event_col = NULL;
 
     obj->var_my_info._init_flg = 0;
     obj->_ext_obj = NULL;
@@ -191,6 +192,7 @@ void thcon_delete(thcon* obj)
 	free(obj->_var_cons_fds);
     obj->_var_cons_fds = NULL;
     obj->_var_epol_inst = NULL;
+    obj->_var_event_col = NULL;    
 
     /* delete queue */
     gqueue_delete(&obj->_msg_queue);
@@ -836,7 +838,7 @@ static int _thcon_send_info(int fd, void* msg, size_t sz)
 static void* _thcon_thread_function_server(void* obj)
 {
     /* counters */    
-    int _i = 0, _n = 0;
+    int _i = 0, _n = 0, _old_state;
     int _e_sock = 0;
     int _stat = 0, _complete = 0;
     thcon* _obj;
@@ -846,6 +848,12 @@ static void* _thcon_thread_function_server(void* obj)
     if(obj == NULL)
 	return NULL;
 
+    /* Thread clean up handler. */
+    pthread_cleanup_push(_thcon_thread_function_server, obj);
+    
+    /* Disable thread cancelling temporarily */
+    pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &_old_state)
+    
     /* cast object pointer to the correct type */
     _obj = (thcon*) obj;
 
@@ -873,13 +881,19 @@ static void* _thcon_thread_function_server(void* obj)
     if(epoll_ctl(_e_sock, EPOLL_CTL_ADD, _obj->var_con_sock, &_event))
 	goto epol_exit;
 
-    _events = calloc(THCON_MAX_EVENTS, sizeof(struct epoll_event));
-
+    /* Restore thread cancelling */
+    pthread_setcancelstate(_old_state, NULL);
+    pthread_testcancel(void);
+    _events = (struct epoll_event*) calloc(THCON_MAX_EVENTS, sizeof(struct epoll_event));
+    _obj->_var_event_col = (void*) _events;
+    
     /* allocate memory for the incomming connections */
     _obj->_var_cons_fds = (int*) calloc(THCON_MAX_CLIENTS, sizeof(int));
+    
     /* main event loop */
     while(1)
 	{
+	    pthread_testcancel(void);
 	    _n = epoll_wait(_e_sock, _events, THCON_MAX_EVENTS, -1);
 	    for(_i = 0; _i < _n; _i++)
 		{
@@ -897,10 +911,13 @@ static void* _thcon_thread_function_server(void* obj)
 				    _thcon_adjust_fds(_obj, _events[i].data.fd);
 				    close(_events[i].data.fd);
 				    
+				    pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &_old_state);
 				    pthread_mutex_lock(_obj->_var_mutex);
 				    _obj->var_num_conns--;
 				    pthread_mutex_unlock(_obj->_var_mutex);
+				    pthread_setcancelstate(&_old_state, NULL);
 				}
+			    pthread_testcancel(void);
 			    continue;
 			}
 		    else if(_obj->var_con_sock == _events[_i].data.fd)
@@ -910,7 +927,10 @@ static void* _thcon_thread_function_server(void* obj)
 			     * Call internal method to haddle the incomming connection and add
 			     * to the epoll instance.
 			     */
+			    pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &_old_state);
 			    _thcon_accept_conn(_obj, _obj->var_con_sock, _e_sock, &_event);
+			    pthread_setcancelstate(&_old_state, NULL);
+			    pthread_testcancel(void);
 			    continue;
 			}
 		    else
@@ -946,19 +966,31 @@ static void* _thcon_thread_function_server(void* obj)
 			{
 			    /* remote client has closed the connection */
 			    fprintf(stdout, "Connection closed on socket - %i\n", _event[i].data.fd);
+			    pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &_old_state);			    
 			    _thcon_adjust_fds(_obj, _event[i].data.fd);
 
 			    /* decrement counter in a mutex */
+
 			    pthread_mutex_lock(_obj->_var_mutex);
 			    _obj->var_num_conns--;
 			    pthread_mutex_unlock(_obj->_var_mutex);
+
 			    
 			    /* close connection so that epoll shall remove the watching descriptor */
 			    close(_event[i].data.fd);
+    			    pthread_setcancelstate(&_old_state, NULL);
+			    pthread_testcancel(void);
+			    
 			}
 		}
 	}
 
+    /*
+     * Pthread clean up pop handler not executed when this point is reached
+     * natuarally.
+     */
+    pthread_cleanup_pop(0);
+    free(_events);
  epoll_exit:
     if(_e_sock)
 	close(_e_sock);
@@ -967,6 +999,7 @@ static void* _thcon_thread_function_server(void* obj)
     if(_obj->var_con_sock)
 	close(_e_sock);
 
+    pthread_exit(NULL);
     return NULL;
 }
 
@@ -1212,3 +1245,32 @@ static void* _thcon_thread_function_write_server(void* obj)
 
     return NULL;
 }
+
+/*
+ * Thread cleanup handler for the server method.
+ */
+static void _thcon_thread_cleanup_server(void* obj)
+{
+    thcon* _obj;
+    
+    if(obj == NULL)
+	return;
+
+    /* Cast to correct object */
+    _obj = (thcon*) obj;
+
+    if(_obj->_var_event_col != NULL)
+	free(_obj->_var_event_col);
+    _obj->_var_event_col = NULL;
+    if(_obj->_var_epol_inst)
+	close(*_obj->_var_epol_inst);
+    _obj->_var_epol_inst = NULL;
+
+    /* create connection socekt */
+    if(_obj->var_con_sock)
+	close(_obj->var_con_sock);
+
+    return;
+    
+}
+
