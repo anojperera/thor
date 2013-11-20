@@ -93,6 +93,9 @@ typedef unsigned int (*gthor_disb_fptr)(void*, int);
 
 
 /*===========================================================================*/
+#define THORNIFIX_MSG_CMD_READ 0
+#define THORNIFIX_MSG_CMD_WRITE_A0 1
+
 /* Message handling methods and macros */
 #define THORNIFIX_MSG_ELM_NUM 16
 #define THORNIFIX_MSG_BUFF_ELM_SZ 8
@@ -106,23 +109,23 @@ struct thor_msg
 
     /* analogue output channels */
     /*--------------------------------------------*/
-    double _ai0_val __attribute__ ((aligned (8)));
-    double _ai1_val __attribute__ ((aligned (8)));
+    double _ao0_val __attribute__ ((aligned (8)));
+    double _ao1_val __attribute__ ((aligned (8)));
     /*--------------------------------------------*/
 
     /* analogue input channels */
     /*--------------------------------------------*/    
-    double _ao0_val __attribute__ ((aligned (8)));
-    double _ao1_val __attribute__ ((aligned (8)));
-    double _ao2_val __attribute__ ((aligned (8)));
-    double _ao3_val __attribute__ ((aligned (8)));
-    double _ao4_val __attribute__ ((aligned (8)));
-    double _ao5_val __attribute__ ((aligned (8)));
-    double _ao6_val __attribute__ ((aligned (8)));
-    double _ao7_val __attribute__ ((aligned (8)));
-    double _ao8_val __attribute__ ((aligned (8)));
-    double _ao9_val __attribute__ ((aligned (8)));
-    double _ao10_val __attribute__ ((aligned (8)));
+    double _ai0_val __attribute__ ((aligned (8)));
+    double _ai1_val __attribute__ ((aligned (8)));
+    double _ai2_val __attribute__ ((aligned (8)));
+    double _ai3_val __attribute__ ((aligned (8)));
+    double _ai4_val __attribute__ ((aligned (8)));
+    double _ai5_val __attribute__ ((aligned (8)));
+    double _ai6_val __attribute__ ((aligned (8)));
+    double _ai7_val __attribute__ ((aligned (8)));
+    double _ai8_val __attribute__ ((aligned (8)));
+    double _ai9_val __attribute__ ((aligned (8)));
+    double _ai10_val __attribute__ ((aligned (8)));
     /*--------------------------------------------*/
     
     /* digital input channels */
@@ -141,7 +144,6 @@ struct thor_msg
     memset((void*) (obj), 0, THORINIFIX_MSG_SZ)
 
 #define thornifix_encode_msg(obj, buff, size) \
-    thorinifix_init_msg(obj); \
     memset((void*) (buff), 0, size); \
     sprintf((buff),		     \
 	    "%i|"		     \

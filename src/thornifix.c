@@ -94,19 +94,19 @@ int thornifix_decode_msg(const char* buff, size_t size, struct thor_msg* msg)
 
     /* copy to message buffer */
     msg->_cmd = _msg_buff[0][0] != '\0'? atoi(_msg_buff[0]) : 0;
-    msg->_ai0_val = _msg_buff[1][0] != '\0'? atof(_msg_buff[1]) : 0;
-    msg->_ai1_val = _msg_buff[2][0] != '\0'? atof(_msg_buff[2]) : 0;
-    msg->_ao0_val = _msg_buff[3][0] != '\0'? atof(_msg_buff[3]) : 0;
-    msg->_ao1_val = _msg_buff[4][0] != '\0'? atof(_msg_buff[4]) : 0;
-    msg->_ao2_val = _msg_buff[5][0] != '\0'? atof(_msg_buff[5]) : 0;
-    msg->_ao3_val = _msg_buff[6][0] != '\0'? atof(_msg_buff[6]) : 0;
-    msg->_ao4_val = _msg_buff[7][0] != '\0'? atof(_msg_buff[7]) : 0;
-    msg->_ao5_val = _msg_buff[8][0] != '\0'? atof(_msg_buff[8]) : 0;
-    msg->_ao6_val = _msg_buff[9][0] != '\0'? atof(_msg_buff[9]) : 0;
-    msg->_ao7_val = _msg_buff[10][0] != '\0'? atof(_msg_buff[10]) : 0;
-    msg->_ao8_val = _msg_buff[11][0] != '\0'? atof(_msg_buff[11]) : 0;
-    msg->_ao9_val = _msg_buff[12][0] != '\0'? atof(_msg_buff[12]) : 0;
-    msg->_ao10_val = _msg_buff[13][0] != '\0'? atof(_msg_buff[13]) : 0;
+    msg->_ao0_val = _msg_buff[1][0] != '\0'? atof(_msg_buff[1]) : 0;
+    msg->_ao1_val = _msg_buff[2][0] != '\0'? atof(_msg_buff[2]) : 0;
+    msg->_ai0_val = _msg_buff[3][0] != '\0'? atof(_msg_buff[3]) : 0;
+    msg->_ai1_val = _msg_buff[4][0] != '\0'? atof(_msg_buff[4]) : 0;
+    msg->_ai2_val = _msg_buff[5][0] != '\0'? atof(_msg_buff[5]) : 0;
+    msg->_ai3_val = _msg_buff[6][0] != '\0'? atof(_msg_buff[6]) : 0;
+    msg->_ai4_val = _msg_buff[7][0] != '\0'? atof(_msg_buff[7]) : 0;
+    msg->_ai5_val = _msg_buff[8][0] != '\0'? atof(_msg_buff[8]) : 0;
+    msg->_ai6_val = _msg_buff[9][0] != '\0'? atof(_msg_buff[9]) : 0;
+    msg->_ai7_val = _msg_buff[10][0] != '\0'? atof(_msg_buff[10]) : 0;
+    msg->_ai8_val = _msg_buff[11][0] != '\0'? atof(_msg_buff[11]) : 0;
+    msg->_ai9_val = _msg_buff[12][0] != '\0'? atof(_msg_buff[12]) : 0;
+    msg->_ai10_val = _msg_buff[13][0] != '\0'? atof(_msg_buff[13]) : 0;
     msg->_di0_val = _msg_buff[14][0] != '\0'? atof(_msg_buff[14]) : 0;
     msg->_di1_val = _msg_buff[15][0] != '\0'? atof(_msg_buff[15]) : 0;
 
