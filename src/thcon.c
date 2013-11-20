@@ -154,7 +154,7 @@ int thcon_init(thcon* obj, thcon_mode mode)
     obj->var_num_conns = 0;
     obj->var_geo_flg = 0;
     obj->var_ip_flg; = 0;
-    
+
     obj->_var_cons_fds = NULL;
     obj->_var_epol_inst = NULL;
     obj->_var_event_col = NULL;
@@ -170,7 +170,7 @@ int thcon_init(thcon* obj, thcon_mode mode)
     pthread_mutex_init(&obj->_var_mutex, NULL);
     pthread_mutex_init(&obj->_var_mutex_q, NULL);
 
-    
+
     return 0;
 }
 
@@ -180,18 +180,18 @@ void thcon_delete(thcon* obj)
     obj->_ext_obj = NULL;
     obj->_thcon_recv_callback = NULL;
     obj->_thcon_write_callback = NULL;
-    
+
     /* check scope */
     sem_destroy(obj->_var_sem);
     pthread_mutex_destroy(&obj->_var_mutex);
     pthread_mutex_destroy(&obj->_var_mutex_q);
-    
+
     /* delete socket fd array */
     if(obj->var_num_conns && obj->_var_cons_fds)
 	free(obj->_var_cons_fds);
     obj->_var_cons_fds = NULL;
     obj->_var_epol_inst = NULL;
-    obj->_var_event_col = NULL;    
+    obj->_var_event_col = NULL;
 
     /* delete queue */
     gqueue_delete(&obj->_msg_queue);
@@ -254,7 +254,7 @@ int thcon_get_my_geo(thcon* obj)
 
     obj->var_geo_flg = 1;
     obj->var_ip_flg = 1;
-    
+
     return 0;
 }
 
@@ -269,7 +269,7 @@ int thcon_contact_admin(thcon* obj, const char* admin_url)
     struct curl_httppost* _last_ptr = NULL;
     struct curl_slist* _header_list = NULL;
     static const char _buff[] = "Expect:";
-    
+
     if(obj == NULL || admin_url == NULL)
 	return -1;
 
@@ -285,7 +285,7 @@ int thcon_contact_admin(thcon* obj, const char* admin_url)
 		 CURLFORM_COPYNAME, THCON_FORM_IP,
 		 CURLFORM_COPYCONTENTS, obj->var_my_info._my_address,
 		 CURLFORM_END);
-    
+
     curl_formadd(&_form_post,
 		 &_last_ptr,
 		 CURLFORM_COPYNAME, THCON_GEO_COUNTRY,
@@ -327,13 +327,13 @@ int thcon_contact_admin(thcon* obj, const char* admin_url)
     curl_easy_setopt(_curl, CURLOPT_URL, admin_url);
     curl_easy_setopt(_curl, CURLOPT_HTTPHEADER, _header_list);
     curl_easy_setopt(_curl, CURLOPT_HTTPPOST, _form_post);
-    
+
 
     _res = curl_easy_perform(_curl);
 
     /* check for errors */
     curl_easy_cleanup(_curl);
-    
+
  contact_admin_cleanup:
     curl_formfree(_form_post);
     curl_slist_free_all(_header_list);
@@ -382,7 +382,7 @@ int thcon_stop(thcon* obj)
 {
     if(obj == NULL)
 	return -1;
-    
+
     /* If there is not server running, exit method */
     if(obj->_var_con_stat == thcon_disconnected)
 	return -1;
@@ -390,10 +390,10 @@ int thcon_stop(thcon* obj)
     /* indicate server is stopped */
     obj->_var_con_stat = thcon_disconnected;
 
-    
+
     /* post sem to proceed with quit */
     semt_post(&obj->_var_sem);
-    
+
     /*
      * In the server mode, first stop and join the write operations.
      */
@@ -408,10 +408,10 @@ int thcon_stop(thcon* obj)
      */
     pthread_cancel(obj->_var_run_thread);
     pthread_join(obj->_var_run_thread, NULL);
-    
-       
+
+
     return 0;
-    
+
 }
 
 /* send information to the socket */
@@ -424,7 +424,7 @@ int thcon_send_info(thcon* obj, void* data, sizt_t sz)
     /* check if the connection was made*/
     if(obj->_var_con_stat == thcon_disconnected)
 	return -1;
-    
+
     /* call private method for sending the information */
     for(i = 0; i < obj->var_num_conns; i++)
 	_thcon_send_info(obj->_var_cons_fds[i], data, sz);
@@ -438,15 +438,15 @@ int thcon_multicast(thcon* obj, void* data, size_t sz)
 {
     struct _curl_mem* _msg;
     int i;
-    
+
     /* check for argument pointers */
     if(!obj || !data || !sz)
 	return -1;
-    
+
     /* check it its running in the server mode */
     if(obj->_var_con_mode == thcon_disconnected)
 	return -1;
-    
+
     _msg = (struct _curl_mem*) malloc(sizeof(struct _curl_mem));
     _msg->memory = (char*) malloc(sz);
     memcpy((void*) _msg->memory, data, sz);
@@ -533,7 +533,7 @@ static int _thcon_create_connection(thcon* obj, int _con_mode)
     /* client mode was selected set the accept socket same as connect socket */
     if(obj->_var_con_mode == thcon_mode_client)
 	obj->var_acc_sock = obj->var_con_sock;
-    
+
     obj->_var_con_stat = thcon_connected;
     return 0;
 }
@@ -652,7 +652,7 @@ static int _parse_html_geo(const struct _curl_mem* _mem, struct thcon_host_info*
      * This section to be handled by the configuration file
      *
      */
-    
+
     _p_stack.stack_ix = 0;
     _p_stack.stack_count = 11;
 
@@ -678,9 +678,9 @@ static int _parse_html_geo(const struct _curl_mem* _mem, struct thcon_host_info*
     HTML_PARSER_ELEM_SET_DIR(&_p_stack, 10, _html_nav_side, 3);
 
     HTML_PARSER_ELEM_SET_DIR(&_p_stack_x, 0, _html_nav_side, 7);
-    
+
     /*----------------------------------------------------------------------*/
-    
+
     /* iterate through the nodes */
     _search = NULL;
     while(_node_ptr)
@@ -752,7 +752,7 @@ static int _parse_html_geo(const struct _curl_mem* _mem, struct thcon_host_info*
 					}
 
 				    _child_ptr =  xmlNextElementSibling(_ptr);
-				    i++;				    
+				    i++;
 				}
 			}
 		    break;
@@ -813,19 +813,19 @@ static void* _thcon_thread_function_client(void* obj)
     int _stat = 0;
     int _cancel_state = 0;
     char _t_buff[THORNIFIX_MSG_BUFF_SZ];
-    
+
     /* check object pointer */
     if(obj == NULL)
 	return NULL;
 
     /* initialise buffer */
     memset((void*) _t_buff, 0, THORNIFIX_MSG_BUFF_SZ);
-    
+
     /* cast object pointer to connection type */
     _obj = (thcon*) obj;
-    
+
     pthread_testcancel(void);
-    
+
     /* loop while connection is active and recieving messages */
     do
 	{
@@ -835,7 +835,7 @@ static void* _thcon_thread_function_client(void* obj)
 
 	    /* disable thread cancel state */
 	    pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &_cancel_state);
-	    
+
 	    /*
 	     * If a callback pointer was set, it shall be called immediately.
 	     * Later on, the message should be queued and have the callback pop following
@@ -846,7 +846,7 @@ static void* _thcon_thread_function_client(void* obj)
 
 	    /* enable thread cancel state */
 	    pthread_setcancelstate(_cancel_state, NULL);
-	    
+
 	    pthread_testcancel(void);
 	    /* sleep for 100ms to save processor cycle time */
 	    usleep(THCON_CLIENT_RECV_SLEEP_TIME);
@@ -859,7 +859,7 @@ static void* _thcon_thread_function_client(void* obj)
 static int _thcon_send_info(int fd, void* msg, size_t sz)
 {
     size_t _buff_sent = 0;
-    
+
     /*
      * Send message in non blocking mode. Iterate until the message was sent.
      *
@@ -878,23 +878,23 @@ static int _thcon_send_info(int fd, void* msg, size_t sz)
  */
 static void* _thcon_thread_function_server(void* obj)
 {
-    /* counters */    
+    /* counters */
     int _i = 0, _n = 0, _old_state;
     int _e_sock = 0;
     int _stat = 0, _complete = 0;
     thcon* _obj;
     struct epoll_event _event, *_events;
-    
+
     /* check for object pointer */
     if(obj == NULL)
 	return NULL;
 
     /* Thread clean up handler. */
     pthread_cleanup_push(_thcon_thread_function_server, obj);
-    
+
     /* Disable thread cancelling temporarily */
     pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &_old_state)
-    
+
     /* cast object pointer to the correct type */
     _obj = (thcon*) obj;
 
@@ -927,24 +927,24 @@ static void* _thcon_thread_function_server(void* obj)
     pthread_testcancel(void);
     _events = (struct epoll_event*) calloc(THCON_MAX_EVENTS, sizeof(struct epoll_event));
     _obj->_var_event_col = (void*) _events;
-    
+
     /* allocate memory for the incomming connections */
     _obj->_var_cons_fds = (int*) calloc(THCON_MAX_CLIENTS, sizeof(int));
-    
+
     /* indicate server is idling */
     _obj->_var_con_stat = thcon_connected;
-    
+
     /* main event loop */
     while(1)
 	{
 	    /* check for cancel here */
 	    pthread_testcancel(void);
-	    
+
 	    _n = epoll_wait(_e_sock, _events, THCON_MAX_EVENTS, -1);
 	    for(_i = 0; _i < _n; _i++)
 		{
 		    _complete = 0;
-		    
+
 		    /* check for errors */
 		    if((_events[_i].events & EPOLLERR) ||
 		       (_events[_i].events & EPOLLHUP) ||
@@ -956,7 +956,7 @@ static void* _thcon_thread_function_server(void* obj)
 				{
 				    _thcon_adjust_fds(_obj, _events[i].data.fd);
 				    close(_events[i].data.fd);
-				    
+
 				    pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &_old_state);
 				    pthread_mutex_lock(_obj->_var_mutex);
 				    _obj->var_num_conns--;
@@ -997,7 +997,7 @@ static void* _thcon_thread_function_server(void* obj)
 					     */
 					    if(errno != EAGAIN)
 						_complete = 1;
-					    
+
 					    break;
 					}
 				    else if(_stat == 0)
@@ -1006,13 +1006,13 @@ static void* _thcon_thread_function_server(void* obj)
 					    break;
 					}
 				}
-			    
+
 			}
 		    if(_complete)
 			{
 			    /* remote client has closed the connection */
 			    fprintf(stdout, "Connection closed on socket - %i\n", _event[i].data.fd);
-			    pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &_old_state);			    
+			    pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &_old_state);
 			    _thcon_adjust_fds(_obj, _event[i].data.fd);
 
 			    /* decrement counter in a mutex */
@@ -1021,12 +1021,12 @@ static void* _thcon_thread_function_server(void* obj)
 			    _obj->var_num_conns--;
 			    pthread_mutex_unlock(_obj->_var_mutex);
 
-			    
+
 			    /* close connection so that epoll shall remove the watching descriptor */
 			    close(_event[i].data.fd);
     			    pthread_setcancelstate(&_old_state, NULL);
 			    pthread_testcancel(void);
-			    
+
 			}
 		}
 	}
@@ -1056,7 +1056,7 @@ static int _thcon_accept_conn(thcon* obj, int list_sock, int epoll_inst, struct 
     socklen_t _in_len;
     int _fd, _stat;
     char _hbuf[NI_MAXHOST], _sbuf[NI_MAXSERV];
-    
+
     while(1)
 	{
 	    _fd = accept(list_sock, &_in_addr, &_in_len);
@@ -1073,7 +1073,7 @@ static int _thcon_accept_conn(thcon* obj, int list_sock, int epoll_inst, struct 
 			}
 		    else
 			{
-#ifdef HTML_STACK_DEBUG_MODE			    
+#ifdef HTML_STACK_DEBUG_MODE
 			    fprintf(stderr, "Accept handling error\n");
 #endif
 			    break;
@@ -1089,7 +1089,7 @@ static int _thcon_accept_conn(thcon* obj, int list_sock, int epoll_inst, struct 
 	    if(_stat == 0)
 		fprintf(stdout, "Accepted connection from %s on port %s\n", _hbuf, _sbuf);
 #endif
-	    
+
 
 	    /* make the connection non blocking  and add to the epoll instance */
 	    _thcon_make_socket_nonblocking(_fd);
@@ -1156,7 +1156,7 @@ inline __attribute__ (always_inline) static int _thcon_alloc_fds(thcon* obj)
      * num connection variable being accessed in different places.
      */
     pthread_mutex_lock(&obj->_var_mutex);
-    
+
     /*
      * If the counter is 0, then its the first connection,
      * set the initial size of the buffer and create it
@@ -1177,7 +1177,7 @@ inline __attribute__ (always_inline) static int _thcon_alloc_fds(thcon* obj)
 	{
 	    /* Record existing size */
 	    _t_exs_sz = obj->_var_bf_sz;
-	    
+
 	    /* New buffer size */
 	    obj->_var_bf_sz += obj->_var_bf_sz;
 
@@ -1196,7 +1196,7 @@ inline __attribute__ (always_inline) static int _thcon_alloc_fds(thcon* obj)
 	     */
 	    free(obj->_var_cons_fds);
 	    obj->_var_cons_fds = _t_buff;
-	    /*--------------------------------------------------*/	    
+	    /*--------------------------------------------------*/
 	}
     pthread_mutex_unlock(&obj->_var_mutex);
     return 0;
@@ -1212,7 +1212,7 @@ inline __attribute__ ((always_inline)) static int _thcon_adjust_fds(thcon* obj, 
 {
     int* _t_buff;
     int i, a;
-    
+
     /* check if connection count is 0, exit method */
     pthread_mutex_lock(obj->_var_mutex);
     if(obj->var_num_conns < 1)
@@ -1235,13 +1235,13 @@ inline __attribute__ ((always_inline)) static int _thcon_adjust_fds(thcon* obj, 
 
     /* free internal buffer and assign new buffer */
     /*--------------------------------------------------*/
-    /************* Mutex Lock This Section **************/    
+    /************* Mutex Lock This Section **************/
     free(obj->_var_cons_fds);
     obj->_var_cons_fds = _t_buff;
     /*--------------------------------------------------*/
 
  _thcon_adjust_fds_exit:
-    pthread_mutex_unlock(obj->_var_mutex);    
+    pthread_mutex_unlock(obj->_var_mutex);
     return 0;
 }
 
@@ -1264,12 +1264,12 @@ static void* _thcon_thread_function_write_server(void* obj)
     while(1)
 	{
 	    pthread_testcancel(void);
-	    
+
 	    /* wait on semaphore */
 	    sem_wait(&obj->_var_sem);
-	    
+
 	    pthread_testcancel(void);
-	    
+
 	    /*
 	     * If the message queue is empty we continue the loop
 	     * and wait on semaphore until, posted from enqueu
@@ -1279,7 +1279,7 @@ static void* _thcon_thread_function_write_server(void* obj)
 		continue;
 
     	    pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &_old_state);
-	    
+
 	    /* Pop message from queue */
 	    pthread_mutex_lock(obj->_var_mutex_q);
 	    gqueue_out(&_obj->_msg_queue, (void**) &_msg);
@@ -1301,8 +1301,8 @@ static void* _thcon_thread_function_write_server(void* obj)
 	    free(_msg);
 	    _msg->memory = NULL;
 	    _msg = NULL;
-	    
-   	    pthread_setcancelstate(_old_state, NULL);	    
+
+   	    pthread_setcancelstate(_old_state, NULL);
 	}
 
     return NULL;
@@ -1315,7 +1315,7 @@ static void _thcon_thread_cleanup_server(void* obj)
 {
     int i;
     thcon* _obj;
-    
+
     if(obj == NULL)
 	return;
 
@@ -1335,8 +1335,8 @@ static void _thcon_thread_cleanup_server(void* obj)
      */
     free(_obj->_var_cons_fds);
     _obj->_var_num_conns = 0;
-    
-    
+
+
     if(_obj->_var_epol_inst)
 	close(*_obj->_var_epol_inst);
     _obj->_var_epol_inst = NULL;
@@ -1346,7 +1346,7 @@ static void _thcon_thread_cleanup_server(void* obj)
 	close(_obj->var_con_sock);
 
     return;
-    
+
 }
 
 /*
@@ -1368,6 +1368,6 @@ static void _thcon_queue_del_helper(void* data)
 
     /* free object itself */
     free(_mem);
-    
+
     return;
 }

@@ -160,6 +160,12 @@ extern "C" {
     strncpy((obj)->var_port_name, name, THCON_PORT_NAME_SZ-1);		\
     (obj)->var_port_name[THCON_PORT_NAME_SZ-1] = '\0'
 
+    /* set geo location url */
+#define thcon_set_geo_ip(obj, name)					\
+    memset((void*) (obj)->var_geo_addr_url, 0, THCON_URL_BUFF_SZ);	\
+    strncpy((obj)->var_geo_addr_url, name, THCON_URL_BUFF_SZ-1);	\
+    (obj)->var_geo_addr_url[THCON_URL_BUFF_SZ-1] = '\0'
+    
     /* gets the connection status */
 #define thcon_get_conn_stat(obj)		\
     (obj)->_var_con_stat
