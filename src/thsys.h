@@ -68,7 +68,7 @@ extern "C" {
 #define thsys_set_sample_rate(obj, val)		\
     (obj)->var_sample_rate = (val>0.0? val : THSYS_DEFAULT_SAMPLE_RATE)
 #define thsys_set_external_obj(obj, val)	\
-    (obj)->var_ext_obj = val
+    (obj)->var_ext_obj = (val)
 #ifdef __cplusplus
 }
 #endif
