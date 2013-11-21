@@ -63,6 +63,11 @@ struct _thgsensor
     unsigned int _count;			/* internal buffer counter */
     unsigned int _count_flg;			/* count flag */
     void* sobj_ptr;				/* pointer to external object */
+    void* var_child;
+
+    /* Function pointers of child classes */
+    void (*var_del_fptr)(void* obj);		/* delete function pointer */
+    double (*var_get_fptr)(void* obj);		/* get function pointer */
 };
 
 #ifdef __cplusplus

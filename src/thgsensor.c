@@ -45,21 +45,22 @@ int thgsensor_new(thgsensor* obj,			/* object pointer to initialise */
     obj->_count_flg = 0;
     obj->var_out_range_flg = 0;
     obj->sobj_ptr = data;
-
+    obj->var_child = NULL;
+    obj->var_del_fptr = NULL;
     return 0;
 }
 
 /* Delete method */
 void thgsensor_delete(thgsensor* obj)
 {
-    obj->var_task = NULL;
-    
     obj->_var_cal_buff_x = NULL;
     obj->_var_cal_buff_y = NULL;
 
     obj->sobj_ptr = NULL;
     obj->var_out_range_flg = 0;    
     obj->var_init_flg = 0;
+    if(obj->var_del_fptr)
+	obj->var_del_fptr(obj->var_child);
 }
 
 /* get value */
@@ -86,7 +87,13 @@ double thgsens_get_value(thgsens* obj)
 	    obj->_count = 0;
 	    obj->_count_flg = 1;
 	}
-    return obj->var_val - (obj->var_min_val > 0.0? obj->var_min_val : 0.0);
+
+    /* Adjust calculated value if minimum value was set */
+    obj->var_val -= (obj->var_min_val > 0.0? obj->var_min_val : 0.0);
+    if(obj->var_get_fptr)
+	return obj->var_get_fptr;
+    else
+	return obj->var_val;
 }
 
 /* reset all */
