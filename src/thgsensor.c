@@ -59,8 +59,15 @@ void thgsensor_delete(thgsensor* obj)
     obj->sobj_ptr = NULL;
     obj->var_out_range_flg = 0;    
     obj->var_init_flg = 0;
+
+    /* Set delete pointers NULL */
+    obj->var_child = NULL;
+    obj->var_del_fptr = NULL;
+    
     if(obj->var_del_fptr)
 	obj->var_del_fptr(obj->var_child);
+
+    return;
 }
 
 /* get value */
