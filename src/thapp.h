@@ -49,7 +49,7 @@ struct _thapp_fptr_arr
 struct _thapp
 {
     unsigned int var_init_flg;
-
+    config_t* var_config;							/* configuration pointer */
     struct thor_msg _msg_buff;							/* message buffer */    
     thcon _var_con;								/* connection object */
 
