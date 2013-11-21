@@ -5,6 +5,7 @@
 #ifndef __THSVR_H__
 #define __THSVR_H__
 
+#include <libconfig.h>
 #include "thornifix.h"
 #include "thsys.h"
 #include "thcon.h"
