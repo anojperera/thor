@@ -1,7 +1,8 @@
 /* Generic sensor class to be inherited by all sensor
  * classes. Provides interfaces to reading and writinge
  * derives equation of the straigt line between voltage
- * and physical property */
+ * and physical property
+ */
 
 #ifndef _THGSENSOR_H_
 #define _THGSENSOR_H_
@@ -9,11 +10,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
-#if defined (WIN32) || defined (_WIN32)
-#include <NIDAQmx.h>
-#else
-#include <NIDAQmxBase.h>
-#endif
 #include "thornifix.h"
 #include "thbuff.h"
 
@@ -35,11 +31,13 @@ typedef struct _thgsensor thgsensor;
 
 struct _thgsensor
 {
+    unsigned int var_init_flg;			/* flag to initialise */
+    unsigned int var_out_range_flg;		/* flag to the sensor is out of range */
+    
     char var_ch_name[THGS_CH_NAME_SZ];		/* channel name */
     double var_ave_buff[THGS_CH_RBUFF_SZ];	/* averaging buffer */
     double _var_ave_buff;
     
-    TaskHandle* var_task;			/* pointer to task handle */
 
     /* calibration buffers */
     const double* _var_cal_buff_x;		/* calibration buffer x */
@@ -52,7 +50,11 @@ struct _thgsensor
     double var_max;				/* maximum physical dimension */
     
     double var_val;				/* sensor return value */
-    float64 var_raw;				/* raw voltage value from sensor */
+    double var_raw;				/* raw voltage value from sensor */
+    double var_min_val;				/* If the value is set, this can be used to reset the
+						 * value of the sensor. Useful for resetting to the environment
+						 * values.
+						 */
 
     unsigned int var_termflg;			/* termination flag for data gathering */
     unsigned int _var_raw_set;			/* flag to indicate raw value set */    
@@ -69,10 +71,8 @@ extern "C" {
 
     /* Constructor with function pointer and channel name */
     int thgsensor_new(thgsensor* obj,		/* object pointer to initialise */
-		      const char* ch_name,	/* channel name */
-		      TaskHandle* task,		/* NI task handle */
 		      void* data);		/* optional external object pointer */
-
+    
     /* destructor */
     void thgsensor_delete(thgsensor* obj); 
 
@@ -80,7 +80,10 @@ extern "C" {
     inline __attribute__ ((always_inline)) static int thgsensor_set_range(thgsensor* obj, double min, double max)
     {
 	if(obj == NULL)
-	    return 1;
+	    return -1;
+	if(obj->var_init_flg != 1)
+	    return -1;
+	
 	obj->var_min = min;
 	obj->var_max = max;
 
@@ -95,10 +98,13 @@ extern "C" {
     inline __attribute__ ((always_inline)) static int thgsens_add_value(thgsens* obj, float64 val)
     {
 	if(!obj)
-	    return 0;
+	    return -1;
+	if(obj->var_init_flg != 1)
+	    return -1;
+	
 	obj->var_raw = val;
 	obj->_var_raw_set = 1;
-	return 1;
+	return 0;
     }
 
     /* get current value */
@@ -111,12 +117,20 @@ extern "C" {
     inline __attribute__ ((always_inline)) static int thgsens_set_calibration_buffers(thgsens* obj, const double* x, const double* y, int n)
     {
 	if(obj == NULL)
-	    return 1;
+	    return -1;
+	if(obj->var_init_flg != 1)
+	    return -1;
+	
 	obj->_var_cal_buff_x = x;
 	obj->_var_cal_buff_y = y;
 	obj->_var_calbuff_sz = n;
 	return 0;
     }
+
+    /* Sets the initial value of the sensor. */
+#define thgsens_set_init_val(obj, val)		\
+    (obj)->var_min_val = val;
+    
 #ifdef __cplusplus
 }
 #endif
