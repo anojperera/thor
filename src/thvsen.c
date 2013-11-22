@@ -114,3 +114,28 @@ double thvsen_get_val(thvsen* obj)
     obj->var_val /= i-1;
     return obj->var_val;
 }
+
+/*===========================================================================*/
+/***************************** Private Methods *******************************/
+
+/* Read configuration settings */
+static int _thvsen_read_config(thvsen* obj)
+{
+    int i, _num;
+    /* check if the configuration settings has been set */
+    if(!obj->_var_setting)
+	return -1;
+
+    /* Get number of settings in the class. */
+    _num = config_setting_length(obj->_var_setting);
+
+    /* Allocate buffer */
+    obj->_var_configs = (struct senconfig*) calloc(_num, sizeof(struct senconfig));
+
+    /*
+     * Iterate over the settings collection and obtain the setting.
+     * for each statndard type. Calibration arrays are.
+     */
+
+
+}
