@@ -21,7 +21,11 @@ struct _thapp_ahu
 
     
     double var_dmp_buff[THAPP_AHU_DMP_BUFF];
-    
+
+    /*
+     * Sensor array for the AHUs.
+     * Velocity sensors.
+     */
     /* Array of function pointers */
     struct _thapp_fptr_arr _var_fptr;    
     void* var_child;
