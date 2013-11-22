@@ -100,7 +100,7 @@ extern "C" {
     }
 
     /* Add new raw value */
-    inline __attribute__ ((always_inline)) static int thgsens_add_value(thgsens* obj, float64 val)
+    inline __attribute__ ((always_inline)) static int thgsens_add_value(thgsens* obj, double val)
     {
 	if(!obj)
 	    return -1;
