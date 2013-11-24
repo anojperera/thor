@@ -16,20 +16,6 @@
 
 typedef struct _thvsen thvsen;
 
-/* Sensor configuration struct */
-struct senconfig
-{
-    unsigned int  _val_calib_elm_cnt;					/* element count */    
-    char var_sen_name_buff[THVSEN_SEN_NAME_BUFF];			/* sensor name buffer */
-    double var_range_min;						/* sensor minimum range */
-    double var_range_max;						/* sensor maximum range */
-
-    double* var_calib_x;						/* calibration buffers */
-    double* var_calib_y;						/* calibration buffers */
-
-};
-
-
 struct _thvsen
 {
     unsigned int var_init_flg;						/* Flag to indicate initialised */
