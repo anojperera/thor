@@ -36,7 +36,7 @@ struct senconfig
 struct _thsen
 {
     int var_init_flg;							/* flag to indicate the sensor object is initialised */
-    const config_setting_t* var_setting;					/* setting object pointer */
+    const config_setting_t* var_setting;				/* setting object pointer */
     
     void* var_child;							/* pointer to a child object */
     
@@ -59,14 +59,21 @@ extern "C" {
     int thsen_init(thsen* obj);
     void thsen_delete(thsen* obj);
 
-    /* helper macros for setting function pointers */
-#define thsen_set_del_fptr(obj, fptr) \
-    (obj)->var_del_fptr = fptr
-#define thsen_set_get_fptr(obj, fptr) \
-    (obj)->var_get_fptr = fptr
-#define thsen_set_setconfig_fptr(obj, fptr)	\
-    (obj)->var_set_config_fptr = fptr
+    /* Helper macros for setting function pointers */
+#define thsen_self_init_vtable(obj)		\
+    (obj)->var_fptr.var_del_fptr = NULL;	\
+    (obj)->var_fptr.var_get_fptr = NULL;	\
+    (obj)->var_fptr.var_set_config_fptr = NULL
+#define thsen_set_parent_del_fptr(obj, fptr)		\
+    (obj)->var_parent.var_fptr.var_del_fptr = fptr
+#define thsen_set_parent_get_fptr(obj, fptr)		\
+    (obj)->var_parent.var_fptr.var_get_fptr = fptr
+#define thsen_set_parent_setconfig_fptr(obj, fptr)		\
+    (obj)->var_parent.var_fptr.var_set_config_fptr = fptr
 
+    /* Return parent */
+#define thsen_return_parent(obj)		\
+    &(obj)->var_parent
     /* Get value of the sensor */
     inline __attribute__ ((always_inline)) static double thsen_get_value(thsen* obj)
     {
@@ -78,6 +85,7 @@ extern "C" {
 
 	return 0.0;
     }
+
 
     /* Set configuration data */
     inline __attribute__ ((always_inline)) static int thsen_set_config(thsen* obj, const config_setting_t* setting)
@@ -100,7 +108,12 @@ extern "C" {
 	return 0;
     }
 
-    
+    /*
+     * Read settings file and store calibration buffers
+     * into internal networks.
+     */
+    int thsen_read_config(thsen* obj);
+    int thsen_read_array(const config_setting_t* setting, size_t sz, double** arr);    
 #ifdef __cpluscplus
 }
 #endif
