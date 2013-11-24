@@ -36,6 +36,10 @@ extern "C" {
 
     extern inline double thbuff_add_new(thbuff* obj, double val);
 
+    /* Macro for getting the average value in struct */
+#define thbuff_get_ave_val(obj)			\
+    (obj)->var_avg
+
 #ifdef __cplusplus
 }
 #endif
