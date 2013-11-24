@@ -12,9 +12,10 @@ int thsen_init(thsen* obj)
     obj->_var_num_config = 0;
     obj->_var_configs = NULL;
 
-    obj->var_thsen_del_fptr = NULL;
-    obj->var_thsen_get_fptr = NULL;
-    obj->var_thsen_set_config_fptr = NULL;
+    /* initialise function pointers */
+    obj->var_fptr.var_thsen_del_fptr = NULL;
+    obj->var_fptr.var_thsen_get_fptr = NULL;
+    obj->var_fptr.var_thsen_set_config_fptr = NULL;
 
     obj->var_init_flg = 1;
     return 0;
@@ -29,8 +30,8 @@ void thsen_delete(thsen* obj)
 	free(obj->_var_configs);
     obj->_var_configs = NULL;
 
-    if(obj->var_thsen_del_fptr)
-	obj->var_thsen_del_fptr(obj->var_child);
+    if(obj->var_fptr.var_thsen_del_fptr)
+	obj->var_fptr.var_thsen_del_fptr(obj->var_child);
 
     return 0;
 }

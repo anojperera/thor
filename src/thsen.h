@@ -12,6 +12,14 @@
 
 typedef struct _thsen thsen;
 
+/* Function pointer table */
+struct thsen_vftpr
+{
+    void (*var_del_fptr)(void*);					/* Delete function pointer */
+    double (*var_get_fptr)(void*);					/* Get function pointer */
+    int (*var_set_config_fptr)(void*);					/* Calls when set configuration method is invoked */
+};
+
 /* Sensor configuration struct */
 struct senconfig
 {
@@ -39,9 +47,8 @@ struct _thsen
      * Function pointers to be called in derrived classes
      * if set they shall be called.
      */
-    void (*var_thsen_del_fptr)(void*);					/* Delete function pointer */
-    double (*var_thsen_get_fptr)(void*);				/* Get function pointer */
-    int (*var_thsen_set_config_fptr)(void*);				/* Calls when set configuration method is invoked */
+    struct thsen_vftpr var_fptr;
+
 };
 
 #ifdef __cpluscplus
@@ -52,14 +59,22 @@ extern "C" {
     int thsen_init(thsen* obj);
     void thsen_delete(thsen* obj);
 
+    /* helper macros for setting function pointers */
+#define thsen_set_del_fptr(obj, fptr) \
+    (obj)->var_del_fptr = fptr
+#define thsen_set_get_fptr(obj, fptr) \
+    (obj)->var_get_fptr = fptr
+#define thsen_set_setconfig_fptr(obj, fptr)	\
+    (obj)->var_set_config_fptr = fptr
+
     /* Get value of the sensor */
     inline __attribute__ ((always_inline)) static double thsen_get_value(thsen* obj)
     {
 	if(obj == NULL)
 	    return 0.0;
 
-	if(obj->var_thsen_get_fptr)
-	    return obj->var_thsen_get_fptr(obj->var_child);
+	if(obj->var_fptr.var_get_fptr)
+	    return obj->var_fptr.var_get_fptr(obj->var_child);
 
 	return 0.0;
     }
@@ -79,8 +94,8 @@ extern "C" {
 
 	/* Set value and call function pointer if was set */
 	obj->var_setting = setting;
-	if(obj->var_thsen_set_config_fptr)
-	    obj->var_thsen_set_config_fptr(obj->var_child);
+	if(obj->var_fptr.var_set_config_fptr)
+	    obj->var_fptr.var_set_config_fptr(obj->var_child);
 
 	return 0;
     }
