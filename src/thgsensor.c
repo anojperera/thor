@@ -2,18 +2,42 @@
 #include "thgsensor.h"
 #include <math.h>
 
+static void _thgsensor_delete(void* obj);
+static double _thgsensor_get_val(void* obj);
+
 /* Constructor */
-int thgsensor_new(thgsensor* obj,			/* object pointer to initialise */
+thsen* thgsensor_new(thgsensor* obj,			/* object pointer to initialise */
 		  void* data)				/* optional external object pointer */
 {
     int i;
+    
     /* check for arguments */
     if(obj == NULL)
-	return -1;
-    if(ch_name == NULL)
-	return -1;
-    if(task == NULL)
-	return -1;
+	{
+	    obj = (thgsensor*) malloc(sizeof(thgsensor));
+	    obj->var_int_flg = 1;
+	}
+    else
+	obj->var_int_flg = 0;
+
+    /* initialise the parent object */
+    if(thsen_init(&obj->var_parent))
+	{
+	    if(obj->var_int_flg)
+		free(obj);
+	    return NULL;
+	}
+
+    /* set child pointer of parent object to self */
+    obj->var_parent.var_child = (void*) obj;
+
+    /*
+     * Using helper macros in thsen class, we set
+     * the function pointer array with local method.
+     */
+    thsen_set_parent_del_fptr(obj, _thgsensor_delete);
+    thsen_set_parent_get_fptr(obj, _thgsensor_get_val);
+
 
     memset(obj->var_ch_name, 0, THGS_CH_NAME_SZ);
 
@@ -46,8 +70,11 @@ int thgsensor_new(thgsensor* obj,			/* object pointer to initialise */
     obj->var_out_range_flg = 0;
     obj->sobj_ptr = data;
     obj->var_child = NULL;
-    obj->var_del_fptr = NULL;
-    return 0;
+
+    /* initialise self vtable */
+    thsen_self_init_vtable(obj);
+
+    return &obj->var_parent;
 }
 
 /* Delete method */
@@ -60,13 +87,18 @@ void thgsensor_delete(thgsensor* obj)
     obj->var_out_range_flg = 0;    
     obj->var_init_flg = 0;
 
+    if(obj->var_fptr.var_del_fptr)
+	obj->var_fptr.var_del_fptr(obj->var_child);
+    
     /* Set delete pointers NULL */
     obj->var_child = NULL;
-    obj->var_del_fptr = NULL;
-    
-    if(obj->var_del_fptr)
-	obj->var_del_fptr(obj->var_child);
 
+    /* We reset the function pointer array before deleting self */
+    thsen_self_init_vtable(obj);
+
+    if(obj->var_int_flg)
+	free(obj);
+    
     return;
 }
 
@@ -97,8 +129,8 @@ double thgsens_get_value(thgsens* obj)
 
     /* Adjust calculated value if minimum value was set */
     obj->var_val -= (obj->var_min_val > 0.0? obj->var_min_val : 0.0);
-    if(obj->var_get_fptr)
-	return obj->var_get_fptr;
+    if(obj->var_fptr.var_get_fptr)
+	return obj->var_fptr.var_get_fptr(obj->var_child);
     else
 	return obj->var_val;
 }
@@ -121,4 +153,27 @@ int thgsens_reset_all(thgsens* obj)
 
     obj->_count = 0;
     obj->_count_flg = 0;
+}
+
+/*===========================================================================*/
+/****************************** Private Methods ******************************/
+/* Delete helper */
+static void _thgsensor_delete(void* obj)
+{
+    thgsensor* _obj;
+    /* Check argument */
+    if(obj == NULL)
+	return;
+
+    _obj = (thgsensor*) obj;
+    thgsensor_delete(_obj);
+}
+
+/* Get val method */
+static double _thgsensor_get_val(void* obj)
+{
+    thgsensor* _obj;
+    if(obj == NULL)
+	return 0.0;
+    return thgsens_get_value(_obj);
 }

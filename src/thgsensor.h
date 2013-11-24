@@ -10,8 +10,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+
 #include "thornifix.h"
-#include "thbuff.h"
+#include "thsen.h"
 
 #define THGS_MIN_VOLT 0.0
 #define THGS_MAX_VOLT 10.0
@@ -32,6 +33,8 @@ typedef struct _thgsensor thgsensor;
 
 struct _thgsensor
 {
+    thsen var_parent;				/* parent object */
+    unsigned int var_int_flg;
     unsigned int var_init_flg;			/* flag to initialise */
     unsigned int var_out_range_flg;		/* flag to the sensor is out of range */
     
@@ -67,8 +70,7 @@ struct _thgsensor
     void* var_child;
 
     /* Function pointers of child classes */
-    void (*var_del_fptr)(void* obj);		/* delete function pointer */
-    double (*var_get_fptr)(void* obj);		/* get function pointer */
+    struct thsen_vftpr var_fptr;		/* function pointer array */
 };
 
 #ifdef __cplusplus
@@ -76,8 +78,8 @@ extern "C" {
 #endif
 
     /* Constructor with function pointer and channel name */
-    int thgsensor_new(thgsensor* obj,		/* object pointer to initialise */
-		      void* data);		/* optional external object pointer */
+    thsen* thgsensor_new(thgsensor* obj,		/* object pointer to initialise */
+		      void* data);			/* optional external object pointer */
     
     /* destructor */
     void thgsensor_delete(thgsensor* obj); 
@@ -111,6 +113,12 @@ extern "C" {
 	obj->var_raw = val;
 	obj->_var_raw_set = 1;
 	return 0;
+    }
+
+    /* Return parent */
+    inline __attribute__ ((always_inline)) static thsen* thgsens_return_parent(thgsens* obj)
+    {
+	return &obj->var_parent;
     }
 
     /* get current value */
