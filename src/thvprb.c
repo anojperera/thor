@@ -23,7 +23,7 @@ thgsensor* thvprb_new(thvprb* obj)
 	obj->var_int_flg = 0;
 
     /* Call parent constructor */
-    if(thgsensor_new(&obj->var_parent, NULL))
+    if(!thgsensor_new(&obj->var_parent, NULL))
 	{
 	    /*
 	     * Errors have occured, checked to see if
@@ -37,9 +37,9 @@ thgsensor* thvprb_new(thvprb* obj)
     /* Set self as child object of parent */
     obj->var_parent.var_child = (void*) obj;
 
-    /* Set callback methods of parent class */
-    obj->var_parent.var_del_fptr = _thvprb_delete;
-    obj->var_parent.var_get_fptr = _thvprb_get_value;
+    /* Set function pointers of the parent object */
+    thsen_set_parent_del_fptr(obj, _thvprb_delete);
+    thsen_set_parent_get_fptr(obj, _thvprb_get_value);
 
     obj->var_init_flg = 0;
     obj->var_air_density = THVPRB_AIR_DENSITY;
@@ -48,7 +48,7 @@ thgsensor* thvprb_new(thvprb* obj)
     obj->var_child = NULL;
 
     /* Return pointer of parent */
-    return &obj->var_parent;
+    return thgsens_return_parent(&obj->var_parent);
 }
 
 /* Delete method */

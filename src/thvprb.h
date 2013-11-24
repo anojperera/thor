@@ -23,6 +23,7 @@ struct _thvprb
     double var_air_density;
     double var_val;
 
+    struct thsen_vftpr var_fptr;
     void* var_child;
 };
 
@@ -33,8 +34,14 @@ extern "C" {
     /*
      * Constructor and destructor
      */
-    thvprb* thvprb_new(thvprb* obj);
+    thsen* thvprb_new(thvprb* obj);
     void thvprb_delete(thvprb* obj);
+
+    /* Return parent */
+    inline __attribute__ ((always_inline)) static thsen* thvprb_return_parent(thvprb* obj)
+    {
+	return thgsensor_return_parent(&obj->var_parent);
+    }
 
     /* All other methods are inherited from the parent class */
     
