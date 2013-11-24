@@ -18,6 +18,10 @@
   fprintf(stderr, "%s\n", msg)
 #endif
 
+#define THOR_CONFIG_CALX "calibration_x"
+#define THOR_CONFIG_CALY "calibration_y"
+
+
 #if defined (WIN32) || defined (_WIN32)
 #include <NIDAQmx.h>
 /* get error string */
