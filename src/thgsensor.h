@@ -27,18 +27,6 @@
     (sensor)->var_intc = (sensor)->var_min - (sensor)->var_grad *	\
 	THGS_MIN_VOLT
 
-/* Sensor configuration struct */
-struct senconfig
-{
-    unsigned int  _val_calib_elm_cnt;					/* element count */    
-    char var_sen_name_buff[THVSEN_SEN_NAME_BUFF];			/* sensor name buffer */
-    double var_range_min;						/* sensor minimum range */
-    double var_range_max;						/* sensor maximum range */
-
-    double* var_calib_x;						/* calibration buffers */
-    double* var_calib_y;						/* calibration buffers */
-
-};
 
 typedef struct _thgsensor thgsensor;
 
