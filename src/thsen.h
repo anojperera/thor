@@ -74,6 +74,7 @@ extern "C" {
     /* Return parent */
 #define thsen_return_parent(obj)		\
     &(obj)->var_parent
+    
     /* Get value of the sensor */
     inline __attribute__ ((always_inline)) static double thsen_get_value(thsen* obj)
     {

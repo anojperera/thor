@@ -103,23 +103,32 @@ void thvsen_delete(thvsen* obj)
 /*
  * Get value method calculates the velocity of the air stream measured between the sensors.
  */
-double thvsen_get_val(thvsen* obj)
+static double thvsen_get_val(void* obj)
 {
+    thvsen* _obj;
     int i;
-    double const* _val = obj->var_raw_buff;
+    double const* _val;
 
-    obj->var_val = 0.0;
-    for(i=0; i<obj->var_num_sen; i++)
+    if(obj == NULL)
+	return 0.0;
+
+    /* Cast object to the self */
+    _obj = (thvsen*) obj;
+    
+    _val = _obj->var_raw_buff;
+
+    _obj->var_val = 0.0;
+    for(i=0; i<_obj->var_num_sen; i++)
 	{
-	    if(i >= obj->var_buff_sz)
+	    if(i >= _obj->var_buff_sz)
 		break;
-	    thgsens_add_value(obj->var_sens[i], *_val);
-	    obj->var_val += thgsens_get_value(obj->var_sens[i]);
+	    thgsens_add_value(THOR_GSEN(_obj->var_sens[i]), *_val);
+	    _obj->var_val += thsen_get_value(_obj->var_sens[i]);
 	    _val++;
 	}
 
-    obj->var_val /= i-1;
-    return obj->var_val;
+    _obj->var_val /= i;
+    return _obj->var_val;
 }
 
 /* Set cofiguration file */

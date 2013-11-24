@@ -60,8 +60,12 @@ extern "C" {
 	return 0;
     }
     
-    /* Get value */
-    double thvsen_get_val(thvsen* obj);
+    /*
+     * Get value method is implemented in the parent class.
+     * A function pointer is set in the parent class pointing
+     * to a local private method.
+     */
+
 
 #ifdef __cpluscplus
 }

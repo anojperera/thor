@@ -102,38 +102,6 @@ void thgsensor_delete(thgsensor* obj)
     return;
 }
 
-/* get value */
-double thgsens_get_value(thgsens* obj)
-{
-    if(obj == NULL)
-       return 0.0;
-    /* check if range is set */
-    if(!obj->var_flg)
-	return 0.0;
-    if(obj->var_init_flg != 1)
-        return 0.0;
-    
-    /* add to buffer */
-    obj->var_ave_buff[obj->_count] = obj->var_grad * (double) var_raw + obj->var_intc;
-    
-    obj->_var_ave_buff += obj->var_ave_buff[obj->_count];
-    obj->_var_ave_buff -= obj->var_ave_buff[(int) fabs(obj->_count-THGS_CH_RBUFF_SZ)];
-    obj->var_val = obj->_var_ave_buff / (obj->_count_flg > 0? THGS_CH_RBUFF_SZ : obj->_count);
-
-    /* increment counter and reset at max */
-    if(obj->_count++ >= THGS_CH_RBUFF_SZ)
-	{
-	    obj->_count = 0;
-	    obj->_count_flg = 1;
-	}
-
-    /* Adjust calculated value if minimum value was set */
-    obj->var_val -= (obj->var_min_val > 0.0? obj->var_min_val : 0.0);
-    if(obj->var_fptr.var_get_fptr)
-	return obj->var_fptr.var_get_fptr(obj->var_child);
-    else
-	return obj->var_val;
-}
 
 /* reset all */
 int thgsens_reset_all(thgsens* obj)
@@ -175,5 +143,35 @@ static double _thgsensor_get_val(void* obj)
     thgsensor* _obj;
     if(obj == NULL)
 	return 0.0;
-    return thgsens_get_value(_obj);
+
+    /* Cast object to self */
+    _obj = (thgsensor*) obj;
+
+    
+    /* check if range is set */
+    if(!_obj->var_flg)
+	return 0.0;
+    if(_obj->var_init_flg != 1)
+        return 0.0;
+    
+    /* add to buffer */
+    _obj->var_ave_buff[_obj->_count] = _obj->var_grad * (double) _obj->var_raw + _obj->var_intc;
+    
+    _obj->_var_ave_buff += _obj->var_ave_buff[_obj->_count];
+    _obj->_var_ave_buff -= _obj->var_ave_buff[(int) fabs(_obj->_count-THGS_CH_RBUFF_SZ)];
+    _obj->var_val = _obj->_var_ave_buff / (_obj->_count_flg > 0? THGS_CH_RBUFF_SZ : _obj->_count);
+
+    /* increment counter and reset at max */
+    if(_obj->_count++ >= THGS_CH_RBUFF_SZ)
+	{
+	    _obj->_count = 0;
+	    _obj->_count_flg = 1;
+	}
+
+    /* Adjust calculated value if minimum value was set */
+    _obj->var_val -= (_obj->var_min_val > 0.0? _obj->var_min_val : 0.0);
+    if(_obj->var_fptr.var_get_fptr)
+	return _obj->var_fptr.var_get_fptr(_obj->var_child);
+    else
+	return _obj->var_val;
 }

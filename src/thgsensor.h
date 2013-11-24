@@ -103,7 +103,7 @@ extern "C" {
     }
 
     /* Add new raw value */
-    inline __attribute__ ((always_inline)) static int thgsens_add_value(thgsens* obj, double val)
+    inline __attribute__ ((always_inline)) static int thgsens_set_value(thgsens* obj, double val)
     {
 	if(!obj)
 	    return -1;
@@ -115,14 +115,18 @@ extern "C" {
 	return 0;
     }
 
+    /*
+     * Get value method is implemented in the parent class.
+     * A function pointer is set in the parent class pointing
+     * to a local private method.
+     */
+
     /* Return parent */
     inline __attribute__ ((always_inline)) static thsen* thgsens_return_parent(thgsens* obj)
     {
 	return &obj->var_parent;
     }
 
-    /* get current value */
-    double thgsens_get_value(thgsens* obj);
 
     /* reset all */
     int thgsens_reset_all(thgsens* obj);
