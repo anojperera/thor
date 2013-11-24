@@ -7,6 +7,7 @@
 #include <libconfig.h>
 #include <stdlib.h>
 #include "thornifix.h"
+#include "thsen.h"
 #include "thvprb.h"
 
 
@@ -18,18 +19,20 @@ typedef struct _thvsen thvsen;
 
 struct _thvsen
 {
+    thsen var_parent;							/* Parent class */
+    unsigned int var_int_flg;
     unsigned int var_init_flg;						/* Flag to indicate initialised */
-    unsigned int var_config_sen;					/* Flag to indicate the number of configurations */
+    unsigned int var_num_sen;
     size_t var_buff_sz;							/* Buffer size */
-    config_setting_t* _var_setting;					/* Configuration object */
 
     const double const* var_raw_buff;					/* Raw buffer */
     double var_val;
-
     
     /* Array of sensors */
-    struct senconfig* _var_configs;					/* Configuration buffers */
-    thgsensor** var_sens;
+    thsen** var_sens;
+    
+    void* var_child;							/* child object */
+    struct thsen_vftpr var_fptr;					/* Function pointer array */
 };
 
 #ifdef __cpluscplus
@@ -37,7 +40,7 @@ extern "C" {
 #endif
 
     /* Constructor and destructor */
-    int thvsen_new(thvsen* obj, config_setting_t* setting, size_t num);
+    thsen* thvsen_new(thvsen* obj, config_setting_t* setting, size_t num);
     void thvsen_delete(thvsen* obj);
 
     /*
