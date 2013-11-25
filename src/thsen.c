@@ -1,6 +1,8 @@
 #include "thsen.h"
 
-
+/*
+ * Initialises the class
+ */
 int thsen_init(thsen* obj)
 {
     it(obj == NULL)
@@ -19,6 +21,11 @@ int thsen_init(thsen* obj)
     return 0;
 }
 
+/*
+ * Release any memory consumed by this class and calls,
+ * destructors of any child classes which are derived from
+ * this.
+ */
 void thsen_delete(thsen* obj)
 {
     int i = 0;
@@ -63,8 +70,15 @@ int thsen_read_config(thsen* obj)
     /* Get number of settings in the class. */
     _num = config_setting_length(obj->var_setting);
 
-    /* Allocate buffer */
+    /* Allocate buffer and initialise elements of each struct */
     obj->_var_configs = (struct senconfig*) calloc(_num, sizeof(struct senconfig));
+    for(i=0; i<_num; i++)
+	{
+	    memset((void*) &obj->_var_configs[i], 0, sizeof(struct senconfig));
+	    obj->_var_configs[i]._val_calib_elm_cnt = 0;
+	    obj->_var_configs[i].var_calib_x = NULL;
+	    obj->_var_configs[i].var_calib_y = NULL;
+	}
 
     /*
      * Iterate over the settings collection and obtain the setting.
@@ -87,6 +101,9 @@ int thsen_read_config(thsen* obj)
 			{
 			case 0:
 			    _name = config_setting_get_string_elem(_setting, j);
+			    /* Check if a valid name is returned */
+			    if(_name == NULL)
+				break;
 			    strncpy(obj->_var_configs[i].var_sen_name_buff, _name, THVSEN_SEN_NAME_BUFF-1);
 			    obj->_var_configs[i].var_sen_name_buff[THVSEN_SEN_NAME_BUFF-1] = '\0';
 			    break;
@@ -115,7 +132,7 @@ int thsen_read_config(thsen* obj)
 			    _thvsen_read_array(_t2_setting, _num3, &obj->_var_configs[i].var_calib_y);
 			    break;
 			default:
-			};
+			}
 		}
 	    
 	}
