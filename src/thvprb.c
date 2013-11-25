@@ -12,7 +12,7 @@ static void _thvprb_delete(void* obj);
 static double _thvprb_get_value(void* obj);
 
 /* Constructor */
-thgsensor* thvprb_new(thvprb* obj)
+thsen* thvprb_new(thvprb* obj)
 {
     if(obj == NULL)
 	{
@@ -41,7 +41,7 @@ thgsensor* thvprb_new(thvprb* obj)
     thsen_set_parent_del_fptr(obj, _thvprb_delete);
     thsen_set_parent_get_fptr(obj, _thvprb_get_value);
 
-    obj->var_init_flg = 0;
+    obj->var_init_flg = 1;
     obj->var_air_density = THVPRB_AIR_DENSITY;
 
     obj->var_val = 0.0;
@@ -91,7 +91,7 @@ static double _thvprb_get_value(void* obj)
     thvprb* _obj;
 
     /* Check object pointer */
-    if(obj == NULL)
+    if(obj == NULL || obj->var_init_flg != 1)
 	return 0.0;
     
     _obj = (thvprb*) obj;
