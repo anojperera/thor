@@ -1,7 +1,6 @@
-/* Generic sensor class to be inherited by all sensor
- * classes. Provides interfaces to reading and writinge
- * derives equation of the straigt line between voltage
- * and physical property
+/*
+ * Generic class, provides additional interfaces for derriving
+ * sensor classes. This class inherits thsen super class.
  */
 
 #ifndef _THGSENSOR_H_

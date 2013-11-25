@@ -74,7 +74,7 @@ thsen* thgsensor_new(thgsensor* obj,			/* object pointer to initialise */
     /* initialise self vtable */
     thsen_self_init_vtable(obj);
 
-    return &obj->var_parent;
+    return thsen_return_parent(obj);
 }
 
 /* Delete method */
@@ -121,6 +121,7 @@ int thgsens_reset_all(thgsens* obj)
 
     obj->_count = 0;
     obj->_count_flg = 0;
+    return 0;
 }
 
 /*===========================================================================*/
@@ -135,6 +136,7 @@ static void _thgsensor_delete(void* obj)
 
     _obj = (thgsensor*) obj;
     thgsensor_delete(_obj);
+    return;
 }
 
 /* Get val method */
