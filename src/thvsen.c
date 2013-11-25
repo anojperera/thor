@@ -109,7 +109,7 @@ static double thvsen_get_val(void* obj)
     int i;
     double const* _val;
 
-    if(obj == NULL)
+    if(obj == NULL || obj->var_init_flg != 1)
 	return 0.0;
 
     /* Cast object to the self */

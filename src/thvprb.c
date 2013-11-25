@@ -59,6 +59,7 @@ void thvprb_delete(thvprb* obj)
 	return 0;
 
     obj->var_child = NULL;
+    obj->var_init_flg = 0;
     
     /* check if object was created and delete it */
     if(obj->var_int_flg)
