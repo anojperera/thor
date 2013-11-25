@@ -9,6 +9,8 @@
 #define __THAPP_H__
 
 #include <stdlib.h>
+#include <pthread.h>
+#include <semaphore.h>
 #include "thornifix.h"
 #include "thcon.h"
 
@@ -29,6 +31,10 @@
 typedef struct _thapp thapp;
 typedef int (*thapp_gf_ptr)(thapp*, void*);
 
+typedef enum {
+    thapp_headless,
+    thapp_master
+} thapp_opmode;
 /*
  * Table of function pointers.
  * All child classes inherits this class
@@ -49,6 +55,8 @@ struct _thapp_fptr_arr
 struct _thapp
 {
     unsigned int var_init_flg;
+    unsigned int var_run_flg;							/* flag to indicate test is running */
+    thapp_opmode var_op_mode;							/* operation mode */
     config_t* var_config;							/* configuration pointer */
     struct thor_msg _msg_buff;							/* message buffer */    
     thcon _var_con;								/* connection object */
@@ -61,6 +69,9 @@ struct _thapp
      * stages of the operation.
      */
     struct _thapp_fptr_arr _var_fptr;
+
+    sem_t _var_sem;
+    pthread_t _var_thread;
 };
 
 
