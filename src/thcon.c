@@ -3,6 +3,7 @@
 
 #include <unistd.h>
 #include <fcntl.h>
+#include <sys/epoll.h>
 #include <errno.h>
 #include <curl/curl.h>
 #include <libxml/HTMLparser.h>
