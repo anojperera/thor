@@ -17,15 +17,16 @@
 /*
  * Macro for initialising the function pointer table.
  */
-#define THAPP_INIT_FPTR(obj)			\
-    (obj)->_var_fptr.var_init_ptr = NULL;	\
-    (obj)->_var_fptr.var_del_ptr = NULL;	\
-    (obj)->_var_fptr.var_start_ptr = NULL;	\
-    (obj)->_var_fptr.var_stop_ptr = NULL;	\
-    (obj)->_var_fptr.var_read_ptr = NULL;	\
-    (obj)->_var_fptr.var_write_ptr = NULL;	\
-    (obj)->_var_fptr.var_log_ptr = NULL;	\
-    (obj)->_var_fptr.var_report_ptr = NULL
+#define THAPP_INIT_FPTR(obj)				\
+    (obj)->_var_fptr.var_init_ptr = NULL;		\
+    (obj)->_var_fptr.var_del_ptr = NULL;		\
+    (obj)->_var_fptr.var_start_ptr = NULL;		\
+    (obj)->_var_fptr.var_stop_ptr = NULL;		\
+    (obj)->_var_fptr.var_read_ptr = NULL;		\
+    (obj)->_var_fptr.var_write_ptr = NULL;		\
+    (obj)->_var_fptr.var_log_ptr = NULL;		\
+    (obj)->_var_fptr.var_report_ptr = NULL;		\
+    (obj)->_var_fptr.var_cmdhnd_ptr = NULL
 
 
 typedef struct _thapp thapp;
@@ -50,14 +51,16 @@ struct _thapp_fptr_arr
     thapp_gr_ptr var_write_ptr;
     thapp_gf_ptr var_log_ptr;
     thapp_gf_ptr var_report_ptr;
+    int (*var_cmdhnd_ptr)(thapp*, void*, char);
 };
 
 struct _thapp
 {
     unsigned int var_init_flg;
     unsigned int var_run_flg;							/* flag to indicate test is running */
+    unsigned int var_sleep_time;						/* sleep time (miliseconds) */    
     thapp_opmode var_op_mode;							/* operation mode */
-    config_t* var_config;							/* configuration pointer */
+    config_t var_config;							/* configuration pointer */
     struct thor_msg _msg_buff;							/* message buffer */    
     thcon _var_con;								/* connection object */
 

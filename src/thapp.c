@@ -4,14 +4,32 @@
 
 #include "thapp.h"
 
+#define THAPP_SLEEP_KEY "main_sleep"
+#define THAPP_DEFAULT_SLEEP 100
+/*
+ * Configuration paths. The default is to look in the home
+ * directory if not in /etc/
+ */
+#define THAPP_CONFIG_PATH1 ".config/thor.cfg"
+#define THAPP_CONFIG_PATH2 "/etc/thor.cfg"
+
+#define THAPP_QUIT_CODE1 81								/* Q */
+#define THAPP_QUIT_CODE2 113								/* q */
+
 /*
  * Method for handling the main loop.
  */
-static void* _thapp_statt_handler(void* obj);
+static void* _thapp_start_handler(void* obj);
 
 
 /* Initialise helper method, loads extra configuration helper methods */
 static int _thapp_init_helper(thapp* obj);
+
+/*---------------------------------------------------------------------------*/
+static char _thapp_get_cmd(void);
+
+
+/*===========================================================================*/
 
 /* Initialise the application object */
 int thapp_init(thapp* obj)
@@ -20,7 +38,7 @@ int thapp_init(thapp* obj)
     if(obj == NULL)
 	return -1;
 
-    obj->var_config = NULL;
+    obj->var_config;
     memset(&obj->_msg_buff, 0, sizeof(struct thor_msg));
 
     /*
@@ -32,6 +50,7 @@ int thapp_init(thapp* obj)
     
     obj->var_init_flg = 1;
     obj->var_init_flg = 0;
+    obj->var_sleep_time = THAPP_DEFAULT_SLEEP;
     obj->var_child = NULL;
 
     /*
@@ -71,8 +90,7 @@ void thapp_delete(thapp* obj)
     obj->var_run_flg = 0;
 
     /* Check configuration pointer and delete it */
-    if(obj->var_config)
-	config_destroy(obj->var_config);
+    config_destroy(&obj->var_config);
     obj->var_config = NULL;
     obj->var_child = NULL;
 
@@ -103,11 +121,86 @@ int thapp_start(thapp* obj)
 	     * we call the handling method in another thread
 	     * to give control back to the calling function.
 	     */
-	    pthread_create(&obj->_var_thread, NULL, _thapp_statt_handler, (void*) obj);
+	    pthread_create(&obj->_var_thread, NULL, _thapp_start_handler, (void*) obj);
 	    return 0;
 	}
     else
 	_thapp_statt_handler((void*) obj);
+
+    return 0;
+}
+
+/*===========================================================================*/
+/**************************** Private Methods ********************************/
+
+/* Main loop method */
+static void* _thapp_start_handler(void* obj)
+{
+    char _cmd;
+    thapp* _obj;
+
+    /* Check object pointer and cast to the correct type */
+    if(obj == NULL)
+	return NULL;
+
+    _obj = (thapp*) obj;
+
+    /*
+     * First thing we do is to check if the any derived child
+     * classes has set initialise and start methods and call
+     * them if they were set. This gives a chance to initialise
+     * any variables before loop start.
+     */
+    if(_obj->_var_fptr.var_init_ptr)
+	_obj->_var_fptr.var_init_ptr(_obj, _obj->var_child);
+    if(_obj->_var_fptr.var_start_ptr)
+	_obj->_var_fptr.var_start_ptr(_obj, _obj->var_child);
+
+    
+    /* Main loop */
+    while(1)
+	{
+	    /*
+	     * Check for keyboard input. Apart, from the quit and stop signals,
+	     * all others are passed to the derived classes to handle.
+	     */
+	    _cmd = _thapp_get_cmd(void);
+	    if(_cmd == THAPP_QUIT_CODE1 || _cmd == THAPP_QUIT_CODE2)
+		{
+		    /* Handle quit event */
+		}
+
+	    /* Passed Command handling to the child class */
+	    if(_obj->_var_fptr.var_cmdhnd_ptr)
+		_obj->_var_fptr.var_cmdhnd_ptr(_obj, _obj->var_child, _cmd);
+	    
+	    usleep(_obj->var_sleep_time);
+	}
+
+    return NULL;
+}
+
+/* Configuration loader */
+static int _thapp_init_helper(thapp* obj)
+{
+    const config_setting_t* _setting;
+    /* Initialise the configuration object */
+    config_init(&obj->var_config);
+
+    /* Try and read the file from the first path */
+    if(config_read_file(&obj->var_config, THAPP_CONFIG_PATH1) != CONFIG_TRUE)
+	{
+	    /* Read from the /etc directory  */
+	    if(config_read_file(&obj->var_config, THAPP_CONFIG_PATH2) != CONFIG_TRUE)
+		return -1;
+	}
+
+    _setting = config_lookup(obj->var_config, THAPP_SLEEP_KEY);
+    if(_setting == NULL)
+	return -1;
+
+    /* Set sleep time as defined in the config file */
+    obj->var_sleep_time = config_setting_get_int(_setting);
 
     return 0;
 }
