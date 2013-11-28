@@ -168,6 +168,8 @@ static void* _thapp_start_handler(void* obj)
 	    if(_cmd == THAPP_QUIT_CODE1 || _cmd == THAPP_QUIT_CODE2)
 		{
 		    /* Handle quit event */
+		    _obj->_var_fptr.var_stop_ptr(_obj, _obj->var_child);
+		    break;
 		}
 
 	    /* Passed Command handling to the child class */
@@ -177,6 +179,7 @@ static void* _thapp_start_handler(void* obj)
 	    usleep(_obj->var_sleep_time);
 	}
 
+    obj->var_run_flg = 0;
     return NULL;
 }
 
