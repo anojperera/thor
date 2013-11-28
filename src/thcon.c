@@ -80,7 +80,7 @@ struct _curl_mem
 };
 
 /* callback for handling content from curl lib */
-static _thcon_copy_to_mem(void* contents, size_t size, size_t memb, void* usr_obj);
+static int _thcon_copy_to_mem(void* contents, size_t size, size_t memb, void* usr_obj);
 
 
 /* thread methods for handling start and clean up process */
@@ -115,15 +115,15 @@ static int _thcon_accept_conn(thcon* obj, int list_sock, int epoll_inst, struct 
  * clients.
  */
 static int _thcon_write_to_int_buff(thcon* obj, int socket_fd);
-static int _thcon_read_from_int_buff(thcon* obj, int socket_fd);
-/*
- *
+/* static int _thcon_read_from_int_buff(thcon* obj, int socket_fd); */
+
+
 /*---------------------------------------------------------------------------*/
 
 /*
  * Internal file descriptor handling methods.
  */
-inline __attribute__ (always_inline) static int _thcon_alloc_fds(thcon* obj);
+inline __attribute__ ((always_inline)) static int _thcon_alloc_fds(thcon* obj);
 inline __attribute__ ((always_inline)) static int _thcon_adjust_fds(thcon* obj, int fd);
 
 /*---------------------------------------------------------------------------*/
@@ -154,7 +154,7 @@ int thcon_init(thcon* obj, thcon_mode mode)
 
     obj->var_num_conns = 0;
     obj->var_geo_flg = 0;
-    obj->var_ip_flg; = 0;
+    obj->var_ip_flg = 0;
 
     obj->_var_cons_fds = NULL;
     obj->_var_epol_inst = NULL;
@@ -183,7 +183,7 @@ void thcon_delete(thcon* obj)
     obj->_thcon_write_callback = NULL;
 
     /* check scope */
-    sem_destroy(obj->_var_sem);
+    sem_destroy(&obj->_var_sem);
     pthread_mutex_destroy(&obj->_var_mutex);
     pthread_mutex_destroy(&obj->_var_mutex_q);
 
@@ -196,6 +196,8 @@ void thcon_delete(thcon* obj)
 
     /* delete queue */
     gqueue_delete(&obj->_msg_queue);
+
+    return;
 }
 
 /* Get external ip address of self
@@ -230,9 +232,11 @@ const char* thcon_get_my_addr(thcon* obj)
 	free(_ip_buff.memory);
 
     if(_rt_val == 0)
-	return obj->_my_address;
+	return obj->var_my_info._my_address;
     else
 	return NULL;
+
+    return NULL;
 }
 
 /* get geo location */
@@ -331,7 +335,9 @@ int thcon_contact_admin(thcon* obj, const char* admin_url)
 
 
     _res = curl_easy_perform(_curl);
-
+    if(_res != CURLE_OK)
+	THOR_LOG_ERROR("Unable to send information to admin");
+    
     /* check for errors */
     curl_easy_cleanup(_curl);
 
@@ -339,6 +345,7 @@ int thcon_contact_admin(thcon* obj, const char* admin_url)
     curl_formfree(_form_post);
     curl_slist_free_all(_header_list);
 
+    return 0;
 }
 
 /* Start program */
@@ -372,6 +379,7 @@ int thcon_start(thcon* obj)
 	}
      return 0;
 }
+
 /*
  * Stop connection and close all socekts.
  * On server mode write method is closed first and thread is joined.
@@ -393,7 +401,7 @@ int thcon_stop(thcon* obj)
 
 
     /* post sem to proceed with quit */
-    semt_post(&obj->_var_sem);
+    sem_post(&obj->_var_sem);
 
     /*
      * In the server mode, first stop and join the write operations.
@@ -416,7 +424,7 @@ int thcon_stop(thcon* obj)
 }
 
 /* send information to the socket */
-int thcon_send_info(thcon* obj, void* data, sizt_t sz)
+int thcon_send_info(thcon* obj, void* data, size_t sz)
 {
     int i = 0;
     if(obj == NULL || data == NULL)
@@ -429,6 +437,8 @@ int thcon_send_info(thcon* obj, void* data, sizt_t sz)
     /* call private method for sending the information */
     for(i = 0; i < obj->var_num_conns; i++)
 	_thcon_send_info(obj->_var_cons_fds[i], data, sz);
+
+    return 0;
 }
 
 /*
@@ -438,14 +448,13 @@ int thcon_send_info(thcon* obj, void* data, sizt_t sz)
 int thcon_multicast(thcon* obj, void* data, size_t sz)
 {
     struct _curl_mem* _msg;
-    int i;
 
     /* check for argument pointers */
     if(!obj || !data || !sz)
 	return -1;
 
     /* check it its running in the server mode */
-    if(obj->_var_con_mode == thcon_disconnected)
+    if(obj->_var_con_stat == thcon_disconnected)
 	return -1;
 
     _msg = (struct _curl_mem*) malloc(sizeof(struct _curl_mem));
@@ -473,7 +482,7 @@ static int _thcon_create_connection(thcon* obj, int _con_mode)
     struct addrinfo *_result, *_p;
 
     /* initialise the address infor struct */
-    memset(obj->_var_info, 0, sizeof(struct addrinfo));
+    memset(&obj->_var_info, 0, sizeof(struct addrinfo));
 
     /* set hints */
     obj->_var_info.ai_family = AF_UNSPEC;
@@ -483,7 +492,7 @@ static int _thcon_create_connection(thcon* obj, int _con_mode)
 	obj->_var_info.ai_flags = AI_PASSIVE;
 
     /* create address infor struct */
-    _stat = getaddrinfo((_con_mode? obj->var_svr_name : NULL), obj->var_port_name, obj->_var_info, &_result);
+    _stat = getaddrinfo((_con_mode? obj->var_svr_name : NULL), obj->var_port_name, &obj->_var_info, &_result);
     if(_stat != 0)
 	{
 	    _err_msg = gai_strerror(_stat);
@@ -492,7 +501,7 @@ static int _thcon_create_connection(thcon* obj, int _con_mode)
 	}
 
     /* create socket for client mode, connect to the server */
-    for(_p = _result; _p != NULL; _p = _p->next)
+    for(_p = _result; _p != NULL; _p = _p->ai_next)
 	{
 	    obj->var_con_sock = socket(obj->_var_info.ai_family, obj->_var_info.ai_socktype, obj->_var_info.ai_protocol);
 	    if(obj->var_con_sock == -1)
@@ -565,10 +574,10 @@ static int _thcon_make_socket_nonblocking(int sock_id)
 }
 
 /* Curl message copy buffer */
-static _thcon_copy_to_mem(void* contents, size_t size, size_t memb, void* usr_obj)
+static int _thcon_copy_to_mem(void* contents, size_t size, size_t memb, void* usr_obj)
 {
     size_t rel = size*memb;
-    struct _curl_mem _mem = (struct _curl_mem*) usr_obj;
+    struct _curl_mem* _mem = (struct _curl_mem*) usr_obj;
 
     /* allocate memory */
     _mem->memory = realloc(_mem->memory, _mem->size+rel+1);
@@ -697,7 +706,7 @@ static int _parse_html_geo(const struct _curl_mem* _mem, struct thcon_host_info*
 		    _t_node = _get_html_tag_names(_node_ptr, &_p_stack);
 		    if(_t_node)
 			{
-			    i = 0
+			    i = 0;
 			    _child_ptr = xmlFirstElementChild(_t_node);
 
 			    while(_child_ptr)
@@ -723,7 +732,7 @@ static int _parse_html_geo(const struct _curl_mem* _mem, struct thcon_host_info*
 					default:
 					    break;
 					}
-				    _child_ptr =  xmlNextElementSibling(_ptr);
+				    _child_ptr =  xmlNextElementSibling(_child_ptr);
 				    i++;
 				}
 			}
@@ -752,7 +761,7 @@ static int _parse_html_geo(const struct _curl_mem* _mem, struct thcon_host_info*
 					    break;
 					}
 
-				    _child_ptr =  xmlNextElementSibling(_ptr);
+				    _child_ptr =  xmlNextElementSibling(_child_ptr);
 				    i++;
 				}
 			}
@@ -825,12 +834,12 @@ static void* _thcon_thread_function_client(void* obj)
     /* cast object pointer to connection type */
     _obj = (thcon*) obj;
 
-    pthread_testcancel(void);
+    pthread_testcancel();
 
     /* loop while connection is active and recieving messages */
     do
 	{
-	    pthread_testcancel(void);
+	    pthread_testcancel();
 	    _stat = recv(_obj->var_acc_sock, _t_buff, THORNIFIX_MSG_BUFF_SZ, MSG_DONTWAIT);
 
 
@@ -848,7 +857,7 @@ static void* _thcon_thread_function_client(void* obj)
 	    /* enable thread cancel state */
 	    pthread_setcancelstate(_cancel_state, NULL);
 
-	    pthread_testcancel(void);
+	    pthread_testcancel();
 	    /* sleep for 100ms to save processor cycle time */
 	    usleep(THCON_CLIENT_RECV_SLEEP_TIME);
 	}while(_stat);
@@ -863,11 +872,10 @@ static int _thcon_send_info(int fd, void* msg, size_t sz)
 
     /*
      * Send message in non blocking mode. Iterate until the message was sent.
-     *
      */
     do
 	{
-	    _buff_sent += send(fd, data+_buff_sent, sz, MSG_DONTWAIT);
+	    _buff_sent += send(fd, msg+_buff_sent, sz, MSG_DONTWAIT);
 	}while(_buff_sent < sz);
 
     return _buff_sent;
@@ -885,16 +893,20 @@ static void* _thcon_thread_function_server(void* obj)
     int _stat = 0, _complete = 0;
     thcon* _obj;
     struct epoll_event _event, *_events;
+    char _err_msg[THOR_BUFF_SZ];
 
     /* check for object pointer */
     if(obj == NULL)
 	return NULL;
 
+    /* Initialise error buffer */
+    memset(_err_msg, 0, THOR_BUFF_SZ);
+    
     /* Thread clean up handler. */
-    pthread_cleanup_push(_thcon_thread_function_server, obj);
+    pthread_cleanup_push(_thcon_thread_cleanup_server, obj);
 
     /* Disable thread cancelling temporarily */
-    pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &_old_state)
+    pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &_old_state);
 
     /* cast object pointer to the correct type */
     _obj = (thcon*) obj;
@@ -915,17 +927,17 @@ static void* _thcon_thread_function_server(void* obj)
     _e_sock = epoll_create1(0);
 
     if(_e_sock == -1)
-	goto epoll_exit;
+	goto epoll_exit_lbl;
     _obj->_var_epol_inst = &_e_sock;
     _event.data.fd = _obj->var_con_sock;
     _event.events = EPOLLIN | EPOLLET;
 
     if(epoll_ctl(_e_sock, EPOLL_CTL_ADD, _obj->var_con_sock, &_event))
-	goto epol_exit;
+	goto epoll_exit_lbl;
 
     /* Restore thread cancelling */
     pthread_setcancelstate(_old_state, NULL);
-    pthread_testcancel(void);
+    pthread_testcancel();
     _events = (struct epoll_event*) calloc(THCON_MAX_EVENTS, sizeof(struct epoll_event));
     _obj->_var_event_col = (void*) _events;
 
@@ -939,7 +951,7 @@ static void* _thcon_thread_function_server(void* obj)
     while(1)
 	{
 	    /* check for cancel here */
-	    pthread_testcancel(void);
+	    pthread_testcancel();
 
 	    _n = epoll_wait(_e_sock, _events, THCON_MAX_EVENTS, -1);
 	    for(_i = 0; _i < _n; _i++)
@@ -952,19 +964,20 @@ static void* _thcon_thread_function_server(void* obj)
 		       (_events[_i].events & EPOLLIN))
 			{
 			    /* errors have occured */
-			    fprintf(stderr, "epoll error\n");
-			    if(_events[i].data.fd != _obj->var_con_sock)
+			    THOR_LOG_ERROR("epoll error");
+			    
+			    if(_events[_i].data.fd != _obj->var_con_sock)
 				{
-				    _thcon_adjust_fds(_obj, _events[i].data.fd);
-				    close(_events[i].data.fd);
+				    _thcon_adjust_fds(_obj, _events[_i].data.fd);
+				    close(_events[_i].data.fd);
 
 				    pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &_old_state);
-				    pthread_mutex_lock(_obj->_var_mutex);
+				    pthread_mutex_lock(&_obj->_var_mutex);
 				    _obj->var_num_conns--;
-				    pthread_mutex_unlock(_obj->_var_mutex);
-				    pthread_setcancelstate(&_old_state, NULL);
+				    pthread_mutex_unlock(&_obj->_var_mutex);
+				    pthread_setcancelstate(_old_state, NULL);
 				}
-			    pthread_testcancel(void);
+			    pthread_testcancel();
 			    continue;
 			}
 		    else if(_obj->var_con_sock == _events[_i].data.fd)
@@ -976,8 +989,8 @@ static void* _thcon_thread_function_server(void* obj)
 			     */
 			    pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &_old_state);
 			    _thcon_accept_conn(_obj, _obj->var_con_sock, _e_sock, &_event);
-			    pthread_setcancelstate(&_old_state, NULL);
-			    pthread_testcancel(void);
+			    pthread_setcancelstate(_old_state, NULL);
+			    pthread_testcancel();
 			    continue;
 			}
 		    else
@@ -989,7 +1002,9 @@ static void* _thcon_thread_function_server(void* obj)
 			     */
 			    while(1)
 				{
-				    _stat = _thcon_write_to_int_buff(_obj, _events[i].data.fd);
+				    _stat = _thcon_write_to_int_buff(_obj, _events[_i].data.fd);
+				    if(_obj->_thcon_recv_callback)
+					_obj->_thcon_recv_callback(obj, _obj->var_membuff_in, THORNIFIX_MSG_BUFF_SZ);
 				    if(_stat == -1)
 					{
 					    /*
@@ -1012,21 +1027,22 @@ static void* _thcon_thread_function_server(void* obj)
 		    if(_complete)
 			{
 			    /* remote client has closed the connection */
-			    fprintf(stdout, "Connection closed on socket - %i\n", _event[i].data.fd);
+			    sprintf(_err_msg, "Connection closed on socket - %i\n", _events[_i].data.fd);
+			    THOR_LOG_ERROR(_err_msg);
+			    
 			    pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &_old_state);
-			    _thcon_adjust_fds(_obj, _event[i].data.fd);
+			    _thcon_adjust_fds(_obj, _events[_i].data.fd);
 
 			    /* decrement counter in a mutex */
-
-			    pthread_mutex_lock(_obj->_var_mutex);
+			    pthread_mutex_lock(&_obj->_var_mutex);
 			    _obj->var_num_conns--;
-			    pthread_mutex_unlock(_obj->_var_mutex);
+			    pthread_mutex_unlock(&_obj->_var_mutex);
 
 
 			    /* close connection so that epoll shall remove the watching descriptor */
-			    close(_event[i].data.fd);
-    			    pthread_setcancelstate(&_old_state, NULL);
-			    pthread_testcancel(void);
+			    close(_events[_i].data.fd);
+    			    pthread_setcancelstate(_old_state, NULL);
+			    pthread_testcancel();
 
 			}
 		}
@@ -1038,7 +1054,8 @@ static void* _thcon_thread_function_server(void* obj)
      */
     pthread_cleanup_pop(0);
     free(_events);
- epoll_exit:
+    
+ epoll_exit_lbl:
     if(_e_sock)
 	close(_e_sock);
 
@@ -1056,8 +1073,10 @@ static int _thcon_accept_conn(thcon* obj, int list_sock, int epoll_inst, struct 
     struct sockaddr _in_addr;
     socklen_t _in_len;
     int _fd, _stat;
+    char _err_msg[THOR_BUFF_SZ];
+    
     char _hbuf[NI_MAXHOST], _sbuf[NI_MAXSERV];
-
+    memset(_err_msg, 0, THOR_BUFF_SZ);
     while(1)
 	{
 	    _fd = accept(list_sock, &_in_addr, &_in_len);
@@ -1086,12 +1105,12 @@ static int _thcon_accept_conn(thcon* obj, int list_sock, int epoll_inst, struct 
 				_hbuf, NI_MAXHOST,
 				_sbuf, NI_MAXSERV,
 				NI_NUMERICHOST | NI_NUMERICSERV);
-#ifdef HTML_STACK_DEBUG_MODE
+
 	    if(_stat == 0)
-		fprintf(stdout, "Accepted connection from %s on port %s\n", _hbuf, _sbuf);
-#endif
-
-
+		{
+		    sprintf(_err_msg, "Accepted connection from %s on port %s\n", _hbuf, _sbuf);
+		    THOR_LOG_ERROR(_err_msg);
+		}
 	    /* make the connection non blocking  and add to the epoll instance */
 	    _thcon_make_socket_nonblocking(_fd);
 
@@ -1105,9 +1124,9 @@ static int _thcon_accept_conn(thcon* obj, int list_sock, int epoll_inst, struct 
 	    _thcon_alloc_fds(obj);
 
 	    /* counter incremented in a mutex */
-	    pthread_mutex_lock(obj->_var_mutex);
-	    obj->_var_cons_fds[obj->var_num_conns++] = fd;
-	    pthread_mutex_unlock(obj->_var_mutex);
+	    pthread_mutex_lock(&obj->_var_mutex);
+	    obj->_var_cons_fds[obj->var_num_conns++] = _fd;
+	    pthread_mutex_unlock(&obj->_var_mutex);
 	}
 
     return 0;
@@ -1116,9 +1135,7 @@ static int _thcon_accept_conn(thcon* obj, int list_sock, int epoll_inst, struct 
 /* Write data on socket to the buffer */
 static int _thcon_write_to_int_buff(thcon* obj, int socket_fd)
 {
-    static int _sz;
-
-    _sz = 0;
+    static int _sz = 0;
     do
 	{
 	    _sz += read(socket_fd, &obj->var_membuff_in[_sz], THORNIFIX_MSG_BUFF_SZ);
@@ -1128,26 +1145,25 @@ static int _thcon_write_to_int_buff(thcon* obj, int socket_fd)
     return _sz;
 }
 
-/* Read from the buffer and write to the socket */
-static int _thcon_read_from_int_buff(thcon* obj, int socket_fd)
-{
-    int _max_length;
-    static int _sz;
+/* /\* Read from the buffer and write to the socket *\/ */
+/* static int _thcon_read_from_int_buff(thcon* obj, int socket_fd) */
+/* { */
+/*     int _max_length; */
+/*     static int _sz = 0; */
 
-    _max_length = strlen(obj->var_membuff_out);
+/*     _max_length = strlen(obj->var_membuff_out); */
 
-    _sz = 0;
-    do
-	{
-	    _sz += write(socket_fd, obj->var_membuff_out[_sz], _max_length-_sz);
+/*     do */
+/* 	{ */
+/* 	    _sz += write(socket_fd, &obj->var_membuff_out[_sz], _max_length-_sz); */
 
-	}while(_sz < _max_length);
+/* 	}while(_sz < _max_length); */
 
-    return _sz;
-}
+/*     return _sz; */
+/* } */
 
 /* Alocate memory */
-inline __attribute__ (always_inline) static int _thcon_alloc_fds(thcon* obj)
+inline __attribute__ ((always_inline)) static int _thcon_alloc_fds(thcon* obj)
 {
     int _t_exs_sz;
     int* _t_buff;
@@ -1215,7 +1231,7 @@ inline __attribute__ ((always_inline)) static int _thcon_adjust_fds(thcon* obj, 
     int i, a;
 
     /* check if connection count is 0, exit method */
-    pthread_mutex_lock(obj->_var_mutex);
+    pthread_mutex_lock(&obj->_var_mutex);
     if(obj->var_num_conns < 1)
 	goto _thcon_adjust_fds_exit;
 
@@ -1242,7 +1258,7 @@ inline __attribute__ ((always_inline)) static int _thcon_adjust_fds(thcon* obj, 
     /*--------------------------------------------------*/
 
  _thcon_adjust_fds_exit:
-    pthread_mutex_unlock(obj->_var_mutex);
+    pthread_mutex_unlock(&obj->_var_mutex);
     return 0;
 }
 
@@ -1264,37 +1280,37 @@ static void* _thcon_thread_function_write_server(void* obj)
 
     while(1)
 	{
-	    pthread_testcancel(void);
+	    pthread_testcancel();
 
 	    /* wait on semaphore */
-	    sem_wait(&obj->_var_sem);
+	    sem_wait(&_obj->_var_sem);
 
-	    pthread_testcancel(void);
+	    pthread_testcancel();
 
 	    /*
 	     * If the message queue is empty we continue the loop
 	     * and wait on semaphore until, posted from enqueu
 	     * method.
 	     */
-	    if(gqueue_count(&obj->_msg_queue) == 0)
+	    if(gqueue_count(&_obj->_msg_queue) == 0)
 		continue;
 
     	    pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &_old_state);
 
 	    /* Pop message from queue */
-	    pthread_mutex_lock(obj->_var_mutex_q);
+	    pthread_mutex_lock(&_obj->_var_mutex_q);
 	    gqueue_out(&_obj->_msg_queue, (void**) &_msg);
-	    pthread_mutex_unlock(obj->_var_mutex_q);
+	    pthread_mutex_unlock(&_obj->_var_mutex_q);
 
 	    /*
 	     * Write to all sockets. Cancellation state is disable between the write.
 	     */
 	    /*--------------------------------------------------*/
 	    /************* Mutex Lock This Section **************/
-	    pthread_mutex_lock(obj->_var_mutex);
-	    for(i = 0; i < _obj->var_num_conns; i++;)
+	    pthread_mutex_lock(&_obj->_var_mutex);
+	    for(i = 0; i < _obj->var_num_conns; i++);
 		_thcon_send_info(_obj->_var_cons_fds[i], _msg->memory, _msg->size);
-	    pthread_mutex_unlock(obj->_var_mutex);
+	    pthread_mutex_unlock(&_obj->_var_mutex);
 	    /*--------------------------------------------------*/
 
 	    /* free memory */
@@ -1335,7 +1351,7 @@ static void _thcon_thread_cleanup_server(void* obj)
      * This thread join should proceed, closing the write method.
      */
     free(_obj->_var_cons_fds);
-    _obj->_var_num_conns = 0;
+    _obj->var_num_conns = 0;
 
 
     if(_obj->_var_epol_inst)

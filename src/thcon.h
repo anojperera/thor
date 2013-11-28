@@ -109,7 +109,7 @@ struct _thcon
     pthread_t _var_svr_write_thread;			/* server writing thread */
     pthread_mutex_t _var_mutex;				/* mutex for controlling file descriptor array */
     pthread_mutex_t _var_mutex_q;			/* mutex for protecting the queue */
-    semt_t _var_sem;					/* semaphore for controlling the delete method */
+    sem_t _var_sem;					/* semaphore for controlling the delete method */
     void* _ext_obj;					/* external object pointer */
     gqueue _msg_queue;					/* message queue */
 
@@ -141,7 +141,7 @@ extern "C" {
     int thcon_stop(thcon* obj);
 
     /* In the server mode, message is sent to all sockets */
-    int thcon_send_info(thcon* obj, void* data, sizt_t sz);
+    int thcon_send_info(thcon* obj, void* data, size_t sz);
 
     /*
      * Multicast message to all connected sockets.
