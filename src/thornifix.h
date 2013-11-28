@@ -101,7 +101,7 @@ typedef unsigned int (*gthor_disb_fptr)(void*, int);
 #define THORNIFIX_MSG_CMD_WRITE_A0 1
 
 /* Message handling methods and macros */
-#define THORNIFIX_MSG_ELM_NUM 16
+#define THORNIFIX_MSG_ELM_NUM 18
 #define THORNIFIX_MSG_BUFF_ELM_SZ 8
 #define THORNIFIX_MSG_BUFF_SZ THORNIFIX_MSG_ELM_NUM*THORNIFIX_MSG_BUFF_ELM_SZ
 
@@ -130,6 +130,8 @@ struct thor_msg
     double _ai8_val __attribute__ ((aligned (8)));
     double _ai9_val __attribute__ ((aligned (8)));
     double _ai10_val __attribute__ ((aligned (8)));
+    double _ai11_val __attribute__ ((alinged (8)));
+    double _ai12_val __attribute__ ((alinged (8)));
     /*--------------------------------------------*/
     
     /* digital input channels */
@@ -147,40 +149,44 @@ struct thor_msg
 #define thorinifix_init_msg(obj)		\
     memset((void*) (obj), 0, THORINIFIX_MSG_SZ)
 
-#define thornifix_encode_msg(obj, buff, size) \
-    memset((void*) (buff), 0, size); \
-    sprintf((buff),		     \
-	    "%i|"		     \
-	    "%.2f|"		     \
-	    "%.2f|"		     \
-	    "%.2f|"		     \
-	    "%.2f|"		     \
-	    "%.2f|"		     \
-	    "%.2f|"		     \
-	    "%.2f|"		     \
-	    "%.2f|"		     \
-	    "%.2f|"		     \
-	    "%.2f|"		     \
-	    "%.2f|"		     \
-	    "%.2f|"		     \
-	    "%.2f|"		     \
-	    "%.2f|"		     \
-	    "%.2f|",		     \
-	    (obj)->_cmd,	     \
-	    (obj)->_a00,	     \
-	    (obj)->_a01,	     \
-	    (obj)->_ai0,	     \
-	    (obj)->_ai1,	     \
-	    (obj)->_ai2,	     \
-	    (obj)->_ai3,	     \
-	    (obj)->_ai4,	     \
-	    (obj)->_ai5,	     \
-	    (obj)->_ai6,	     \
-	    (obj)->_ai7,	     \
-	    (obj)->_ai8,	     \
-	    (obj)->_ai9,	     \
-	    (obj)->_ai10,	     \
-	    (obj)->_di0,	     \
+#define thornifix_encode_msg(obj, buff, size)	\
+    memset((void*) (buff), 0, size);		\
+    sprintf((buff),				\
+	    "%i|"				\
+	    "%.2f|"				\
+	    "%.2f|"				\
+	    "%.2f|"				\
+	    "%.2f|"				\
+	    "%.2f|"				\
+	    "%.2f|"				\
+	    "%.2f|"				\
+	    "%.2f|"				\
+	    "%.2f|"				\
+	    "%.2f|"				\
+	    "%.2f|"				\
+	    "%.2f|"				\
+	    "%.2f|"				\
+	    "%.2f|"				\
+	    "%.2f|"				\
+	    "%.2f|"				\
+	    "%.2f|",				\
+	    (obj)->_cmd,			\
+	    (obj)->_a00,			\
+	    (obj)->_a01,			\
+	    (obj)->_ai0,			\
+	    (obj)->_ai1,			\
+	    (obj)->_ai2,			\
+	    (obj)->_ai3,			\
+	    (obj)->_ai4,			\
+	    (obj)->_ai5,			\
+	    (obj)->_ai6,			\
+	    (obj)->_ai7,			\
+	    (obj)->_ai8,			\
+	    (obj)->_ai9,			\
+	    (obj)->_ai10,			\
+	    (obj)->_ai11,			\
+	    (obj)->_ai12,			\
+	    (obj)->_di0,			\
 	    (obj)->_di1)
 
 /* decode message */
