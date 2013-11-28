@@ -11,6 +11,7 @@
 #include <pthread.h>
 #include <semaphore.h>
 #include <gqueue.h>
+#include "thornifix.h"
 
 #define THCON_URL_BUFF_SZ 2048
 #define THCON_PORT_NAME_SZ 16
