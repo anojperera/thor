@@ -1,16 +1,21 @@
 /* test program for testing system class */
 #include <stdlib.h>
+#include <signal.h>
 #include <unistd.h>
 #include "thsys.h"
 
-#define MAX_TIME 2
+#define MAX_TIME 30
+
+
 
 static int _update(thsys* obj, void* _ext_obj, const float64* buff, const int sz);
+static void _sig_handler(int signo);
 
+static thsys sys;
 int main(int argc, char** argv)
 {
     int count = 0;
-    thsys sys;
+
 
     if(thsys_init(&sys, NULL))
 	{
@@ -25,7 +30,6 @@ int main(int argc, char** argv)
     printf("\n");
     while(1)
 	{
-	    fprintf(stderr, "count: %i\r", count);
 	    sleep(1);
 	    if(count++ > MAX_TIME)
 		break;
@@ -43,8 +47,18 @@ int main(int argc, char** argv)
 static int _update(thsys* obj, void* _ext_obj, const float64* buff, const int sz)
 {
   int i = 0;
+  fprintf(stderr, "\n=========================\n");  
   for(i=0; i<sz; i++)
-    fprintf(stderr, "\n%f\t", buff[i]);
-  fprintf(stderr, "\n=========================\n");
+    fprintf(stderr, "%f\t", buff[i]);
+  fprintf(stderr, "\r");
+  fflush(stderr);
   return 0;
+}
+
+static void _sig_handler(int signo)
+{
+    if(signo = SIGINT)
+    thsys_stop(&sys);
+    thsys_delete(&sys);
+    closelog();	
 }
