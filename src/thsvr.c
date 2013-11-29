@@ -26,8 +26,8 @@
 
 /* Interupt handlers.*/
 static int _thsvr_sys_interupt_callback(thsys* obj, void* self);
-static int _thsvy_sys_update_callback(thsys* obj, const float64* buff, const int sz);
-
+static int _thsvy_sys_update_callback(thsys* obj, void* self, const float64* buff, const int sz);
+static int _thsvr_con_recv_callback(void* obj, void* msg, size_t sz);
 /*
  * Initialise the server component and get configuration settings
  * for the admin url etc.
@@ -50,7 +50,7 @@ int thsvr_init(thsvr* obj, const config_t* config)
 	return -1;
 
     /* initialise system object */
-    if(thsys_init(&obj->_var_sys, _thsvr_sys_interupt))
+    if(thsys_init(&obj->_var_sys, _thsvr_sys_interupt_callback))
 	{
 	    thcon_delete(&obj->_var_con);
 	    return -1;
@@ -58,7 +58,11 @@ int thsvr_init(thsvr* obj, const config_t* config)
 
     /* Set external object pointer */
     thsys_set_external_obj(&obj->_var_sys, (void*) obj);
+    thcon_set_ext_obj(&obj->_var_con, (void*) obj);
+
+    /* Set callback methods */
     obj->_var_sys.var_callback_update = _thsvy_sys_update_callback;
+    obj->_var_con._thcon_recv_callback = _thsvr_con_recv_callback;
     
     obj->var_init_flg = 1;
     return 0;
@@ -69,10 +73,21 @@ int thsvr_init(thsvr* obj, const config_t* config)
  * If the test is running, it stops and frees the resources
  * allocated to the connection and system objects.
  */
-void thsvr_delete(thsys* obj)
+void thsvr_delete(thsvr* obj)
 {
+    /* Check for object */
+    if(obj == NULL)
+	return;
+    
     obj->_var_config = NULL;
+    /*
+     * Call stop method to as a safe option
+     */
+    thsvr_stop(obj);
 
+    /* Delete both connection and the system object */
+    thcon_delete(&obj->_var_con);
+    thsys_delete(&obj->_var_sys);
     return;
 }
 
@@ -171,11 +186,18 @@ int thsvr_stop(thsvr* obj)
  * We call connection objects multicast method to relay messages to the connected
  * app clients.
  */
-static int _thsvy_sys_update_callback(thsys* obj, const float64* buff, const int sz)
+static int _thsvy_sys_update_callback(thsys* obj, void* self, const float64* buff, const int sz)
 {
     struct thor_msg _msg;
     char _msg_buff[THORINIFIX_MSG_SZ];
+    thsvr* _obj;
 
+    if(self == NULL || buff == NULL || sz <= 0)
+	return -1;
+
+    /* Cast self object pointer to the correct type */
+    _obj = (thsvr*) self;
+    
     /* initialise message buffer size */
     thorinifix_init_msg(&_msg);
     thorinifix_init_msg(_msg_buff);
@@ -185,27 +207,79 @@ static int _thsvy_sys_update_callback(thsys* obj, const float64* buff, const int
      * before multi casting.
      */
     _msg._cmd = 0;
-    _msg._ao0 = 0;
-    _msg._ao1 = 0;
-    _msg._ai0 = (double) buff[0];
-    _msg._ai1 = (double) buff[1];
-    _msg._ai2 = (double) buff[2];
-    _msg._ai3 = (double) buff[3];
-    _msg._ai4 = (double) buff[4];
-    _msg._ai5 = (double) buff[5];
-    _msg._ai6 = (double) buff[6];
-    _msg._ai7 = (double) buff[7];
-    _msg._ai8 = (double) buff[8];
-    _msg._ai9 = (double) buff[9];
-    _msg._ai10 = (double) buff[10];
+    _msg._ao0_val = 0.0;
+    _msg._ao1_val = 0.0;
+    _msg._ai0_val = (double) buff[0];
+    _msg._ai1_val = (double) buff[1];
+    _msg._ai2_val = (double) buff[2];
+    _msg._ai3_val = (double) buff[3];
+    _msg._ai4_val = (double) buff[4];
+    _msg._ai5_val = (double) buff[5];
+    _msg._ai6_val = (double) buff[6];
+    _msg._ai7_val = (double) buff[7];
+    _msg._ai8_val = (double) buff[8];
+    _msg._ai9_val = (double) buff[9];
+    _msg._ai10_val = (double) buff[10];
+    _msg._ai11_val = (double) buff[11];
+    _msg._ai12_val = (double) buff[12];
 
     /* Digital read set to zero */
-    _msg._di0 = 0.0;
-    _msg_di1 = 0.0;
+    _msg._di0_val = 0.0;
+    _msg._di1_val = 0.0;
 
     /* encode message to string and multi cast */
     thornifix_encode_msg(&_msg, _msg_buff, THORINIFIX_MSG_SZ);
-    thcon_multicast(&obj->_var_con, _msg_buff, THORINIFIX_MSG_SZ);
+    thcon_multicast(&_obj->_var_con, _msg_buff, THORINIFIX_MSG_SZ);
+
+    return 0;
+}
+
+/*
+ * Interupt handler. This callback method is fired at a defined rate by the sys object.
+ * Any interupt processing can be done here.
+ */
+static int _thsvr_sys_interupt_callback(thsys* obj, void* self)
+{
+    return 0;
+}
+
+/*
+ * This callback method handles, messages from the client connections.
+ * When a client application sends commands to the server, this method
+ * shall be called from thcon. We shall parse the message and pass it to
+ * thsys object.
+ */
+static int _thsvr_con_recv_callback(void* obj, void* msg, size_t sz)
+{
+    float64 _ao_buff[THSYS_NUM_AO_CHANNELS];					/* buffer to hold analogue out */
+    struct thor_msg _msg;							/* message struct */
+    thsvr* _obj;								/* self */
+
+    /* Check for arguments */
+    if(obj == NULL || msg == NULL || sz <= 0)
+	return -1;
+
+    _obj = (thsvr*) obj;
+
+    _ao_buff[0] = 0.0;
+    _ao_buff[1] = 0.0;
+
+    /* Initialise message struct */
+    thorinifix_init_msg(&_msg);
+    
+    /* Decode the message */
+    if(thornifix_decode_msg((const char*) msg, sz, &_msg))
+	return -1;
+
+    /* Check command here */
+
+    /*--------------------*/
+
+    _ao_buff[0] = _msg._ao0_val;
+    _ao_buff[1] = _msg._ao1_val;
+
+    /* Call write method of system object */
+    thsys_set_write_buff(&_obj->_var_sys, _ao_buff, THSYS_NUM_AO_CHANNELS);
 
     return 0;
 }

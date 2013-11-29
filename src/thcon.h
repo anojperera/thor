@@ -114,6 +114,10 @@ struct _thcon
     gqueue _msg_queue;					/* message queue */
 
     /* set callback function to get a callback when data is recieve or write on the socket */
+    /*
+     * Recv callback is fired when data is recieved on listening sockets.
+     * All messages between connections are made using message struct.
+     */
     int (*_thcon_recv_callback)(void*, void*, size_t);
     int (*_thcon_write_callback)(void*, void*, size_t);
 };
@@ -128,7 +132,7 @@ extern "C" {
 
     /* Methods for handling my information struct */
 #define thcon_reset_my_info(obj)					\
-    memset((obj)->var_my_info, 0, sizeof(struct thcon_host_info))
+    memset((void*) &(obj)->var_my_info, 0, sizeof(struct thcon_host_info))
     
     const char* thcon_get_my_addr(thcon* obj);
     int thcon_get_my_geo(thcon* obj);
@@ -170,7 +174,9 @@ extern "C" {
     /* gets the connection status */
 #define thcon_get_conn_stat(obj)		\
     (obj)->_var_con_stat
-    
+
+#define thcon_set_ext_obj(obj, ext)		\
+    (obj)->_ext_obj = (ext)
 #ifdef __cplusplus
 }
 #endif

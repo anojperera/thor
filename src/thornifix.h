@@ -130,8 +130,8 @@ struct thor_msg
     double _ai8_val __attribute__ ((aligned (8)));
     double _ai9_val __attribute__ ((aligned (8)));
     double _ai10_val __attribute__ ((aligned (8)));
-    double _ai11_val __attribute__ ((alinged (8)));
-    double _ai12_val __attribute__ ((alinged (8)));
+    double _ai11_val __attribute__ ((aligned (8)));
+    double _ai12_val __attribute__ ((aligned (8)));    
     /*--------------------------------------------*/
     
     /* digital input channels */
@@ -171,23 +171,23 @@ struct thor_msg
 	    "%.2f|"				\
 	    "%.2f|",				\
 	    (obj)->_cmd,			\
-	    (obj)->_a00,			\
-	    (obj)->_a01,			\
-	    (obj)->_ai0,			\
-	    (obj)->_ai1,			\
-	    (obj)->_ai2,			\
-	    (obj)->_ai3,			\
-	    (obj)->_ai4,			\
-	    (obj)->_ai5,			\
-	    (obj)->_ai6,			\
-	    (obj)->_ai7,			\
-	    (obj)->_ai8,			\
-	    (obj)->_ai9,			\
-	    (obj)->_ai10,			\
-	    (obj)->_ai11,			\
-	    (obj)->_ai12,			\
-	    (obj)->_di0,			\
-	    (obj)->_di1)
+	    (obj)->_ao0_val,			\
+	    (obj)->_ao1_val,			\
+	    (obj)->_ai0_val,			\
+	    (obj)->_ai1_val,			\
+	    (obj)->_ai2_val,			\
+	    (obj)->_ai3_val,			\
+	    (obj)->_ai4_val,			\
+	    (obj)->_ai5_val,			\
+	    (obj)->_ai6_val,			\
+	    (obj)->_ai7_val,			\
+	    (obj)->_ai8_val,			\
+	    (obj)->_ai9_val,			\
+	    (obj)->_ai10_val,			\
+	    (obj)->_ai11_val,			\
+	    (obj)->_ai12_val,			\
+	    (obj)->_di0_val,			\
+	    (obj)->_di1_val)
 
 /* decode message */
 int thornifix_decode_msg(const char* buff, size_t size, struct thor_msg* msg);
