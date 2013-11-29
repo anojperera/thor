@@ -25,6 +25,7 @@ int main(int argc, char** argv)
 
     openlog("thor_sys", LOG_PID, LOG_USER);
     sys.var_callback_update = _update;
+    signal(SIGINT, _sig_handler);
     thsys_set_sample_rate(&sys, 4);
     thsys_start(&sys);
     printf("\n");
