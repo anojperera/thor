@@ -32,9 +32,8 @@ int main(int argc, char** argv)
     while(1)
 	{
 	    sleep(1);
-	    if(count++ > MAX_TIME)
-		break;
 	}
+
 
     thsys_stop(&sys);
     thsys_delete(&sys);
@@ -48,7 +47,6 @@ int main(int argc, char** argv)
 static int _update(thsys* obj, void* _ext_obj, const float64* buff, const int sz)
 {
   int i = 0;
-  fprintf(stderr, "\n=========================\n");  
   for(i=0; i<sz; i++)
     fprintf(stderr, "%f\t", buff[i]);
   fprintf(stderr, "\r");
@@ -63,6 +61,7 @@ static void _sig_handler(int signo)
 	    thsys_stop(&sys);
 	    thsys_delete(&sys);
 	    closelog();
+	    printf("\nEnd\n");    	    
 	}
     return;
 }
