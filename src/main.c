@@ -58,7 +58,7 @@ static int _update(thsys* obj, void* _ext_obj, const float64* buff, const int sz
 
 static void _sig_handler(int signo)
 {
-    if(signo = SIGINT)
+    if(signo == SIGINT)
 	{
 	    thsys_stop(&sys);
 	    thsys_delete(&sys);
