@@ -14,7 +14,7 @@ int thsys_init(thsys* obj, int (*callback) (thsys*, void*))
 
     /* initialise flags */
     obj->var_flg = 0;
-    obj->var_client_count = 1;
+    obj->var_client_count = 0;
     obj->var_run_flg = 0;
 
     /* create tasks */
@@ -79,7 +79,7 @@ int thsys_start(thsys* obj)
 
     if(!obj->var_flg)
 	return -1;
-
+    obj->var_client_count++;
     /* indicate running */
     if(obj->var_run_flg)
 	return 0;
@@ -110,6 +110,13 @@ int thsys_stop(thsys* obj)
     if(!obj->var_run_flg)
 	return -1;
 
+    /*
+     * Decrement client connections and cancel the thread.
+     * If the test is still running put to stop.
+     */
+    if((obj->var_client_count--) == 0)
+	return 0;
+    
     /* cancel thread */
     pthread_cancel(obj->var_thread);
     return 0;
