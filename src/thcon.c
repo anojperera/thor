@@ -843,7 +843,7 @@ static void* _thcon_thread_function_client(void* obj)
 
     /* make socket non blocking */
     if(_thcon_make_socket_nonblocking(_obj->var_acc_sock))
-	goto listening_sock_exit;
+	return NULL;
 
     pthread_testcancel();
 
