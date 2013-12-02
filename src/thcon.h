@@ -185,6 +185,11 @@ extern "C" {
 
 #define thcon_set_ext_obj(obj, ext)		\
     (obj)->_ext_obj = (ext)
+
+    /* Set callback function pointers for recieving data */
+#define thcon_set_recv_callback(obj, fptr)	\
+    (obj)->_thcon_recv_callback = fptr
+    
 #ifdef __cplusplus
 }
 #endif
