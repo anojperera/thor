@@ -420,7 +420,7 @@ int thcon_stop(thcon* obj)
     pthread_cancel(obj->_var_run_thread);
     pthread_join(obj->_var_run_thread, NULL);
 
-
+    THOR_LOG_ERROR("thcon sucessfully freed");
     return 0;
 
 }
