@@ -134,6 +134,7 @@ int thsvr_start(thsvr* obj)
 	}
 
     _setting = config_lookup(obj->_var_config, THSVR_COM_PORT);
+    _t_buff = NULL;
     if(_setting)
 	{
 	    _t_buff = config_setting_get_string(_setting);
