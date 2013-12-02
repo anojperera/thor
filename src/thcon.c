@@ -1176,22 +1176,6 @@ static int _thcon_write_to_int_buff(thcon* obj, int socket_fd)
     return _sz;
 }
 
-/* /\* Read from the buffer and write to the socket *\/ */
-/* static int _thcon_read_from_int_buff(thcon* obj, int socket_fd) */
-/* { */
-/*     int _max_length; */
-/*     static int _sz = 0; */
-
-/*     _max_length = strlen(obj->var_membuff_out); */
-
-/*     do */
-/* 	{ */
-/* 	    _sz += write(socket_fd, &obj->var_membuff_out[_sz], _max_length-_sz); */
-
-/* 	}while(_sz < _max_length); */
-
-/*     return _sz; */
-/* } */
 
 /* Alocate memory */
 inline __attribute__ ((always_inline)) static int _thcon_alloc_fds(thcon* obj)
