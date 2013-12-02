@@ -97,7 +97,7 @@ void thsvr_delete(thsvr* obj)
  */
 int thsvr_start(thsvr* obj)
 {
-    const char* _t_buff;
+    const char* _t_buff;    
     struct config_setting_t* _setting;
     
     /* check for object */
@@ -132,6 +132,13 @@ int thsvr_start(thsvr* obj)
 		_thsvr_copy_admin2(obj, _t_buff, THCON_URL_BUFF_SZ);
 	}
 
+    _setting = config_lookup(obj->_var_config, THSVR_COM_PORT);
+    if(_setting)
+	{
+	    _t_buff = config_setting_get_string(_setting);
+	    if(_t_buff)
+		thcon_set_port_name(&obj->_var_con, _t_buff);
+	}
     /*
      * Reset connection info struct.
      */
