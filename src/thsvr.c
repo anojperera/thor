@@ -12,6 +12,7 @@
 #define THSVR_ADMIN1_URL "prime_admin_url"
 #define THSVR_ADMIN2_URL "http://www.valyria.co.uk:/8080/dieties/"
 #define THSVR_COM_PORT "main_con_port"
+#define THSVR_DEF_COM_PORT "11000"
 
 /*
  * Macro for copying admin url to the internal buffers.
@@ -139,6 +140,9 @@ int thsvr_start(thsvr* obj)
 	    if(_t_buff)
 		thcon_set_port_name(&obj->_var_con, _t_buff);
 	}
+    else
+	thcon_set_port_name(&obj->_var_con, THSVR_DEF_COM_PORT);
+    
     /*
      * Reset connection info struct.
      */
