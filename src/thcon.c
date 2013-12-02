@@ -164,6 +164,7 @@ int thcon_init(thcon* obj, thcon_mode mode)
     obj->_ext_obj = NULL;
     obj->_thcon_recv_callback = NULL;
     obj->_thcon_write_callback = NULL;
+    obj->_thcon_conn_made = NULL;
 
     /* initialise queue and locks */
     gqueue_new(&obj->_msg_queue, _thcon_queue_del_helper);
@@ -181,6 +182,7 @@ void thcon_delete(thcon* obj)
     obj->_ext_obj = NULL;
     obj->_thcon_recv_callback = NULL;
     obj->_thcon_write_callback = NULL;
+    obj->_thcon_conn_made = NULL;    
 
     /* check scope */
     sem_destroy(&obj->_var_sem);
@@ -990,6 +992,14 @@ static void* _thcon_thread_function_server(void* obj)
 			     */
 			    pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &_old_state);
 			    _thcon_accept_conn(_obj, _obj->var_con_sock, _e_sock, &_event);
+
+			    /*
+			     * Fire callback to indicate connection was established and that
+			     * the sys object should be started.
+			     */
+			    if(_obj->_thcon_conn_made)
+				_obj->_thcon_conn_made(_obj->_ext_obj, obj);
+			    
 			    pthread_setcancelstate(_old_state, NULL);
 			    pthread_testcancel();
 			    continue;

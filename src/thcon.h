@@ -120,6 +120,14 @@ struct _thcon
      */
     int (*_thcon_recv_callback)(void*, void*, size_t);
     int (*_thcon_write_callback)(void*, void*, size_t);
+
+    /*
+     * Callback pointer to indicate when a connection
+     * is made on this server.
+     * First argument is the external object pointer and the
+     * second argument is the connection object itself.
+     */
+    int (*_thcon_conn_made)(void*, void*);
 };
 
 #ifdef __cplusplus
