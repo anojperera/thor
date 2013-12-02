@@ -61,6 +61,8 @@ int thsvr_init(thsvr* obj, const config_t* config)
     /* Set external object pointer */
     thsys_set_external_obj(&obj->_var_sys, (void*) obj);
     thcon_set_ext_obj(&obj->_var_con, (void*) obj);
+    
+    thsys_set_sample_rate(&obj->_var_sys, 4);
 
     /* Set callback methods */
     obj->_var_sys.var_callback_update = _thsvy_sys_update_callback;
@@ -240,7 +242,8 @@ static int _thsvy_sys_update_callback(thsys* obj, void* self, const float64* buf
     /* encode message to string and multi cast */
     thornifix_encode_msg(&_msg, _msg_buff, THORINIFIX_MSG_SZ);
     thcon_multicast(&_obj->_var_con, _msg_buff, THORINIFIX_MSG_SZ);
-
+    
+    THOR_LOG_ERROR(_msg_buff);
     return 0;
 }
 
