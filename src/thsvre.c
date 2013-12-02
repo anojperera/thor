@@ -36,6 +36,7 @@ int main(int argc, char** argv)
 
     /* Attach a signal handler */
     signal(SIGTERM, _thsvre_sigterm_handler);
+    signal(SIGINT, _thsvre_sigterm_handler);    
     
     /* Start the program */
     thsvr_start(&_var_svr);
