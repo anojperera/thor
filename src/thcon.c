@@ -993,6 +993,7 @@ static void* _thcon_thread_function_server(void* obj)
 			    pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &_old_state);
 			    _thcon_accept_conn(_obj, _obj->var_con_sock, _e_sock, &_event);
 
+    			    THOR_LOG_ERROR("Connection made");
 			    /*
 			     * Fire callback to indicate connection was established and that
 			     * the sys object should be started.
