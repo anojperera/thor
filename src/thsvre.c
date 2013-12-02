@@ -8,7 +8,8 @@
 #include "thsvr.h"
 
 #define THSVR_DEFAULT_CONFIG_PATH1 "thor.cfg"
-#define THSVR_DEFAULT_CONFIG_PATH2 "/etc/thor.cfg"
+#define THSVR_DEFAULT_CONFIG_PATH2 "../config/thor.cfg"
+#define THSVR_DEFAULT_CONFIG_PATH3 "/etc/thor.cfg"
     
 thsvr _var_svr;							/* Server component */
 config_t _var_config;						/* Configuration settings object */
@@ -65,6 +66,9 @@ static int _thsvre_load_config(void)
 
     if(config_read_file(&_var_config, THSVR_DEFAULT_CONFIG_PATH2) == CONFIG_TRUE)
 	return 0;
+
+    if(config_read_file(&_var_config, THSVR_DEFAULT_CONFIG_PATH3) == CONFIG_TRUE)
+	return 0;    
 
     /*
      * If failed at this point, we indicate failure and not to continue
