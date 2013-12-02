@@ -964,7 +964,7 @@ static void* _thcon_thread_function_server(void* obj)
 		    /* check for errors */
 		    if((_events[_i].events & EPOLLERR) ||
 		       (_events[_i].events & EPOLLHUP) ||
-		       (_events[_i].events & EPOLLIN))
+		       (!(_events[_i].events & EPOLLIN)))
 			{
 			    /* errors have occured */
 			    THOR_LOG_ERROR("epoll error");
