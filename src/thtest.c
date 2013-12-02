@@ -23,7 +23,11 @@ int main(int argc, char** argv)
     signal(SIGINT, _sig_handler);
     thcon_start(&_con);
     while(1)
-	sleep(1);
+	{
+	    sleep(10);
+	    break;
+	}
+    _sig_handler(SIGINT);
     return 0;
 }
 
