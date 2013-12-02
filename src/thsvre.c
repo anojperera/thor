@@ -82,14 +82,15 @@ static int _thsvre_load_config(void)
 /* Signal handler */
 static void _thsvre_sigterm_handler(int signo)
 {
-    if(signo == SIGTERM || signo == SIGINT)
+    if(signo == SIGINT)
 	{
 	    /* Stop the server */
 	    thsvr_stop(&_var_svr);
 	    thsvr_delete(&_var_svr);
+	    
+	    /* Destroy the configuration object */
+	    config_destroy(&_var_config);
 	}
 
-    /* Destroy the configuration object */
-    config_destroy(&_var_config);
     return;
 }

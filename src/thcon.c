@@ -836,6 +836,14 @@ static void* _thcon_thread_function_client(void* obj)
 
     /* cast object pointer to connection type */
     _obj = (thcon*) obj;
+    
+    /* create socket and bind */
+    if(_thcon_create_connection(_obj, thcon_mode_client))
+	return NULL;
+
+    /* make socket non blocking */
+    if(_thcon_make_socket_nonblocking(_obj->var_acc_sock))
+	goto listening_sock_exit;
 
     pthread_testcancel();
 
