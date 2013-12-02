@@ -14,9 +14,6 @@ static void _sig_handler(int signo);
 static thsys sys;
 int main(int argc, char** argv)
 {
-    int count = 0;
-
-
     if(thsys_init(&sys, NULL))
 	{
 	    printf("%s\n","sys not initialised");
