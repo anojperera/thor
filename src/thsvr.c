@@ -29,6 +29,7 @@
 static int _thsvr_sys_interupt_callback(thsys* obj, void* self);
 static int _thsvy_sys_update_callback(thsys* obj, void* self, const float64* buff, const int sz);
 static int _thsvr_con_recv_callback(void* obj, void* msg, size_t sz);
+static int _thsvr_con_made_callback(void* obj, void* con);
 /*
  * Initialise the server component and get configuration settings
  * for the admin url etc.
@@ -64,6 +65,7 @@ int thsvr_init(thsvr* obj, const config_t* config)
     /* Set callback methods */
     obj->_var_sys.var_callback_update = _thsvy_sys_update_callback;
     obj->_var_con._thcon_recv_callback = _thsvr_con_recv_callback;
+    obj->_var_con._thcon_conn_made = _thsvr_con_made_callback;
     
     obj->var_init_flg = 1;
     return 0;
@@ -168,10 +170,6 @@ int thsvr_start(thsvr* obj)
      * clients.
      */
     if(thcon_start(&obj->_var_con))
-	return -1;
-
-    /* Start system */
-    if(thsys_start(&obj->_var_sys))
 	return -1;
 
     return 0;
@@ -293,5 +291,23 @@ static int _thsvr_con_recv_callback(void* obj, void* msg, size_t sz)
     /* Call write method of system object */
     thsys_set_write_buff(&_obj->_var_sys, _ao_buff, THSYS_NUM_AO_CHANNELS);
 
+    return 0;
+}
+
+/*
+ * This callback is fired when a connection is made.
+ * When the fist connection is made, we start the sys object.
+ */
+static int _thsvr_con_made_callback(void* obj, void* con)
+{
+    thsvr* _obj;
+
+    if(obj == NULL)
+       return -1;
+
+    /* Case object to the correct type */
+    _obj = (thsvr*) obj;
+
+    thsys_start(&_obj->_var_sys);
     return 0;
 }
