@@ -31,7 +31,7 @@ int main(int argc, char** argv)
     printf("\n");
     while(1)
 	{
-	    sleep(1);
+	    sleep(10);
 	}
 
 
