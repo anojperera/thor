@@ -1105,9 +1105,7 @@ static int _thcon_accept_conn(thcon* obj, int list_sock, int epoll_inst, struct 
 			}
 		    else
 			{
-#ifdef HTML_STACK_DEBUG_MODE
-			    fprintf(stderr, "Accept handling error\n");
-#endif
+	    		    THOR_LOG_ERROR("Accept handling error\n");
 			    break;
 			}
 		}
