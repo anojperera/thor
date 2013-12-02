@@ -21,7 +21,8 @@ int main(int argc, char** argv)
     thcon_set_recv_callback(&_con, _recv_callback);
 
     thcon_start(&_con);
-
+    while(1)
+	sleep(1);
     return 0;
 }
 
