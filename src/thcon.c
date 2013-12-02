@@ -492,7 +492,7 @@ static int _thcon_create_connection(thcon* obj, int _con_mode)
 	obj->_var_info.ai_flags = AI_PASSIVE;
 
     /* create address infor struct */
-    _stat = getaddrinfo((_con_mode? obj->var_svr_name : NULL), obj->var_port_name, &obj->_var_info, &_result);
+    _stat = getaddrinfo((_con_mode? NULL : obj->var_svr_name), obj->var_port_name, &obj->_var_info, &_result);
     if(_stat != 0)
 	{
 	    _err_msg = gai_strerror(_stat);
