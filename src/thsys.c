@@ -73,7 +73,6 @@ void thsys_delete(thsys* obj)
 /* Start system */
 int thsys_start(thsys* obj)
 {
-    pthread_attr_t _attr;					/* thread attribute */
     if(obj == NULL)
 	return -1;
 
@@ -87,15 +86,8 @@ int thsys_start(thsys* obj)
     /* configure timing and start tasks */
     ERR_CHECK(NICfgSampClkTiming(obj->var_a_intask, THSYS_CLOCK_SOURCE, obj->var_sample_rate, DAQmx_Val_Rising, DAQmx_Val_ContSamps, 1));
 
-    /* initialise thread attribute */
-    pthread_attr_init(&_attr);
-    pthread_attr_setdetachstate(&_attr, PTHREAD_CREATE_DETACHED);
-
     /* creat thread */
-    pthread_create(&obj->var_thread, &_attr, _thsys_start_async, (void*) obj);
-
-    /* destroy attribute object as we no longer need it */
-    pthread_attr_destroy(&_attr);
+    pthread_create(&obj->var_thread, NULL, _thsys_start_async, (void*) obj);
 
     obj->var_run_flg = 1;
     return 0;
@@ -119,6 +111,7 @@ int thsys_stop(thsys* obj)
     
     /* cancel thread */
     pthread_cancel(obj->var_thread);
+    pthread_join(obj->var_thread, NULL);
     return 0;
 }
 
