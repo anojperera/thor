@@ -951,7 +951,7 @@ static void* _thcon_thread_function_server(void* obj)
 	goto epoll_exit_lbl;
     _obj->_var_epol_inst = &_e_sock;
     _event.data.fd = _obj->var_con_sock;
-    _event.events = EPOLLIN;
+    _event.events = EPOLLIN | EPOLLET | EPOLLRDHUP;
 
     if(epoll_ctl(_e_sock, EPOLL_CTL_ADD, _obj->var_con_sock, &_event))
 	goto epoll_exit_lbl;
