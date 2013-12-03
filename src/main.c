@@ -6,7 +6,7 @@
 
 #define MAX_TIME 30
 
-
+volatile sig_atomic_t flg = 1;
 
 static int _update(thsys* obj, void* _ext_obj, const float64* buff, const int sz);
 static void _sig_handler(int signo);
@@ -26,18 +26,11 @@ int main(int argc, char** argv)
     thsys_set_sample_rate(&sys, 4);
     thsys_start(&sys);
     printf("\n");
-    while(1)
+    while(flg)
 	{
 	    sleep(10);
-	    break;
 	}
 
-
-    thsys_stop(&sys);
-    thsys_delete(&sys);
-    closelog();
-
-    printf("\nEnd\n");    
     return 0;
 }
 
@@ -59,7 +52,7 @@ static void _sig_handler(int signo)
 	    thsys_stop(&sys);
 	    thsys_delete(&sys);
 	    closelog();
-	    printf("\nEnd\n");    	    
+	    flg = 0;
 	}
     return;
 }
