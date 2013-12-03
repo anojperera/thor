@@ -951,7 +951,7 @@ static void* _thcon_thread_function_server(void* obj)
 	goto epoll_exit_lbl;
     _obj->_var_epol_inst = &_e_sock;
     _event.data.fd = _obj->var_con_sock;
-    _event.events = EPOLLIN | EPOLLET;
+    _event.events = EPOLLIN;
 
     if(epoll_ctl(_e_sock, EPOLL_CTL_ADD, _obj->var_con_sock, &_event))
 	goto epoll_exit_lbl;
@@ -1001,59 +1001,63 @@ static void* _thcon_thread_function_server(void* obj)
 			    pthread_testcancel();
 			    continue;
 			}
-		    else if(_obj->var_con_sock == _events[_i].data.fd)
+		    else if((_events[_i].events & EPOLLIN) ||
+			    (_events[_i].events & EPOLLRDHUP))
 			{
-			    /*
-			     * Information on listening socket, means we have a connection.
-			     * Call internal method to haddle the incomming connection and add
-			     * to the epoll instance.
-			     */
-			    pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &_old_state);
-			    _thcon_accept_conn(_obj, _obj->var_con_sock, _e_sock, &_event);
-
-
-			    /*
-			     * Fire callback to indicate connection was established and that
-			     * the sys object should be started.
-			     */
-			    if(_obj->_thcon_conn_made)
-				_obj->_thcon_conn_made(_obj->_ext_obj, obj);
-
-			    pthread_setcancelstate(_old_state, NULL);
-			    pthread_testcancel();
-			    continue;
-			}
-		    else
-			{
-			    
-			    /*
-			     * Data on socket waiting to be read. All data shall be read
-			     * in a single pass. Since we are running on edge triggered mode
-			     * in epoll, we wont get a notification again.
-			     */
-			    while(1)
+			    if(_obj->var_con_sock == _events[_i].data.fd)
 				{
-				    _stat = _thcon_write_to_int_buff(_obj, _events[_i].data.fd);
-				    if(_obj->_thcon_recv_callback && _stat > 0)
-					_obj->_thcon_recv_callback(_obj->_ext_obj, _obj->var_membuff_in, THORNIFIX_MSG_BUFF_SZ);
-				    if(_stat == -1)
-					{
-					    /*
-					     * if error is EAGAIN, we have read all data, go back to
-					     * the main loop.
-					     */
-					    if(errno != EAGAIN)
-						_complete = 1;
+				    /*
+				     * Information on listening socket, means we have a connection.
+				     * Call internal method to haddle the incomming connection and add
+				     * to the epoll instance.
+				     */
+				    pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &_old_state);
+				    _thcon_accept_conn(_obj, _obj->var_con_sock, _e_sock, &_event);
 
-					    break;
-					}
-				    else if(_stat == 0)
-					{
-					    _complete = 1;
-					    break;
-					}
+
+				    /*
+				     * Fire callback to indicate connection was established and that
+				     * the sys object should be started.
+				     */
+				    if(_obj->_thcon_conn_made)
+					_obj->_thcon_conn_made(_obj->_ext_obj, obj);
+
+				    pthread_setcancelstate(_old_state, NULL);
+				    pthread_testcancel();
+				    continue;
 				}
+			    else
+				{
+			    
+				    /*
+				     * Data on socket waiting to be read. All data shall be read
+				     * in a single pass. Since we are running on edge triggered mode
+				     * in epoll, we wont get a notification again.
+				     */
+				    while(1)
+					{
+					    _stat = _thcon_write_to_int_buff(_obj, _events[_i].data.fd);
+					    if(_obj->_thcon_recv_callback && _stat > 0)
+						_obj->_thcon_recv_callback(_obj->_ext_obj, _obj->var_membuff_in, THORNIFIX_MSG_BUFF_SZ);
+					    if(_stat == -1)
+						{
+						    /*
+						     * if error is EAGAIN, we have read all data, go back to
+						     * the main loop.
+						     */
+						    if(errno != EAGAIN)
+							_complete = 1;
 
+						    break;
+						}
+					    else if(_stat == 0)
+						{
+						    _complete = 1;
+						    break;
+						}
+					}
+
+				}
 			}
 		    if(_complete)
 			{
