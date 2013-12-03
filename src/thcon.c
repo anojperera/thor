@@ -999,6 +999,16 @@ static void* _thcon_thread_function_server(void* obj)
 			    pthread_testcancel();
 			    continue;
 			}
+		    else if(_events[_i].events & EPOLLRDHUP)
+			{
+   			    _thcon_adjust_fds(_obj, _events[_i].data.fd);
+			    close(_events[_i].data.fd);
+
+			    /* decrement counter in a mutex */
+			    pthread_mutex_lock(&_obj->_var_mutex);
+			    _obj->var_num_conns--;
+			    pthread_mutex_unlock(&_obj->_var_mutex);			    
+			}
 		    else if(_obj->var_con_sock == _events[_i].data.fd)
 			{
 			    /*
