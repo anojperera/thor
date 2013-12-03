@@ -1025,25 +1025,6 @@ static void* _thcon_thread_function_server(void* obj)
 			}
 		    else
 			{
-			    /*
-			     * This where data is read from the socket.
-			     * Kernel issues a EPOLLIN, event even when the
-			     * client closes the connection. Therefore we trap that here
-			     * and close the socket.
-			     */
-			    if(_events[_i].events & EPOLLRDHUP)
-				{
-				    sprintf(_err_msg, "Connection closed: %i\n", _events[_i].data.fd);
-				    THOR_LOG_ERROR(_err_msg);
-				    _thcon_adjust_fds(_obj, _events[_i].data.fd);
-				    close(_events[_i].data.fd);
-
-				    /* decrement counter in a mutex */
-				    pthread_mutex_lock(&_obj->_var_mutex);
-				    _obj->var_num_conns--;
-				    pthread_mutex_unlock(&_obj->_var_mutex);
-				    continue;
-				}
 			    
 			    /*
 			     * Data on socket waiting to be read. All data shall be read
@@ -1053,7 +1034,7 @@ static void* _thcon_thread_function_server(void* obj)
 			    while(1)
 				{
 				    _stat = _thcon_write_to_int_buff(_obj, _events[_i].data.fd);
-				    if(_obj->_thcon_recv_callback)
+				    if(_obj->_thcon_recv_callback && _stat > 0)
 					_obj->_thcon_recv_callback(_obj->_ext_obj, _obj->var_membuff_in, THORNIFIX_MSG_BUFF_SZ);
 				    if(_stat == -1)
 					{
@@ -1314,9 +1295,6 @@ static void* _thcon_thread_function_write_server(void* obj)
 
     /* cast argument to correct object pointer */
     _obj = (thcon*) obj;
-    
-    /* Ignore sigpipe event */
-    signal(SIGPIPE, SIG_IGN);
     
     while(1)
 	{
