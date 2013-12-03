@@ -1148,7 +1148,7 @@ static int _thcon_accept_conn(thcon* obj, int list_sock, int epoll_inst, struct 
 	    _thcon_make_socket_nonblocking(_fd);
 
 	    event->data.fd = _fd;
-	    event->events = EPOLLIN | EPOLLET;
+	    event->events = EPOLLIN | EPOLLET | EPOLLRDHUP;
 	    epoll_ctl(list_sock, EPOLL_CTL_ADD, _fd, event);
 
 	    /*
