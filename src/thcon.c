@@ -1325,10 +1325,10 @@ static void* _thcon_thread_function_write_server(void* obj)
 	     */
 	    /*--------------------------------------------------*/
 	    /************* Mutex Lock This Section **************/
-	    pthread_mutex_lock(&_obj->_var_mutex);
-	    for(i = 0; i < _obj->var_num_conns; i++)
-		_thcon_send_info(_obj->_var_cons_fds[i], _msg->memory, _msg->size);
-	    pthread_mutex_unlock(&_obj->_var_mutex);
+	    /* pthread_mutex_lock(&_obj->_var_mutex); */
+	    /* for(i = 0; i < _obj->var_num_conns; i++) */
+	    /* 	_thcon_send_info(_obj->_var_cons_fds[i], _msg->memory, _msg->size); */
+	    /* pthread_mutex_unlock(&_obj->_var_mutex); */
 	    /*--------------------------------------------------*/
 
 	    /* free memory */
