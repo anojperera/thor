@@ -4,6 +4,8 @@
 #include <stdlib.h>
 #include <signal.h>
 #include <unistd.h>
+#include <syslog.h>
+#include <pthread.h>
 #include <libconfig.h>
 #include "thsvr.h"
 
@@ -27,7 +29,7 @@ static void _thsvre_sigterm_handler(int signo);
 int main(int argc, char** argv)
 {
 
-
+    openlog("thor_sys", LOG_PID, LOG_USER);
     if(_thsvre_load_config())
 	exit(1);
 
@@ -51,6 +53,7 @@ int main(int argc, char** argv)
 
  thsvre_exit:
     config_destroy(&_var_config);
+    closelog();
     return 0;
 }
 
