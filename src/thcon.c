@@ -1066,10 +1066,10 @@ static void* _thcon_thread_function_server(void* obj)
 			    THOR_LOG_ERROR(_err_msg);
 
 			    pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &_old_state);
-			    _thcon_adjust_fds(_obj, _events[_i].data.fd);
 
 			    /* decrement counter in a mutex */
 			    pthread_mutex_lock(&_obj->_var_mutex);
+			    _thcon_adjust_fds(_obj, _events[_i].data.fd);			    
 			    _obj->var_num_conns--;
 			    pthread_mutex_unlock(&_obj->_var_mutex);
 
