@@ -2,6 +2,7 @@
 #include "thornifix.h"
 
 #include <string.h>
+#include <signal.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/epoll.h>
@@ -173,7 +174,8 @@ int thcon_init(thcon* obj, thcon_mode mode)
     pthread_mutex_init(&obj->_var_mutex, NULL);
     pthread_mutex_init(&obj->_var_mutex_q, NULL);
 
-
+    /* Ignore sigpipe event */
+    signal(SIGPIPE, SIG_IGN);
     return 0;
 }
 
@@ -894,9 +896,9 @@ static int _thcon_send_info(int fd, void* msg, size_t sz)
      */
     do
 	{
-	    if(!recv(fd, NULL, 0, MSG_DONTWAIT))
-		break;
 	    _buff_sent += send(fd, msg+_buff_sent, sz, MSG_DONTWAIT);
+	    if(_buff_sent == EPIPE)
+		return -1;
 	}while(_buff_sent < sz);
 
     return _buff_sent;
@@ -1192,7 +1194,6 @@ static int _thcon_write_to_int_buff(thcon* obj, int socket_fd)
     do
 	{
 	    _sz += read(socket_fd, &obj->var_membuff_in[_sz], THORNIFIX_MSG_BUFF_SZ);
-
 	}while(_sz > 0);
 
     return _sz;
@@ -1309,6 +1310,8 @@ static void* _thcon_thread_function_write_server(void* obj)
     int i, _old_state;
     thcon* _obj;
     struct _curl_mem* _msg;
+    int _stat;
+    
     if(obj == NULL)
 	return NULL;
 
