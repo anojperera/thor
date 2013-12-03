@@ -1109,7 +1109,8 @@ static int _thcon_accept_conn(thcon* obj, int list_sock, int epoll_inst, struct 
     socklen_t _in_len;
     int _fd, _stat;
     char _err_msg[THOR_BUFF_SZ];
-
+    int _set = 1;
+    
     char _hbuf[NI_MAXHOST], _sbuf[NI_MAXSERV];
     memset(_err_msg, 0, THOR_BUFF_SZ);
     while(1)
@@ -1132,6 +1133,9 @@ static int _thcon_accept_conn(thcon* obj, int list_sock, int epoll_inst, struct 
 			    break;
 			}
 		}
+
+	    /* Disable generating SIGPIPE */
+	    setsockopt(_fd, SOL_SOCKET, SO_NOSIGPIPE, (void *)&_set, sizeof(int));
 
 	    /* get information about the connection and log */
 	    _stat = getnameinfo(&_in_addr, _in_len,
