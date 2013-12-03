@@ -11,6 +11,7 @@
 #include <sys/wait.h>
 #include <pthread.h>
 #include <libconfig.h>
+#include "thornifix.h"
 #include "thsvr.h"
 
 #define THSVR_DEFAULT_CONFIG_PATH1 "thor.cfg"
@@ -32,6 +33,8 @@ static void _thsvre_sigterm_handler(int signo);
 
 int main(int argc, char** argv)
 {
+    /* Only daemonise in headless mode */
+#ifdef THOR_HEADLESS    
     pid_t _pid;
     
     /*
@@ -41,22 +44,21 @@ int main(int argc, char** argv)
     _pid = fork();
     if(_pid < 0)
 	exit(EXIT_FAILURE);
-
-    /* Exit the parent process */
+    /* exit the parent process */
     if(_pid > 0)
 	exit(EXIT_SUCCESS);
-
+    
     /* Change the file mask */
     umask(0);
 
     /* Change the current direcotry */
-    if(chdir("/") < 0)
-       exit(EXIT_FAILURE);
+    if((chdir("/")) < 0)
+	exit(EXIT_FAILURE);
 
     close(STDIN_FILENO);
     close(STDOUT_FILENO);
     close(STDERR_FILENO);
-
+#endif
     
     openlog("thor_sys", LOG_PID, LOG_USER);
     if(_thsvre_load_config())
