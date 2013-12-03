@@ -33,6 +33,7 @@ static void _thsvre_sigterm_handler(int signo);
 
 int main(int argc, char** argv)
 {
+    
     /* Only daemonise in headless mode */
 #ifdef THOR_HEADLESS    
     pid_t _pid;
@@ -47,22 +48,30 @@ int main(int argc, char** argv)
     /* exit the parent process */
     if(_pid > 0)
 	exit(EXIT_SUCCESS);
-    
+
     /* Change the file mask */
     umask(0);
 
     /* Change the current direcotry */
     if((chdir("/")) < 0)
 	exit(EXIT_FAILURE);
+#endif
+    
+    /*
+     * Read the configuration file before all the files were closed.
+     */
+    if(_thsvre_load_config())
+	exit(1);
 
+    /* Only daemonise in headless mode */
+#ifdef THOR_HEADLESS        
     close(STDIN_FILENO);
     close(STDOUT_FILENO);
     close(STDERR_FILENO);
 #endif
     
     openlog("thor_sys", LOG_PID, LOG_USER);
-    if(_thsvre_load_config())
-	exit(1);
+
 
     /* Initialise the server component object */
     if(thsvr_init(&_var_svr, &_var_config))
