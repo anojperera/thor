@@ -6,6 +6,7 @@
 #include "thornifix.h"
 #include "thcon.h"
 
+volatile sig_atomic_t _flg = 1;
 static thcon _con;
 static int _recv_callback(void* obj, void* msg, size_t sz);
 static void _sig_handler(int signo);
@@ -22,12 +23,10 @@ int main(int argc, char** argv)
     thcon_set_recv_callback(&_con, _recv_callback);
     signal(SIGINT, _sig_handler);
     thcon_start(&_con);
-    while(1)
-	{
-	    sleep(10);
-	    break;
-	}
-    _sig_handler(SIGINT);
+    while(_flg)
+	sleep(10);
+
+
     return 0;
 }
 
@@ -37,6 +36,7 @@ static void _sig_handler(int signo)
 	{
 	    thcon_stop(&_con);
 	    thcon_delete(&_con);
+	    _flg = 0;
 	}
     return;
 }
