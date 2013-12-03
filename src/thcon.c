@@ -551,7 +551,6 @@ static int _thcon_create_connection(thcon* obj, int _con_mode)
     if(obj->_var_con_mode == thcon_mode_client)
 	obj->var_acc_sock = obj->var_con_sock;
 
-    obj->_var_con_stat = thcon_connected;
     return 0;
 }
 
@@ -1108,11 +1107,12 @@ static void* _thcon_thread_function_server(void* obj)
 static int _thcon_accept_conn(thcon* obj, int list_sock, int epoll_inst, struct epoll_event* event)
 {
     struct sockaddr _in_addr;
-    socklen_t _in_len;
-    int _fd, _stat;
+    socklen_t _in_len=0;
+    int _fd=0, _stat=0;
     char _err_msg[THOR_BUFF_SZ];
     
     char _hbuf[NI_MAXHOST], _sbuf[NI_MAXSERV];
+    memset((void*) &_in_addr, 0, sizeof(struct sockaddr));
     memset(_err_msg, 0, THOR_BUFF_SZ);
     while(1)
 	{
