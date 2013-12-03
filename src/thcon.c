@@ -183,7 +183,7 @@ void thcon_delete(thcon* obj)
     obj->_ext_obj = NULL;
     obj->_thcon_recv_callback = NULL;
     obj->_thcon_write_callback = NULL;
-    obj->_thcon_conn_made = NULL;    
+    obj->_thcon_conn_made = NULL;
 
     /* check scope */
     sem_destroy(&obj->_var_sem);
@@ -340,7 +340,7 @@ int thcon_contact_admin(thcon* obj, const char* admin_url)
     _res = curl_easy_perform(_curl);
     if(_res != CURLE_OK)
 	THOR_LOG_ERROR("Unable to send information to admin");
-    
+
     /* check for errors */
     curl_easy_cleanup(_curl);
 
@@ -838,7 +838,7 @@ static void* _thcon_thread_function_client(void* obj)
 
     /* cast object pointer to connection type */
     _obj = (thcon*) obj;
-    
+
     /* create socket and bind */
     if(_thcon_create_connection(_obj, thcon_mode_client))
 	return NULL;
@@ -888,7 +888,7 @@ static void* _thcon_thread_function_client(void* obj)
 static int _thcon_send_info(int fd, void* msg, size_t sz)
 {
     size_t _buff_sent = 0;
-    
+
     /*
      * Send message in non blocking mode. Iterate until the message was sent.
      */
@@ -920,7 +920,7 @@ static void* _thcon_thread_function_server(void* obj)
 
     /* Initialise error buffer */
     memset(_err_msg, 0, THOR_BUFF_SZ);
-    
+
     /* Thread clean up handler. */
     pthread_cleanup_push(_thcon_thread_cleanup_server, obj);
 
@@ -984,7 +984,7 @@ static void* _thcon_thread_function_server(void* obj)
 			{
 			    /* errors have occured */
 			    THOR_LOG_ERROR("epoll error");
-			    
+
 			    if(_events[_i].data.fd != _obj->var_con_sock)
 				{
 				    _thcon_adjust_fds(_obj, _events[_i].data.fd);
@@ -1001,13 +1001,15 @@ static void* _thcon_thread_function_server(void* obj)
 			}
 		    else if(_events[_i].events & EPOLLRDHUP)
 			{
+			    sprintf(_err_msg, "Connection closed: %i\n", _events[_i].data.fd);
+			    THOR_LOG_ERROR(_err_msg);
    			    _thcon_adjust_fds(_obj, _events[_i].data.fd);
 			    close(_events[_i].data.fd);
 
 			    /* decrement counter in a mutex */
 			    pthread_mutex_lock(&_obj->_var_mutex);
 			    _obj->var_num_conns--;
-			    pthread_mutex_unlock(&_obj->_var_mutex);			    
+			    pthread_mutex_unlock(&_obj->_var_mutex);
 			}
 		    else if(_obj->var_con_sock == _events[_i].data.fd)
 			{
@@ -1026,7 +1028,7 @@ static void* _thcon_thread_function_server(void* obj)
 			     */
 			    if(_obj->_thcon_conn_made)
 				_obj->_thcon_conn_made(_obj->_ext_obj, obj);
-			    
+
 			    pthread_setcancelstate(_old_state, NULL);
 			    pthread_testcancel();
 			    continue;
@@ -1067,7 +1069,7 @@ static void* _thcon_thread_function_server(void* obj)
 			    /* remote client has closed the connection */
 			    sprintf(_err_msg, "Connection closed on socket - %i\n", _events[_i].data.fd);
 			    THOR_LOG_ERROR(_err_msg);
-			    
+
 			    pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &_old_state);
 			    _thcon_adjust_fds(_obj, _events[_i].data.fd);
 
@@ -1092,7 +1094,7 @@ static void* _thcon_thread_function_server(void* obj)
      */
     pthread_cleanup_pop(0);
     free(_events);
-    
+
  epoll_exit_lbl:
     if(_e_sock)
 	close(_e_sock);
@@ -1112,7 +1114,7 @@ static int _thcon_accept_conn(thcon* obj, int list_sock, int epoll_inst, struct 
     socklen_t _in_len;
     int _fd, _stat;
     char _err_msg[THOR_BUFF_SZ];
-    
+
     char _hbuf[NI_MAXHOST], _sbuf[NI_MAXSERV];
     memset(_err_msg, 0, THOR_BUFF_SZ);
     while(1)
@@ -1162,11 +1164,11 @@ static int _thcon_accept_conn(thcon* obj, int list_sock, int epoll_inst, struct 
 	    /* counter incremented in a mutex */
 	    pthread_mutex_lock(&obj->_var_mutex);
 	    obj->_var_cons_fds[obj->var_num_conns++] = _fd;
-	    
+
 	    /* Display message in debug mode */
 	    sprintf(_err_msg, "Connection made on socket: %i\n", obj->_var_cons_fds[obj->var_num_conns-1]);
 	    THOR_LOG_ERROR(_err_msg);
-	    
+
 	    pthread_mutex_unlock(&obj->_var_mutex);
 	}
 
