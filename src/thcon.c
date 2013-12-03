@@ -894,6 +894,8 @@ static int _thcon_send_info(int fd, void* msg, size_t sz)
      */
     do
 	{
+	    if(!recv(fd, NULL, 0, MSG_DONTWAIT))
+		break;
 	    _buff_sent += send(fd, msg+_buff_sent, sz, MSG_DONTWAIT);
 	}while(_buff_sent < sz);
 
