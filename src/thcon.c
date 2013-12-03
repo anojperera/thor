@@ -5,6 +5,8 @@
 #include <signal.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <sys/types.h>
+#include <sys/socket.h>
 #include <sys/epoll.h>
 #include <errno.h>
 #include <curl/curl.h>
