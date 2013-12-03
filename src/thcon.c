@@ -1136,8 +1136,6 @@ static int _thcon_accept_conn(thcon* obj, int list_sock, int epoll_inst, struct 
 			}
 		}
 
-	    /* Disable generating SIGPIPE */
-	    setsockopt(_fd, SOL_SOCKET, MSG_NOSIGNAL, (void *)&_set, sizeof(int));
 
 	    /* get information about the connection and log */
 	    _stat = getnameinfo(&_in_addr, _in_len,
