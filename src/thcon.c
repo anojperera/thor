@@ -894,7 +894,7 @@ static int _thcon_send_info(int fd, void* msg, size_t sz)
      */
     do
 	{
-	    _buff_sent += send(fd, msg+_buff_sent, sz, MSG_DONTWAIT);
+	    _buff_sent += send(fd, msg+_buff_sent, sz, MSG_DONTWAIT | MSG_NOSIGNAL);
 	    if(_buff_sent == EPIPE)
 		return -1;
 	}while(_buff_sent < sz);
