@@ -5,6 +5,10 @@
 #include <signal.h>
 #include <unistd.h>
 #include <syslog.h>
+#include <sys/stat.h>
+#include <sys/resource.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 #include <pthread.h>
 #include <libconfig.h>
 #include "thsvr.h"
@@ -28,7 +32,32 @@ static void _thsvre_sigterm_handler(int signo);
 
 int main(int argc, char** argv)
 {
+    pid_t _pid;
+    
+    /*
+     * Fork the main process and close all the
+     * standard file pointers.
+     */
+    _pid = fork();
+    if(_pid < 0)
+	exit(EXIT_FAILURE);
 
+    /* Exit the parent process */
+    if(_pid > 0)
+	exit(EXIT_SUCCESS);
+
+    /* Change the file mask */
+    umask(0);
+
+    /* Change the current direcotry */
+    if(chdir("/") < 0)
+       exit(EXIT_FAILURE);
+
+    close(STDIN_FILENO);
+    close(STDOUT_FILENO);
+    close(STDERR_FILENO);
+
+    
     openlog("thor_sys", LOG_PID, LOG_USER);
     if(_thsvre_load_config())
 	exit(1);
