@@ -70,7 +70,7 @@ int thsvr_init(thsvr* obj, const config_t* config)
     obj->_var_sys.var_callback_update = _thsvy_sys_update_callback;
     obj->_var_con._thcon_recv_callback = _thsvr_con_recv_callback;
     obj->_var_con._thcon_conn_made = _thsvr_con_made_callback;
-    obj->_thcon_conn_closed = _thsvr_con_closed_callback;    
+    obj->_var_con._thcon_conn_closed = _thsvr_con_closed_callback;    
     
     obj->var_init_flg = 1;
     return 0;
