@@ -1167,7 +1167,7 @@ static int _thcon_accept_conn(thcon* obj, int list_sock, int epoll_inst, struct 
 
 	    event->data.fd = _fd;
 	    event->events = EPOLLIN | EPOLLET | EPOLLRDHUP;
-	    epoll_ctl(list_sock, EPOLL_CTL_ADD, _fd, event);
+	    epoll_ctl(epoll_inst, EPOLL_CTL_ADD, _fd, event);
 
 	    /*
 	     * Check if buffer needs expanding or not and set fd value.
