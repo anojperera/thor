@@ -151,6 +151,7 @@ int thcon_init(thcon* obj, thcon_mode mode)
 
     obj->var_con_sock = 0;
     obj->var_acc_sock = 0;
+    obj->_var_curl_timeout = 0;
     obj->var_flg = 1;
 
     obj->_var_con_stat = thcon_disconnected;
@@ -341,6 +342,8 @@ int thcon_contact_admin(thcon* obj, const char* admin_url)
     curl_easy_setopt(_curl, CURLOPT_HTTPHEADER, _header_list);
     curl_easy_setopt(_curl, CURLOPT_HTTPPOST, _form_post);
 
+    /* set time out */
+    curl_easy_setopt(_curl, CURLOPT_TIMEOUT, obj->_var_curl_timeout);
 
     _res = curl_easy_perform(_curl);
     if(_res != CURLE_OK)

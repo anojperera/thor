@@ -81,6 +81,7 @@ struct _thcon
     unsigned int var_geo_flg;				/* indicate geo location is obtained */
     unsigned int var_ip_flg;				/* indicate ip flag was obtained */
     unsigned int _var_bf_sz;				/* dynamic buffer size holding */
+    unsigned int _var_curl_timeout;			/* default time out mode */
 
     /*-----------------------------------------*/
     /*
@@ -190,6 +191,10 @@ extern "C" {
     /* Set callback function pointers for recieving data */
 #define thcon_set_recv_callback(obj, fptr)	\
     (obj)->_thcon_recv_callback = fptr
+
+    /* Set timeout method */
+#define thcon_set_timeout(obj, time)		\
+    (obj)->_var_curl_timeout = time
     
 #ifdef __cplusplus
 }
