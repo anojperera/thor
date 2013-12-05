@@ -619,6 +619,8 @@ static int _thcon_get_url_content(const char* ip_addr, struct _curl_mem* mem)
     curl_global_init(CURL_GLOBAL_ALL);
 
     _url_handle = curl_easy_init();
+    if(_url_handle == NULL)
+	return -1;
 
     /* specify url to get */
     curl_easy_setopt(_url_handle, CURLOPT_URL, ip_addr);
