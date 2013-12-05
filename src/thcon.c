@@ -257,6 +257,9 @@ int thcon_get_my_geo(thcon* obj)
     if(obj->var_geo_addr_url[0] == '\0' || obj->var_geo_addr_url[0] == 0)
 	return -1;
 
+    /* Initialise the memory buffer */
+    memset((void*) &_ip_buff, 0, sizeof(struct _curl_mem));
+    _ip_buff.memory = NULL;
     _rt_val = _thcon_get_url_content(obj->var_geo_addr_url, &_ip_buff);
     if(_rt_val)
 	return -1;
