@@ -446,8 +446,13 @@ int thcon_send_info(thcon* obj, void* data, size_t sz)
 	return -1;
 
     /* call private method for sending the information */
-    for(i = 0; i < obj->var_num_conns; i++)
-	_thcon_send_info(obj->_var_cons_fds[i], data, sz);
+    if(obj->_var_con_mode == thcon_mode_client)
+	_thcon_send_info(obj->var_acc_sock, data, sz);
+    else
+	{
+	    for(i = 0; i < obj->var_num_conns; i++)
+		_thcon_send_info(obj->_var_cons_fds[i], data, sz);
+	}
 
     return 0;
 }
