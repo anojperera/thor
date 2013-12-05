@@ -588,7 +588,7 @@ static int _thcon_copy_to_mem(void* contents, size_t size, size_t memb, void* us
     /* allocate memory */
     _mem->memory = realloc(_mem->memory, _mem->size+rel+1);
     if(_mem->memory == NULL)
-	return -1;
+	return 0;
 
     /* copy to buffer */
     memcpy(&_mem->memory[_mem->size], contents, rel);
@@ -631,7 +631,8 @@ static int _thcon_get_url_content(const char* ip_addr, struct _curl_mem* mem)
     curl_easy_setopt(_url_handle, CURLOPT_USERAGENT, "libcurl-agent/1.0");
 
     _res = curl_easy_perform(_url_handle);
-
+    if(_res != CURLE_OK)
+	THOR_LOG_ERROR(curl_easy_strerror(_res));
     /* clean up memory */
     curl_easy_cleanup(_url_handle);
     curl_global_cleanup();
