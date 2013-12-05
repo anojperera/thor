@@ -176,8 +176,8 @@ extern "C" {
     /* set geo location url */
 #define thcon_set_geo_ip(obj, name)					\
     memset((void*) (obj)->var_geo_addr_url, 0, THCON_URL_BUFF_SZ);	\
-    strncpy((obj)->var_geo_addr_url, name, THCON_URL_BUFF_SZ-1);	\
-    (obj)->var_geo_addr_url[THCON_URL_BUFF_SZ-1] = '\0'
+    strcpy((obj)->var_geo_addr_url, name)
+
     
     /* gets the connection status */
 #define thcon_get_conn_stat(obj)		\
