@@ -13,6 +13,7 @@
 #define THSVR_ADMIN2_URL "http://www.valyria.co.uk:/8080/dieties/"
 #define THSVR_COM_PORT "main_con_port"
 #define THSVR_DEF_COM_PORT "11000"
+#define THSVR_DEF_TIMEOUT "def_time_out"
 
 /*
  * Macro for copying admin url to the internal buffers.
@@ -102,6 +103,7 @@ void thsvr_delete(thsvr* obj)
  */
 int thsvr_start(thsvr* obj)
 {
+    int _time_out = 0;
     const char* _t_buff;    
     struct config_setting_t* _setting;
     
@@ -137,16 +139,22 @@ int thsvr_start(thsvr* obj)
 		_thsvr_copy_admin2(obj, _t_buff, THCON_URL_BUFF_SZ);
 	}
 
-    /* _setting = config_lookup(obj->_var_config, THSVR_COM_PORT); */
-    /* _t_buff = NULL; */
-    /* if(_setting) */
-    /* 	{ */
-    /* 	    _t_buff = config_setting_get_string(_setting); */
-    /* 	    if(_t_buff) */
-    /* 		thcon_set_port_name(&obj->_var_con, _t_buff); */
-    /* 	} */
-    /* else */
-    thcon_set_port_name(&obj->_var_con, THSVR_DEF_COM_PORT);
+    _setting = config_lookup(obj->_var_config, THSVR_COM_PORT);
+    _t_buff = NULL;
+    if(_setting)
+    	{
+    	    _t_buff = config_setting_get_string(_setting);
+    	    if(_t_buff)
+    		thcon_set_port_name(&obj->_var_con, _t_buff);
+    	}
+    else
+	thcon_set_port_name(&obj->_var_con, THSVR_DEF_COM_PORT);
+
+    /* Get time out for the admin query and set in connection object */
+    _setting = config_lookup(obj->_var_config, THSVR_DEF_TIMEOUT);
+    if(_setting)
+	_time_out = config_setting_get_int(_setting);
+    thcon_set_timeout(&obj->_var_con, _time_out);
     
     /*
      * Reset connection info struct.
