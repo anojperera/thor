@@ -350,7 +350,7 @@ static int _thsvr_con_closed_callback(void* obj, void* con, int fd)
      * therefore, if all connections were closed, the system
      * object shall be stopped.
      */
-    thsys_stop(_obj->_var_sys);
+    thsys_stop(&_obj->_var_sys);
 
     return 0;
 }
