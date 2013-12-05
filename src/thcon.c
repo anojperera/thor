@@ -260,7 +260,7 @@ int thcon_get_my_geo(thcon* obj)
     /* Initialise the memory buffer */
     memset((void*) &_ip_buff, 0, sizeof(struct _curl_mem));
     _ip_buff.memory = NULL;
-    _rt_val = _thcon_get_url_content(obj->var_geo_addr_url, &_ip_buff);
+    _rt_val = _thcon_get_url_content("http://www.iplocation.net/", &_ip_buff);
     if(_rt_val)
 	return -1;
     _parse_html_geo(&_ip_buff, &obj->var_my_info);
