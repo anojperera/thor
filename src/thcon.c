@@ -616,7 +616,8 @@ static int _thcon_get_url_content(const char* ip_addr, struct _curl_mem* mem)
     mem->size = 0;
 
     /* initialise global variables of curl */
-    curl_global_init(CURL_GLOBAL_ALL);
+    if(curl_global_init(CURL_GLOBAL_ALL))
+	return -1;
 
     _url_handle = curl_easy_init();
     if(_url_handle == NULL)

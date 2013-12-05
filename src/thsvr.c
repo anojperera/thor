@@ -146,7 +146,7 @@ int thsvr_start(thsvr* obj)
     /* 		thcon_set_port_name(&obj->_var_con, _t_buff); */
     /* 	} */
     /* else */
-	thcon_set_port_name(&obj->_var_con, THSVR_DEF_COM_PORT);
+    thcon_set_port_name(&obj->_var_con, THSVR_DEF_COM_PORT);
     
     /*
      * Reset connection info struct.
