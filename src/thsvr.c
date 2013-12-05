@@ -31,6 +31,7 @@ static int _thsvr_sys_interupt_callback(thsys* obj, void* self);
 static int _thsvy_sys_update_callback(thsys* obj, void* self, const float64* buff, const int sz);
 static int _thsvr_con_recv_callback(void* obj, void* msg, size_t sz);
 static int _thsvr_con_made_callback(void* obj, void* con);
+static int _thsvr_con_closed_callback(void* obj, void* con, int fd);
 /*
  * Initialise the server component and get configuration settings
  * for the admin url etc.
@@ -69,6 +70,7 @@ int thsvr_init(thsvr* obj, const config_t* config)
     obj->_var_sys.var_callback_update = _thsvy_sys_update_callback;
     obj->_var_con._thcon_recv_callback = _thsvr_con_recv_callback;
     obj->_var_con._thcon_conn_made = _thsvr_con_made_callback;
+    obj->_thcon_conn_closed = _thsvr_con_closed_callback;    
     
     obj->var_init_flg = 1;
     return 0;
@@ -319,5 +321,36 @@ static int _thsvr_con_made_callback(void* obj, void* con)
     _obj = (thsvr*) obj;
 
     thsys_start(&_obj->_var_sys);
+    return 0;
+}
+
+/*
+ * Callback method to indicate connection was closed.
+ */
+static int _thsvr_con_closed_callback(void* obj, void* con, int fd)
+{
+    char _err_msg[THOR_BUFF_SZ];
+    thsvr* _obj;
+    
+    if(obj == NULL)
+	return -1;
+
+    memset((void*) _err_msg, 0, THOR_BUFF_SZ);
+    
+    /* Cast object to the correct pointer */
+    _obj = (thsvr*) obj;
+
+    /* Log message to indicate connection was closed */
+    sprintf(_err_msg, "Connection Closed with FD: %i", fd);
+    THOR_LOG_ERROR(_err_msg);
+
+    /*
+     * Call stop method of the system object.
+     * The system object is aware of the number of connections,
+     * therefore, if all connections were closed, the system
+     * object shall be stopped.
+     */
+    thsys_stop(_obj->_var_sys);
+
     return 0;
 }

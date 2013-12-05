@@ -170,6 +170,7 @@ int thcon_init(thcon* obj, thcon_mode mode)
     obj->_thcon_recv_callback = NULL;
     obj->_thcon_write_callback = NULL;
     obj->_thcon_conn_made = NULL;
+    obj->_thcon_conn_closed = NULL;
 
     /* initialise queue and locks */
     gqueue_new(&obj->_msg_queue, _thcon_queue_del_helper);
@@ -187,6 +188,7 @@ void thcon_delete(thcon* obj)
     obj->_thcon_recv_callback = NULL;
     obj->_thcon_write_callback = NULL;
     obj->_thcon_conn_made = NULL;
+    obj->_thcon_conn_closed = NULL;    
 
     /* check scope */
     sem_destroy(&obj->_var_sem);
@@ -1013,6 +1015,8 @@ static void* _thcon_thread_function_server(void* obj)
 				    _obj->var_num_conns--;
 				    pthread_mutex_unlock(&_obj->_var_mutex);
 				    pthread_setcancelstate(_old_state, NULL);
+				    if(_obj->_thcon_conn_closed)
+					_obj->_thcon_conn_closed(_obj->_ext_obj, obj, _events[_i].data.fd);
 				}
 			    pthread_testcancel();
 			    continue;

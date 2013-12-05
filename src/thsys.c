@@ -106,7 +106,7 @@ int thsys_stop(thsys* obj)
      * Decrement client connections and cancel the thread.
      * If the test is still running put to stop.
      */
-    if((obj->var_client_count--) == 0)
+    if((--obj->var_client_count) > 0)
 	return 0;
     
     /* cancel thread */

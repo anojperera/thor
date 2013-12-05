@@ -129,6 +129,14 @@ struct _thcon
      * second argument is the connection object itself.
      */
     int (*_thcon_conn_made)(void*, void*);
+
+    /*
+     * Callback method to indicate the connection was closed.
+     * First argument is the external object pointer,
+     * second argument is the connection object it self.
+     * Third argument is the closed socket.
+     */
+    int (*_thcon_conn_closed)(void*, void*, int);
 };
 
 #ifdef __cplusplus
@@ -191,6 +199,10 @@ extern "C" {
     /* Set callback function pointers for recieving data */
 #define thcon_set_recv_callback(obj, fptr)	\
     (obj)->_thcon_recv_callback = fptr
+
+    /* Set callback to indicate the connection was closed */
+#define thcon_set_closed_callback(obj, fptr)	\
+    (obj)->_thcon_conn_closed = fptr
 
     /* Set timeout method */
 #define thcon_set_timeout(obj, time)		\
