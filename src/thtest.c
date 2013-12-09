@@ -77,7 +77,10 @@ static int _write_to_svr(void)
 
     _msg._ao0_val = rand()%10;
     _msg._ao1_val = rand()%10;
-
+    
+    _msg._ao0_val = _msg._ao0_val > 10.0? 9.99 : _msg._ao0_val;
+    _msg._ao1_val = _msg._ao1_val > 10.0? 9.99 : _msg._ao1_val;
+    
     /* Encode message buffer */
     thornifix_encode_msg(&_msg, _msg_buff, THORNIFIX_MSG_BUFF_SZ);
 
