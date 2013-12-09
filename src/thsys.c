@@ -5,6 +5,7 @@
 /* thread function */
 static void* _thsys_start_async(void* para);
 static void _thsys_thread_cleanup(void* para);
+static void _thsys_queue_del_helper(void* data);
 
 int thsys_init(thsys* obj, int (*callback) (thsys*, void*))
 {
@@ -39,6 +40,10 @@ int thsys_init(thsys* obj, int (*callback) (thsys*, void*))
     obj->var_flg = 1;
     sem_init(&obj->var_sem, 0, 0);
 
+    pthread_mutex_init(&obj->_var_mutex, NULL);
+    /* Initialise the output message queue */
+    gqueue_new(&obj->_var_out_queue, _thsys_queue_del_helper);
+
     THOR_LOG_ERROR("thor system initialised");
 
     return 0;
@@ -71,7 +76,12 @@ void thsys_delete(thsys* obj)
     obj->var_callback_intrupt = NULL;
     obj->var_callback_update = NULL;
     obj->var_ext_obj = NULL;
+
+    /* Delete queue */
+    gqueue_delete(&obj->_var_out_queue);
+    
     sem_destroy(&obj->var_sem);
+    pthread_mutex_destroy(&obj->_var_mutex);
     THOR_LOG_ERROR("thor system cleaned up");
     return;
 }
@@ -137,7 +147,9 @@ int thsys_e_stop(thsys* obj)
 /* set write buffer */
 int thsys_set_write_buff(thsys* obj, float64* buff, size_t sz)
 {
-    int32 _samples;
+    int i;
+    float64* _buff;
+
     /* check for object and buffer */
     if(obj == NULL || !buff || !obj->var_run_flg)
 	return -1;
@@ -146,10 +158,17 @@ int thsys_set_write_buff(thsys* obj, float64* buff, size_t sz)
     if(sz != THSYS_NUM_AO_CHANNELS)
 	return 1;
 
-    /* Write buffer to the device */
-    ERR_CHECK(NIWriteAnalogArrayF64(obj->var_a_outask, 1, 0, 1.0, DAQmx_Val_GroupByChannel, buff, &_samples, NULL));
+    /* allocate buffer */
+    _buff = (float64*) calloc(sz, sizeof(float64));
+    for(i=0; i<sz; i++)
+	_buff[i] = buff[i];
 
-    return _samples;
+    /* Queue the values */
+    pthread_mutex_lock(&obj->_var_mutex);
+    gqueue_in(&obj->_var_out_queue, (void*) _buff);
+    pthread_mutex_unlock(&obj->_var_mutex);
+    
+    return 0;
 }
 
 /* thread cleanup handler */
@@ -173,9 +192,11 @@ static void _thsys_thread_cleanup(void* para)
 /* Thread function */
 static void* _thsys_start_async(void* para)
 {
+    int32 _samples;    
     int _old_state;
     thsys* _obj;
     int32 _samples_read = 0;
+    float64* _buff;
 
     /* push cleanup handler */
     pthread_cleanup_push(_thsys_thread_cleanup, para);
@@ -207,6 +228,20 @@ static void* _thsys_start_async(void* para)
 	    /* if a callback for update is hooked, this shall call the callback function */
 	    if(_obj->var_callback_update)
 	      _obj->var_callback_update(_obj, _obj->var_ext_obj, _obj->var_inbuff, THSYS_NUM_AI_CHANNELS);
+
+	    /* If write values are available write to the device */
+	    if(gqueue_count(&_obj->_var_out_queue) > 0)
+		{
+	    	    pthread_mutex_lock(&_obj->_var_mutex);
+		    gqueue_out(&_obj->_var_out_queue, (void**) &_buff);
+		    pthread_mutex_unlock(&_obj->_var_mutex);
+		    
+		    /* Write buffer to the device */
+		    ERR_CHECK(NIWriteAnalogArrayF64(_obj->var_a_outask, 1, 0, 1.0, DAQmx_Val_GroupByChannel, _buff, &_samples, NULL));
+		    free(_buff);
+		    _buff = NULL;
+		}
+
 	    pthread_setcancelstate(_old_state, NULL);
 
     	    pthread_testcancel();
@@ -215,4 +250,14 @@ static void* _thsys_start_async(void* para)
 
     pthread_cleanup_pop(1);
     return NULL;
+}
+
+/* Delete helper method */
+static void _thsys_queue_del_helper(void* data)
+{
+    /* Check for argument */
+    if(data)
+	free(data);
+    
+    return;
 }

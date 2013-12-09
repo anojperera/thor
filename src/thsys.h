@@ -6,6 +6,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <semaphore.h>
+#include <gqueue.h>
 #include "thornifix.h"
 
 #define THSYS_AI_CHANNELS "Dev1/ai0:12"
@@ -39,7 +40,16 @@ struct _thsys
     float64 var_inbuff[THSYS_NUM_AI_CHANNELS];
     float64 var_outbuff[THSYS_NUM_AO_CHANNELS];
 
+    /*
+     * A message queue is used to buffer the output writes.
+     * All output values from clients are pushed in to the
+     * queue. The internal scan loop shall pop from the
+     * queue as requed.
+     */
+    gqueue _var_out_queue;
+    
     pthread_t var_thread;				/* thread id */
+    pthread_mutex_t _var_mutex;
     sem_t var_sem;
     void* var_ext_obj;					/* external object */
 
