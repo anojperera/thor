@@ -1220,7 +1220,7 @@ static int _thcon_write_to_int_buff(thcon* obj, int socket_fd)
     do
 	{
 	    _sz += read(socket_fd, &obj->var_membuff_in[_sz], THORNIFIX_MSG_BUFF_SZ);
-	}while(_sz > 0);
+	}while(_sz < THORNIFIX_MSG_BUFF_SZ);
 
     return _sz;
 }
