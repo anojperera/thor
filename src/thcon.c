@@ -1217,9 +1217,11 @@ static int _thcon_accept_conn(thcon* obj, int list_sock, int epoll_inst, struct 
 static int _thcon_write_to_int_buff(thcon* obj, int socket_fd)
 {
     static int _sz = 0;
+    memset((void*) obj->var_membuff_in, 0, THORNIFIX_MSG_BUFF_SZ);
+    
     do
 	{
-	    _sz += read(socket_fd, &obj->var_membuff_in[_sz], THORNIFIX_MSG_BUFF_SZ);
+	    _sz += read(socket_fd, obj->var_membuff_in, THORNIFIX_MSG_BUFF_SZ);
 	}while(_sz < THORNIFIX_MSG_BUFF_SZ);
 
     return _sz;
