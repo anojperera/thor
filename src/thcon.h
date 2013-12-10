@@ -195,7 +195,8 @@ extern "C" {
 
 #define thcon_set_ext_obj(obj, ext)		\
     (obj)->_ext_obj = (ext)
-
+#define thcon_get_ext_obj(obj)			\
+    (obj)->_ext_obj
     /* Set callback function pointers for recieving data */
 #define thcon_set_recv_callback(obj, fptr)	\
     (obj)->_thcon_recv_callback = fptr
