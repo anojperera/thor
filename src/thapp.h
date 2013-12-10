@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include <pthread.h>
 #include <semaphore.h>
+#include <gqueue.h>
 #include "thornifix.h"
 #include "thcon.h"
 
@@ -36,6 +37,7 @@ typedef enum {
     thapp_headless,
     thapp_master
 } thapp_opmode;
+
 /*
  * Table of function pointers.
  * All child classes inherits this class
@@ -58,14 +60,21 @@ struct _thapp
 {
     unsigned int var_init_flg;
     unsigned int var_run_flg;							/* flag to indicate test is running */
-    unsigned int var_sleep_time;						/* sleep time (miliseconds) */    
+    unsigned int var_sleep_time;						/* sleep time (miliseconds) */
+
     thapp_opmode var_op_mode;							/* operation mode */
     config_t var_config;							/* configuration pointer */
     struct thor_msg _msg_buff;							/* message buffer */    
     thcon _var_con;								/* connection object */
 
     void* var_child;								/* child object */
-
+    
+    /*
+     * Queue for buffering the messages recieved from the
+     * server.
+     */
+    gqueue _var_msg_queue;
+       
     /*
      * Function pointer array.
      * These function pointers are called at various
@@ -75,6 +84,7 @@ struct _thapp
 
     sem_t _var_sem;
     pthread_t _var_thread;
+    pthread_mutex_t _var_mutex;
 };
 
 
@@ -92,9 +102,25 @@ extern "C" {
      * These method starts and stops the main loop.
      * If the respective function pointers are assigned
      * they shall be called.
+     *
+     * The start method shall only call function pointers when the 
+     * connection object has been successfull.
      */
     int thapp_start(thapp* obj);
     int thapp_stop(thapp* obj);
+
+    /*
+     * Message retrieves the value from the message queue
+     * in a thread safe manor. The method is wrapped in
+     * a mutex for thread safety.
+     * Application are encouraged to use this for popping
+     * messages off the queue rather than directly accessing
+     * values using the methods provided by generic queue.
+     */
+#define  thapp_get_msg(obj, msg)		\
+    pthread_mutex_lock(&(obj)->_var_mutex);	\
+    gqueue_out(&(obj)->_var_msg_queue, (msg));	\
+    pthread_mutex_unlock(&(obj)->_var_mutex)
 
 
 #endif __cplusplus
