@@ -7,6 +7,23 @@ static void* _thsys_start_async(void* para);
 static void _thsys_thread_cleanup(void* para);
 static void _thsys_queue_del_helper(void* data);
 
+/*
+ * Helper macros for configuring the channels.
+ */
+#define THSYS_CLEAR_TASKS			\
+    NIClearTask(obj->var_a_outask);		\
+    NIClearTask(obj->var_a_intask)
+
+
+#define THSYS_CREATE_TASKS							\
+    ERR_CHECK(NICreateTask(THSYS_EMPTY_STR, &obj->var_a_outask));	\
+    ERR_CHECK(NICreateTask(THSYS_EMPTY_STR, &obj->var_a_intask))
+
+#define THSYS_CONFIG_CHANNELS						\
+    ERR_CHECK(NICreateAOVoltageChan(obj->var_a_outask, THSYS_A0_CHANNELS, THSYS_EMPTY_STR, THSYS_MIN_VAL, THSYS_MAX_VAL, DAQmx_Val_Volts , NULL)); \
+    ERR_CHECK(NICreateAIVoltageChan(obj->var_a_intask, THSYS_AI_CHANNELS, THSYS_EMPTY_STR,  DAQmx_Val_NRSE, THSYS_MIN_VAL, THSYS_MAX_VAL, DAQmx_Val_Volts, NULL))
+
+
 int thsys_init(thsys* obj, int (*callback) (thsys*, void*))
 {
     int i;
@@ -23,7 +40,6 @@ int thsys_init(thsys* obj, int (*callback) (thsys*, void*))
     ERR_CHECK(NICreateTask(THSYS_EMPTY_STR, &obj->var_a_intask));
 
     /* create channels in order */
-
     ERR_CHECK(NICreateAOVoltageChan(obj->var_a_outask, THSYS_A0_CHANNELS, THSYS_EMPTY_STR, THSYS_MIN_VAL, THSYS_MAX_VAL, DAQmx_Val_Volts , NULL));
     ERR_CHECK(NICreateAIVoltageChan(obj->var_a_intask, THSYS_AI_CHANNELS, THSYS_EMPTY_STR,  DAQmx_Val_NRSE, THSYS_MIN_VAL, THSYS_MAX_VAL, DAQmx_Val_Volts, NULL));
 
@@ -130,6 +146,17 @@ int thsys_stop(thsys* obj)
     /* cancel thread */
     pthread_cancel(obj->var_thread);
     pthread_join(obj->var_thread, NULL);
+
+    /*
+     * Reconfigure the tasks for the next start.
+     * Set init flag to 0.
+     */
+    obj->var_flg = 0;
+    THSYS_CLEAR_TASKS;
+    THSYS_CREATE_TASKS;
+
+    THSYS_CONFIG_CHANNELS;
+    obj->var_flg = 1;
     return 0;
 }
 
@@ -237,6 +264,7 @@ static void* _thsys_start_async(void* para)
     	    if(_obj->var_callback_intrupt)
 	        _obj->var_callback_intrupt(_obj, (_obj->var_ext_obj? _obj->var_ext_obj : NULL));
 
+	    _samples_read = 0;
 	    /* change cancel state to protect read */
 	    pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &_old_state);
     	    ERR_CHECK(NIReadAnalogF64(_obj->var_a_intask, 1, THSYS_DEF_TIMEOUT, DAQmx_Val_GroupByScanNumber, _obj->var_inbuff, THSYS_NUM_AI_CHANNELS, &_samples_read, NULL));
@@ -256,6 +284,7 @@ static void* _thsys_start_async(void* para)
 		    /* Write buffer to the device */
 		    if(_buff)
 			{
+			    _samples = 0;
 			    ERR_CHECK(NIWriteAnalogArrayF64(_obj->var_a_outask, 1, 0, THSYS_DEF_TIMEOUT, DAQmx_Val_GroupByScanNumber, _buff, &_samples, NULL));
 			    free(_buff);
 			}
