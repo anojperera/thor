@@ -10,20 +10,20 @@ static void _thsys_queue_del_helper(void* data);
 /*
  * Helper macros for configuring the channels.
  */
-#define THSYS_CLEAR_TASKS			\
-    NIClearTask(obj->var_a_outask);		\
-    NIClearTask(obj->var_a_intask)
+#define THSYS_CLEAR_TASKS(sys_obj)		\
+    NIClearTask((sys_obj)->var_a_outask);	\
+    NIClearTask((sys_obj)->var_a_intask)
 
 
-#define THSYS_CREATE_TASKS							\
-    ERR_CHECK(NICreateTask(THSYS_EMPTY_STR, &obj->var_a_outask));	\
-    ERR_CHECK(NICreateTask(THSYS_EMPTY_STR, &obj->var_a_intask))
+#define THSYS_CREATE_TASKS(sys_obj)					\
+    ERR_CHECK(NICreateTask(THSYS_EMPTY_STR, &(sys_obj)->var_a_outask));	\
+    ERR_CHECK(NICreateTask(THSYS_EMPTY_STR, &(sys_obj)->var_a_intask))
 
-#define THSYS_CONFIG_CHANNELS						\
-    ERR_CHECK(NICreateAOVoltageChan(obj->var_a_outask, THSYS_A0_CHANNELS, THSYS_EMPTY_STR, THSYS_MIN_VAL, THSYS_MAX_VAL, DAQmx_Val_Volts , NULL)); \
-    ERR_CHECK(NICreateAIVoltageChan(obj->var_a_intask, THSYS_AI_CHANNELS, THSYS_EMPTY_STR,  DAQmx_Val_NRSE, THSYS_MIN_VAL, THSYS_MAX_VAL, DAQmx_Val_Volts, NULL))
+#define THSYS_CONFIG_CHANNELS(sys_obj)					\
+    ERR_CHECK(NICreateAOVoltageChan((sys_obj)->var_a_outask, THSYS_A0_CHANNELS, THSYS_EMPTY_STR, THSYS_MIN_VAL, THSYS_MAX_VAL, DAQmx_Val_Volts , NULL)); \
+    ERR_CHECK(NICreateAIVoltageChan((sys_obj)->var_a_intask, THSYS_AI_CHANNELS, THSYS_EMPTY_STR,  DAQmx_Val_NRSE, THSYS_MIN_VAL, THSYS_MAX_VAL, DAQmx_Val_Volts, NULL))
 
-
+/* Initialise method */
 int thsys_init(thsys* obj, int (*callback) (thsys*, void*))
 {
     int i;
@@ -36,12 +36,10 @@ int thsys_init(thsys* obj, int (*callback) (thsys*, void*))
     obj->var_run_flg = 0;
 
     /* create tasks */
-    ERR_CHECK(NICreateTask(THSYS_EMPTY_STR, &obj->var_a_outask));
-    ERR_CHECK(NICreateTask(THSYS_EMPTY_STR, &obj->var_a_intask));
+    THSYS_CREATE_TASKS(obj);
 
     /* create channels in order */
-    ERR_CHECK(NICreateAOVoltageChan(obj->var_a_outask, THSYS_A0_CHANNELS, THSYS_EMPTY_STR, THSYS_MIN_VAL, THSYS_MAX_VAL, DAQmx_Val_Volts , NULL));
-    ERR_CHECK(NICreateAIVoltageChan(obj->var_a_intask, THSYS_AI_CHANNELS, THSYS_EMPTY_STR,  DAQmx_Val_NRSE, THSYS_MIN_VAL, THSYS_MAX_VAL, DAQmx_Val_Volts, NULL));
+    THSYS_CONFIG_CHANNELS(obj);
 
     /* initialise buffers */
     for(i=0; i<THSYS_NUM_AI_CHANNELS; i++)
@@ -83,8 +81,7 @@ void thsys_delete(thsys* obj)
 	sem_wait(&obj->var_sem);
 
       }
-    NIClearTask(obj->var_a_outask);
-    NIClearTask(obj->var_a_intask);
+    THSYS_CLEAR_TASKS(obj);
 
     obj->var_flg = 0;
     obj->var_client_count = 0;
@@ -152,10 +149,10 @@ int thsys_stop(thsys* obj)
      * Set init flag to 0.
      */
     obj->var_flg = 0;
-    THSYS_CLEAR_TASKS;
-    THSYS_CREATE_TASKS;
+    THSYS_CLEAR_TASKS(obj);
+    THSYS_CREATE_TASKS(obj);
 
-    THSYS_CONFIG_CHANNELS;
+    THSYS_CONFIG_CHANNELS(obj);
     obj->var_flg = 1;
     return 0;
 }
