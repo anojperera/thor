@@ -18,7 +18,14 @@ struct _thapp_ahu
 {
     thapp _var_parent;
     int var_init_flg;
+    
+    /*
+     * 0 - manual (default)
+     * 1 - auto.
+     */
+    int var_mode;							/* Running mode. */
 
+    int var_act_pct;							/* Actuator percentage */
     
     double var_dmp_buff[THAPP_AHU_DMP_BUFF];
 
@@ -26,6 +33,28 @@ struct _thapp_ahu
      * Sensor array for the AHUs.
      * Velocity sensors.
      */
+    thsen* _var_vsen;
+    
+    thsen* _var_tp_sen;							/* Temperature sensor */
+    thsen* _var_sp_sen;							/* Speed sensor */
+    thsen* _var_st_sen;							/* Static sensor */
+
+    /*
+     * This sensor is used for measuring the loss in static pressure in
+     * the test set up.
+     * It uses a smart sensor which is an array of sensors used for
+     * acurately measuring a diverse range of pressure.
+     */
+    thsen* _var_stm_sen;						/* Static smart sensor */
+    
+    double var_duct_dia;
+    double var_duct_vel;
+    double var_duct_vol;
+    double var_duct_loss;						/* Static pressure loss in duct */
+    double var_t_ext_st;						/* Total external static pressure */
+
+    double* _var_act_arr;						/* Actuator array */
+
     /* Array of function pointers */
     struct _thapp_fptr_arr _var_fptr;    
     void* var_child;
