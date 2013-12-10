@@ -185,7 +185,7 @@ static void _thsys_thread_cleanup(void* para)
 
     _buff[0] = 0.0;
     _buff[1] = 0.0;
-    ERR_CHECK(NIWriteAnalogArrayF64(_obj->var_a_outask, 1, 0, 1.0, DAQmx_Val_GroupByScanNumber, _buff, &_samples, NULL));
+    ERR_CHECK(NIWriteAnalogArrayF64(_obj->var_a_outask, 1, 0, THSYS_DEF_TIMEOUT, DAQmx_Val_GroupByScanNumber, _buff, &_samples, NULL));
 
     /* Log messsage to indicate output channels have been reset */
     if(_samples > 0)
@@ -239,7 +239,7 @@ static void* _thsys_start_async(void* para)
 
 	    /* change cancel state to protect read */
 	    pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &_old_state);
-    	    ERR_CHECK(NIReadAnalogF64(_obj->var_a_intask, 1, 1.0, DAQmx_Val_GroupByScanNumber, _obj->var_inbuff, THSYS_NUM_AI_CHANNELS, &_samples_read, NULL));
+    	    ERR_CHECK(NIReadAnalogF64(_obj->var_a_intask, 1, THSYS_DEF_TIMEOUT, DAQmx_Val_GroupByScanNumber, _obj->var_inbuff, THSYS_NUM_AI_CHANNELS, &_samples_read, NULL));
 
 	    /* if a callback for update is hooked, this shall call the callback function */
 	    if(_obj->var_callback_update)
@@ -256,7 +256,7 @@ static void* _thsys_start_async(void* para)
 		    /* Write buffer to the device */
 		    if(_buff)
 			{
-			    ERR_CHECK(NIWriteAnalogArrayF64(_obj->var_a_outask, 1, 0, 1.0, DAQmx_Val_GroupByScanNumber, _buff, &_samples, NULL));
+			    ERR_CHECK(NIWriteAnalogArrayF64(_obj->var_a_outask, 1, 0, THSYS_DEF_TIMEOUT, DAQmx_Val_GroupByScanNumber, _buff, &_samples, NULL));
 			    free(_buff);
 			}
 		}

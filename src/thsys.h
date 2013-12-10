@@ -19,6 +19,7 @@
 #define THSYS_MAX_VAL 10.0
 #define THSYS_DEFAULT_SAMPLE_RATE 8.0
 #define THSYS_READ_WRITE_FACTOR 1.5
+#define THSYS_DEF_TIMEOUT 10.0
 
 typedef struct _thsys thsys;
 
