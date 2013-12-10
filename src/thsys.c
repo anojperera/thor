@@ -174,11 +174,27 @@ int thsys_set_write_buff(thsys* obj, float64* buff, size_t sz)
 /* thread cleanup handler */
 static void _thsys_thread_cleanup(void* para)
 {
+    int32 _samples;
+    float64 _buff[THSYS_NUM_AO_CHANNELS];
     thsys* _obj;
+    char _err_msg[THOR_BUFF_SZ];
+    
     if(para == NULL)
 	return;
     _obj = (thsys*) para;
 
+    _buff[0] = 0.0;
+    _buff[1] = 0.0;
+    ERR_CHECK(NIWriteAnalogArrayF64(_obj->var_a_outask, 1, 0, 1.0, DAQmx_Val_GroupByChannel, _buff, &_samples, NULL));
+
+    /* Log messsage to indicate output channels have been reset */
+    if(_samples > 0)
+	{
+	    memset((void*) _err_msg, 0, THOR_BUFF_SZ);
+	    sprintf(_err_msg, "Output channels reset %d", (int) _samples);
+	    THOR_LOG_ERROR(_err_msg);
+	}
+    
     /* stop tasks */
     NIStopTask(_obj->var_a_outask);
     NIStopTask(_obj->var_a_intask);
@@ -230,6 +246,7 @@ static void* _thsys_start_async(void* para)
 	      _obj->var_callback_update(_obj, _obj->var_ext_obj, _obj->var_inbuff, THSYS_NUM_AI_CHANNELS);
 
 	    /* If write values are available write to the device */
+	    _buff = NULL;
 	    if(gqueue_count(&_obj->_var_out_queue) > 0)
 		{
 	    	    pthread_mutex_lock(&_obj->_var_mutex);
@@ -237,9 +254,11 @@ static void* _thsys_start_async(void* para)
 		    pthread_mutex_unlock(&_obj->_var_mutex);
 		    
 		    /* Write buffer to the device */
-		    ERR_CHECK(NIWriteAnalogArrayF64(_obj->var_a_outask, 1, 0, 1.0, DAQmx_Val_GroupByChannel, _buff, &_samples, NULL));
-		    free(_buff);
-		    _buff = NULL;
+		    if(_buff)
+			{
+			    ERR_CHECK(NIWriteAnalogArrayF64(_obj->var_a_outask, 1, 0, 1.0, DAQmx_Val_GroupByChannel, _buff, &_samples, NULL));
+			    free(_buff);
+			}
 		}
 
 	    pthread_setcancelstate(_old_state, NULL);
