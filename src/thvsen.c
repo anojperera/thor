@@ -16,7 +16,7 @@ thsen* thvsen_new(thvsen* obj, config_setting_t* setting, size_t num)
 {
     int i;
     
-    if(config == NULL || num <= 0)
+    if(setting == NULL || num <= 0)
 	return NULL;
     
     /* check for arguments */
@@ -28,6 +28,14 @@ thsen* thvsen_new(thvsen* obj, config_setting_t* setting, size_t num)
     else
 	obj->var_int_flg = 0;
 
+    /* Initialise sensor object */
+    if(thsen_init(&obj->var_parent))
+	{
+	    if(obj->var_int_flg)
+		free(obj);
+	    return = NULL;
+	}
+
     /* Set child pointer of parent object */
     obj->var_parent.var_child = (void*) obj;
 
@@ -37,8 +45,13 @@ thsen* thvsen_new(thvsen* obj, config_setting_t* setting, size_t num)
     thsen_set_parent_setconfig_fptr(obj, thvsen_set_config);
     
     /* Set configuration file and read arrays */
-    if(_thsen_read_config(&obj->var_parent))
-	return -1;
+    thsen_set_config(&obj->var_parent, setting);
+    if(thsen_read_config(&obj->var_parent))
+	{
+	    thvsen_delete(obj);
+	    return NULL;
+	}
+
 
     /* create array of velocity probes */
     obj->var_sens = (thsen**) calloc(obj->var_config_sen, sizeof(thsen*));
@@ -50,15 +63,15 @@ thsen* thvsen_new(thvsen* obj, config_setting_t* setting, size_t num)
 	    obj->var_sens[i] = thvprb_new(NULL);
 
 	    /* Set range, calibration buffers and other parameters */
-	    thgsens_set_calibration_buffers(obj->var_sens[i],						/* Velocity probe */
-					    obj->var_configs[i].var_calib_x,				/* X calibration buffer */
-					    obj->var_configs[i].var_calib_y,				/* Y calibration buffer */
-					    obj->var_configs[i]._val_calib_elm_cnt);			/* Element count */
+	    thgsens_set_calibration_buffers(THOR_GSEN(obj->var_sens[i]),				/* Velocity probe */
+					    obj->var_parent.var_configs[i].var_calib_x,			/* X calibration buffer */
+					    obj->var_parent.var_configs[i].var_calib_y,			/* Y calibration buffer */
+					    obj->var_parent.var_configs[i]._val_calib_elm_cnt);		/* Element count */
 
 	    /* Set range */
-	    thgsensor_set_range(obj->var_sens[i],							/* Sensor */
-				obj->var_configs[i].var_range_min,					/* Minimum range */
-				obj->var_configs[i].var_range_max);					/* Maximum range */
+	    thgsensor_set_range(THOR_GSEN(obj->var_sens[i]),							/* Sensor */
+				obj->var_parent.var_configs[i].var_range_min,					/* Minimum range */
+				obj->var_parent.var_configs[i].var_range_max);					/* Maximum range */
 	}
 
     obj->var_raw_buff = NULL;
@@ -138,7 +151,8 @@ static int thvsen_set_config(void* obj)
 
     if(obj == NULL)
 	return 0.0;
-
+    
+    _obj = (thvsen*) obj;
     _obj->var_num_sen = _obj->var_parent._var_num_config;
     return 0;
 }
