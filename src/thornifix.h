@@ -202,7 +202,8 @@ int thornifix_decode_msg(const char* buff, size_t size, struct thor_msg* msg);
     (thvprb*) (THOR_GSEN(obj))->var_child
 #define THOR_VSEN(obj)				\
     (thvsen*) obj->var_child
-
+#define THOR_SMSEN(obj)				\
+    (thsmsen*) (obj)->var_child
 
 /*===========================================================================*/
 /* error check function */
