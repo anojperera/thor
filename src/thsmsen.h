@@ -8,6 +8,7 @@
 #ifndef __THSMSEN_H__
 #define __THSMSEN_H__
 
+#include <stdlib.h>
 #include "thornifix.h"
 #include "thsen.h"
 #include "thgsensor.h"
@@ -29,7 +30,9 @@ struct _thsmsen
     unsigned int var_err_flg;
 
     unsigned int var_next_ix;				/* Next index to select */
+    unsigned int var_raw_val_sz;			/* Size of array */
     
+    const double* var_raw_vals;				/* Array of raw values */
     double var_val;					/* Pressure value */
     
     /* Array of sensors */
@@ -46,7 +49,25 @@ struct _thsmsen
 extern "C" {
 #endif
 
-    thsen* thsmsen_new(
+    /* Constructor and destructor */
+    thsen* thsmsen_new(thsmsen* obj);
+    thsen* thsmsen_delete(thsmsen* obj);
+
+
+    /*
+     * Array position of raw values are stored. Therefore every time the raw values are updated,
+     * Call to update all sensors shall retrieve the values.
+     */
+    inline __attribute__ ((always_inline)) static int thsmsen_set_value_array(thsmsen* obj, const double* vals, size_t sz)
+    {
+	/* Check object */
+	if(obj == NULL)
+	    return -1;
+
+	/* Set value pointer */
+	obj->var_raw_vals = vals;
+	obj->var_raw_val_sz = sz;
+    }
 
 #ifdef __cplusplus
 }
