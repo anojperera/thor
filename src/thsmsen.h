@@ -9,6 +9,7 @@
 #define __THSMSEN_H__
 
 #include <stdlib.h>
+#include <libconfig.h>
 #include "thornifix.h"
 #include "thsen.h"
 #include "thgsensor.h"
@@ -21,7 +22,7 @@ struct _thsmsen
 {
     thsen _var_parent;					/* Inherited parent class */
 
-    unsigned int var_init_flg;				/* Flag to indicate initialisation successful. */
+    unsigned int var_int_flg;				/* Flag to indicate initialisation successful. */
 
     /*
      * Flag to indicate error have occured and that no further
@@ -50,24 +51,15 @@ extern "C" {
 #endif
 
     /* Constructor and destructor */
-    thsen* thsmsen_new(thsmsen* obj);
-    thsen* thsmsen_delete(thsmsen* obj);
+    thsen* thsmsen_new(thsmsen* obj, config_setting_t* settings);
+    void thsmsen_delete(thsmsen* obj);
 
 
     /*
      * Array position of raw values are stored. Therefore every time the raw values are updated,
      * Call to update all sensors shall retrieve the values.
      */
-    inline __attribute__ ((always_inline)) static int thsmsen_set_value_array(thsmsen* obj, const double* vals, size_t sz)
-    {
-	/* Check object */
-	if(obj == NULL)
-	    return -1;
-
-	/* Set value pointer */
-	obj->var_raw_vals = vals;
-	obj->var_raw_val_sz = sz;
-    }
+    int thsmsen_set_value_array(thsmsen* obj, const double* vals, size_t sz);
 
 #ifdef __cplusplus
 }
