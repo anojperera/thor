@@ -57,6 +57,7 @@ thsen* thgsensor_new(thgsensor* obj,			/* object pointer to initialise */
 
     obj->var_val = 0.0;
     obj->var_raw = 0.0;
+    obj->var_raw_ptr = NULL;
     obj->var_min_val = 0.0;
 
     obj->var_init_flg = 1;
@@ -84,6 +85,7 @@ void thgsensor_delete(thgsensor* obj)
     obj->_var_cal_buff_y = NULL;
 
     obj->sobj_ptr = NULL;
+    obj->var_raw_ptr = NULL;    
     obj->var_out_range_flg = 0;    
     obj->var_init_flg = 0;
 
@@ -155,9 +157,13 @@ static double _thgsensor_get_val(void* obj)
 	return 0.0;
     if(_obj->var_init_flg != 1)
         return 0.0;
+
+    /* Set raw value from pointer */
+    if(_obj->_var_raw_ptr)
+	_obj->var_raw = *_obj->var_raw_ptr;
     
     /* add to buffer */
-    _obj->var_ave_buff[_obj->_count] = _obj->var_grad * (double) _obj->var_raw + _obj->var_intc;
+    _obj->var_ave_buff[_obj->_count] = _obj->var_grad * _obj->var_raw + _obj->var_intc;
     
     _obj->_var_ave_buff += _obj->var_ave_buff[_obj->_count];
     _obj->_var_ave_buff -= _obj->var_ave_buff[(int) fabs(_obj->_count-THGS_CH_RBUFF_SZ)];

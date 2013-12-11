@@ -54,6 +54,7 @@ struct _thgsensor
     
     double var_val;				/* sensor return value */
     double var_raw;				/* raw voltage value from sensor */
+    const double* var_raw_ptr;			/* raw voltage pointer */
     double var_min_val;				/* If the value is set, this can be used to reset the
 						 * value of the sensor. Useful for resetting to the environment
 						 * values.
@@ -110,6 +111,22 @@ extern "C" {
 	    return -1;
 	
 	obj->var_raw = val;
+	obj->_var_raw_set = 1;
+	return 0;
+    }
+
+    /*
+     * Set raw value pointer. When this method is used, there's no requirement to
+     * call set value method every time before get value is called.
+     */
+    inline __attribute__ ((always_inline)) static int thgsens_set_value_ptr(thgsens* obj, const double* val)
+    {
+	if(!obj)
+	    return -1;
+	if(obj->var_init_flg != 1)
+	    return -1;
+	
+	obj->var_raw_ptr = val;
 	obj->_var_raw_set = 1;
 	return 0;
     }
