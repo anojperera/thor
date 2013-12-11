@@ -60,20 +60,20 @@ extern "C" {
     void thsen_delete(thsen* obj);
 
     /* Helper macros for setting function pointers */
-#define thsen_self_init_vtable(obj)		\
-    (obj)->var_fptr.var_del_fptr = NULL;	\
-    (obj)->var_fptr.var_get_fptr = NULL;	\
-    (obj)->var_fptr.var_set_config_fptr = NULL
-#define thsen_set_parent_del_fptr(obj, fptr)		\
-    (obj)->var_parent.var_fptr.var_del_fptr = fptr
-#define thsen_set_parent_get_fptr(obj, fptr)		\
-    (obj)->var_parent.var_fptr.var_get_fptr = fptr
-#define thsen_set_parent_setconfig_fptr(obj, fptr)		\
-    (obj)->var_parent.var_fptr.var_set_config_fptr = fptr
+#define thsen_self_init_vtable(obj_ptr)			\
+    (obj_ptr)->var_fptr.var_del_fptr = NULL;		\
+    (obj_ptr)->var_fptr.var_get_fptr = NULL;		\
+    (obj_ptr)->var_fptr.var_set_config_fptr = NULL
+#define thsen_set_parent_del_fptr(obj_ptr, fptr)	\
+    (obj_ptr)->var_parent.var_fptr.var_del_fptr = fptr
+#define thsen_set_parent_get_fptr(obj_ptr, fptr)	\
+    (obj_ptr)->var_parent.var_fptr.var_get_fptr = fptr
+#define thsen_set_parent_setconfig_fptr(obj_ptr, fptr)		\
+    (obj_ptr)->var_parent.var_fptr.var_set_config_fptr = fptr
 
     /* Return parent */
-#define thsen_return_parent(obj)		\
-    &(obj)->var_parent
+#define thsen_return_parent(obj_ptr)		\
+    &(obj_ptr)->var_parent
     
     /* Get value of the sensor */
     inline __attribute__ ((always_inline)) static double thsen_get_value(thsen* obj)

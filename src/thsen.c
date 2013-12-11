@@ -69,6 +69,7 @@ int thsen_read_config(thsen* obj)
 
     /* Get number of settings in the class. */
     _num = config_setting_length(obj->var_setting);
+    obj->_var_num_config = _num;
 
     /* Allocate buffer and initialise elements of each struct */
     obj->_var_configs = (struct senconfig*) calloc(_num, sizeof(struct senconfig));
@@ -123,13 +124,13 @@ int thsen_read_config(thsen* obj)
 				break;
 			    
 			    _num3 = config_setting_length(_t2_setting);
-			    _thvsen_read_array(_t2_setting, _num3, &obj->_var_configs[i].var_calib_x);
+			    thvsen_read_array(_t2_setting, _num3, &obj->_var_configs[i].var_calib_x);
 			    break;
 			case 4:
 			    _t2_setting = config_setting_get_member(_setting, THOR_CONFIG_CALY);
 			    if(_t2_setting == NULL)
 				break;			    
-			    _thvsen_read_array(_t2_setting, _num3, &obj->_var_configs[i].var_calib_y);
+			    thvsen_read_array(_t2_setting, _num3, &obj->_var_configs[i].var_calib_y);
 			    break;
 			default:
 			}
@@ -144,7 +145,7 @@ int thsen_read_config(thsen* obj)
  * Loads array elements defined in a configuration file to the pointer pointed by arr.
  * The size of the array must be greater than zeor. A new arr of size sz shall be allocated
  */
-int _thsen_read_array(const config_setting_t* setting, size_t sz, double** arr)
+int thsen_read_array(const config_setting_t* setting, size_t sz, double** arr)
 {
     int i;
 
