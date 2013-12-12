@@ -5,14 +5,11 @@
 #ifndef __THVPRB_H__
 #define __THVPRB_H__
 
+#include "thsen.h"
 #include "thgsensor.h"
 
-/* Object conversion macro */
-#define THOR_TH_PROBE(obj)			\
-    (thvprb*) (obj)->var_child
-
 /* Forward declaration of struct */
-typedef struct _thvprg thvprb;
+typedef struct _thvprb thvprb;
 
 struct _thvprb
 {
@@ -40,7 +37,7 @@ extern "C" {
     /* Return parent */
     inline __attribute__ ((always_inline)) static thsen* thvprb_return_parent(thvprb* obj)
     {
-	return thgsensor_return_parent(&obj->var_parent);
+	return thgsens_return_parent(&obj->var_parent);
     }
 
     /* All other methods are inherited from the parent class */

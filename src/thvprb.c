@@ -47,6 +47,9 @@ thsen* thvprb_new(thvprb* obj)
     obj->var_val = 0.0;
     obj->var_child = NULL;
 
+    /* initialise self vtable */
+    thsen_self_init_vtable(obj);    
+
     /* Return pointer of parent */
     return thgsens_return_parent(&obj->var_parent);
 }
@@ -56,8 +59,11 @@ void thvprb_delete(thvprb* obj)
 {
     /* check object */
     if(obj == NULL)
-	return 0;
+	return;
 
+    /* Remove parent object */
+    thgsensor_delete(&obj->var_parent);
+    
     obj->var_child = NULL;
     obj->var_init_flg = 0;
     
@@ -92,15 +98,20 @@ static double _thvprb_get_value(void* obj)
     thvprb* _obj;
 
     /* Check object pointer */
-    if(obj == NULL || obj->var_init_flg != 1)
+    if(obj == NULL)
 	return 0.0;
     
     _obj = (thvprb*) obj;
-
+    if(_obj->var_init_flg != 1)
+	return 0.0;
 
     /* Calculate velocity based on differential pressure */
     _obj->var_val = _obj->var_parent.var_val / (0.5 * THVPRB_AIR_DENSITY);
     _obj->var_val = sqrt(_obj->var_val);
 
-    return _obj->var_val;
+    /* Call get function pointer if set */
+    if(_obj->var_fptr.var_get_fptr)
+	return _obj->var_fptr.var_get_fptr(_obj->var_child);
+    else
+	return _obj->var_val;
 }
