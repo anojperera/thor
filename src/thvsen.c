@@ -7,7 +7,6 @@
 
 #include "thvsen.h"
 
-static void thvsen_delete(void* obj);
 static double thvsen_get_val(void* obj);
 static int thvsen_set_config(void* obj);
 
@@ -33,16 +32,24 @@ thsen* thvsen_new(thvsen* obj, config_setting_t* setting, size_t num)
 	{
 	    if(obj->var_int_flg)
 		free(obj);
-	    return = NULL;
+	    return NULL;
 	}
 
     /* Set child pointer of parent object */
     obj->var_parent.var_child = (void*) obj;
 
     /* Set function pointers of parent object */
-    thsen_set_parent_del_fptr(obj, thvsen_delete);
     thsen_set_parent_get_fptr(obj, thvsen_get_val);
     thsen_set_parent_setconfig_fptr(obj, thvsen_set_config);
+
+    obj->var_num_sen = 0;
+    obj->var_raw_buff = NULL;
+    obj->var_val = 0.0;
+    obj->var_sens = NULL;
+    obj->var_child = NULL;
+
+    /* Initialise function pointer array */
+    thsen_self_init_vtable(obj);
     
     /* Set configuration file and read arrays */
     thsen_set_config(&obj->var_parent, setting);
@@ -54,7 +61,7 @@ thsen* thvsen_new(thvsen* obj, config_setting_t* setting, size_t num)
 
 
     /* create array of velocity probes */
-    obj->var_sens = (thsen**) calloc(obj->var_config_sen, sizeof(thsen*));
+    obj->var_sens = (thsen**) calloc(obj->var_num_sen, sizeof(thsen*));
 
     /* Configure sensors */
     for(i=0; i<obj->var_num_sen; i++)
@@ -64,18 +71,16 @@ thsen* thvsen_new(thvsen* obj, config_setting_t* setting, size_t num)
 
 	    /* Set range, calibration buffers and other parameters */
 	    thgsens_set_calibration_buffers(THOR_GSEN(obj->var_sens[i]),				/* Velocity probe */
-					    obj->var_parent.var_configs[i].var_calib_x,			/* X calibration buffer */
-					    obj->var_parent.var_configs[i].var_calib_y,			/* Y calibration buffer */
-					    obj->var_parent.var_configs[i]._val_calib_elm_cnt);		/* Element count */
+					    obj->var_parent._var_configs[i].var_calib_x,			/* X calibration buffer */
+					    obj->var_parent._var_configs[i].var_calib_y,			/* Y calibration buffer */
+					    obj->var_parent._var_configs[i]._val_calib_elm_cnt);		/* Element count */
 
 	    /* Set range */
 	    thgsensor_set_range(THOR_GSEN(obj->var_sens[i]),							/* Sensor */
-				obj->var_parent.var_configs[i].var_range_min,					/* Minimum range */
-				obj->var_parent.var_configs[i].var_range_max);					/* Maximum range */
+				obj->var_parent._var_configs[i].var_range_min,					/* Minimum range */
+				obj->var_parent._var_configs[i].var_range_max);					/* Maximum range */
 	}
 
-    obj->var_raw_buff = NULL;
-    obj->var_val = 0.0;
     
     /* Set initialisation flag */
     obj->var_init_flg = 1;
@@ -93,23 +98,31 @@ void thvsen_delete(thvsen* obj)
 {
     int i = 0;
     
-    /* All internally alocated buffers and objects */
-
     if(obj == NULL)
 	return;
+
+    /* Delete parent object */
+    
 
     /* Delete sensor collection */
     for(i=0; i<obj->var_num_sen; i++)
 	{
-	    thgsensor_delete(obj->var_sens[i]);
+	    if(obj->var_sens == NULL)
+		break;
+	    thgsensor_delete(THOR_GSEN(obj->var_sens[i]));
 	    obj->var_sens[i] = NULL;
 	}
 
-    free(obj->var_sens);
+    if(obj->var_sens)
+	free(obj->var_sens);
     obj->var_sens = NULL;
 
-
+    thsen_self_init_vtable(obj);
     obj->var_init_flg = 0;
+
+    /* If the object was internally created, we delete it */
+    if(obj->var_int_flg)
+	free(obj);
     return;
 }
 
@@ -120,24 +133,22 @@ static double thvsen_get_val(void* obj)
 {
     thvsen* _obj;
     int i;
-    double const* _val;
 
-    if(obj == NULL || obj->var_init_flg != 1)
+    if(obj == NULL)
 	return 0.0;
 
     /* Cast object to the self */
     _obj = (thvsen*) obj;
-    
-    _val = _obj->var_raw_buff;
+
+    if(_obj->var_init_flg != 1)
+	return 0.0;
 
     _obj->var_val = 0.0;
     for(i=0; i<_obj->var_num_sen; i++)
 	{
 	    if(i >= _obj->var_buff_sz)
 		break;
-	    thgsens_add_value(THOR_GSEN(_obj->var_sens[i]), *_val);
 	    _obj->var_val += thsen_get_value(_obj->var_sens[i]);
-	    _val++;
 	}
 
     _obj->var_val /= i;

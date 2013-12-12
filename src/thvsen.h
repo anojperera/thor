@@ -25,7 +25,7 @@ struct _thvsen
     unsigned int var_num_sen;
     size_t var_buff_sz;							/* Buffer size */
 
-    const double const* var_raw_buff;					/* Raw buffer */
+    const double* var_raw_buff;						/* Raw buffer */
     double var_val;
     
     /* Array of sensors */
@@ -51,13 +51,28 @@ extern "C" {
      */
     inline __attribute__ ((always_inline)) static int thvsen_set_raw_buff(thvsen* obj, const double* buff, size_t sz)
     {
+	int i = 0;
 	if(obj == NULL)
 	    return -1;
 
 	obj->var_raw_buff = buff;
 	obj->var_buff_sz = sz;
 
+	/* Check the initialise flag */
+	if(!obj->var_init_flg)
+	    return -1;
+
+	/* Set raw buffer pointer to each generic sensor */
+	for(; i<sz; i++)
+	    thgsens_set_value_ptr(THOR_GSEN(obj->var_sens[i]), &obj->var_raw_buff[i]);
+
 	return 0;
+    }
+
+    /* Return parent */
+    inline __attribute__ ((always_inline)) static thsen* thvsen_return_parent(thvsen* obj)
+    {
+	return &obj->var_parent;
     }
     
     /*
@@ -65,7 +80,7 @@ extern "C" {
      * A function pointer is set in the parent class pointing
      * to a local private method.
      */
-
+    
 
 #ifdef __cpluscplus
 }
