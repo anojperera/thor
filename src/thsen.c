@@ -35,6 +35,10 @@ void thsen_delete(thsen* obj)
     
     for(i=0; i< obj->_var_num_config; i++)
 	{
+	    /* No need to free if not set */
+	    if(!obj->_var_configs)
+		break;
+	    
 	    /* delete sensor configuration details */
 	    free(obj->_var_configs[i].var_calib_x);
 	    free(obj->_var_configs[i].var_calib_y);
@@ -47,10 +51,7 @@ void thsen_delete(thsen* obj)
 	free(obj->_var_configs);
     obj->_var_configs = NULL;
 
-    if(obj->var_fptr.var_thsen_del_fptr)
-	obj->var_fptr.var_thsen_del_fptr(obj->var_child);
-
-    return 0;
+    return;
 }
 
 /*===========================================================================*/
@@ -62,6 +63,10 @@ int thsen_read_config(thsen* obj)
     int i, j, _num, _num2, _num3;
     config_setting_t* _setting, *_t_setting, *_t2_setting;
     const char* _name;
+
+    /* Check for object pointer */
+    if(obj == NULL)
+	return -1;
     
     /* check if the configuration settings has been set */
     if(!obj->var_setting)
@@ -84,6 +89,8 @@ int thsen_read_config(thsen* obj)
     /*
      * Iterate over the settings collection and obtain the setting.
      * for each statndard type. Calibration arrays are.
+     * This setting collection is expected to be the format defined
+     * in configuration file.
      */
     for(i=0; i<_num; i++)
 	{
@@ -124,13 +131,13 @@ int thsen_read_config(thsen* obj)
 				break;
 			    
 			    _num3 = config_setting_length(_t2_setting);
-			    thvsen_read_array(_t2_setting, _num3, &obj->_var_configs[i].var_calib_x);
+			    thsen_read_array(_t2_setting, _num3, &obj->_var_configs[i].var_calib_x);
 			    break;
 			case 4:
 			    _t2_setting = config_setting_get_member(_setting, THOR_CONFIG_CALY);
 			    if(_t2_setting == NULL)
 				break;			    
-			    thvsen_read_array(_t2_setting, _num3, &obj->_var_configs[i].var_calib_y);
+			    thsen_read_array(_t2_setting, _num3, &obj->_var_configs[i].var_calib_y);
 			    break;
 			default:
 			}
