@@ -5,7 +5,7 @@
  */
 int thsen_init(thsen* obj)
 {
-    it(obj == NULL)
+    if(obj == NULL)
 	return -1;
 
     obj->var_setting = NULL;
@@ -61,7 +61,7 @@ void thsen_delete(thsen* obj)
 int thsen_read_config(thsen* obj)
 {
     int i, j, _num, _num2, _num3;
-    config_setting_t* _setting, *_t_setting, *_t2_setting;
+    config_setting_t* _setting, *_t_setting;
     const char* _name;
 
     /* Check for object pointer */
@@ -112,8 +112,8 @@ int thsen_read_config(thsen* obj)
 			    /* Check if a valid name is returned */
 			    if(_name == NULL)
 				break;
-			    strncpy(obj->_var_configs[i].var_sen_name_buff, _name, THVSEN_SEN_NAME_BUFF-1);
-			    obj->_var_configs[i].var_sen_name_buff[THVSEN_SEN_NAME_BUFF-1] = '\0';
+			    strncpy(obj->_var_configs[i].var_sen_name_buff, _name, THSEN_NAME_BUFF_SZ-1);
+			    obj->_var_configs[i].var_sen_name_buff[THSEN_NAME_BUFF_SZ-1] = '\0';
 			    break;
 			case 1:
 			    obj->_var_configs[i].var_range_min = config_setting_get_float_elem(_setting, j);
@@ -126,20 +126,21 @@ int thsen_read_config(thsen* obj)
 			     * Load calibration settings if exists. Index 3 and 4 loads calibration
 			     * settings as defined in the configuration file.
 			     */
-			    _t2_setting = config_setting_get_member(_setting, THOR_CONFIG_CALX);
-			    if(_t2_setting == NULL)
+			    _t_setting = config_setting_get_member(_setting, THOR_CONFIG_CALX);
+			    if(_t_setting == NULL)
 				break;
 			    
-			    _num3 = config_setting_length(_t2_setting);
-			    thsen_read_array(_t2_setting, _num3, &obj->_var_configs[i].var_calib_x);
+			    _num3 = config_setting_length(_t_setting);
+			    thsen_read_array(_t_setting, _num3, &obj->_var_configs[i].var_calib_x);
 			    break;
 			case 4:
-			    _t2_setting = config_setting_get_member(_setting, THOR_CONFIG_CALY);
-			    if(_t2_setting == NULL)
+			    _t_setting = config_setting_get_member(_setting, THOR_CONFIG_CALY);
+			    if(_t_setting == NULL)
 				break;			    
-			    thsen_read_array(_t2_setting, _num3, &obj->_var_configs[i].var_calib_y);
+			    thsen_read_array(_t_setting, _num3, &obj->_var_configs[i].var_calib_y);
 			    break;
 			default:
+			    break;
 			}
 		}
 	    

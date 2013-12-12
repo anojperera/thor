@@ -10,6 +10,7 @@
 #include <libconfig.h>
 #include "thornifix.h"
 
+#define THSEN_NAME_BUFF_SZ 64
 typedef struct _thsen thsen;
 
 /* Function pointer table */
@@ -24,7 +25,7 @@ struct thsen_vftpr
 struct senconfig
 {
     unsigned int  _val_calib_elm_cnt;					/* element count */    
-    char var_sen_name_buff[THVSEN_SEN_NAME_BUFF];			/* sensor name buffer */
+    char var_sen_name_buff[THSEN_NAME_BUFF_SZ];				/* sensor name buffer */
     double var_range_min;						/* sensor minimum range */
     double var_range_max;						/* sensor maximum range */
 
