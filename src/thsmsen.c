@@ -25,7 +25,7 @@ thsen* thsmsen_new(thsmsen* obj, config_setting_t* settings)
 	obj->var_int_flg = 0;
 
     /* Create parent object */
-    if(thsen_init(&obj->_var_parent))
+    if(thsen_init(&obj->var_parent))
 	{
 	    if(obj->var_int_flg)
 		free(obj);
@@ -46,8 +46,8 @@ thsen* thsmsen_new(thsmsen* obj, config_setting_t* settings)
     obj->var_sen_cnt = 0;
     obj->var_sen = NULL;
     /* Set settings object */
-    thsen_set_config(&obj->_var_parent, settings);
-    thsen_read_config(&obj->_var_parent);
+    thsen_set_config(&obj->var_parent, settings);
+    thsen_read_config(&obj->var_parent);
 
     /*
      * The sensor count is determined by the number of
@@ -55,23 +55,23 @@ thsen* thsmsen_new(thsmsen* obj, config_setting_t* settings)
      */
     if(obj->var_sen_cnt > 0)
 	{
-	    obj->_var_sen = (thsen**) calloc(obj->var_sen_cnt, sizeof(thsen*));
+	    obj->var_sen = (thsen**) calloc(obj->var_sen_cnt, sizeof(thsen*));
 
 	    /* Configure senseors */
 	    for(i=0; i<obj->var_sen_cnt; i++)
 		{
-		    obj->_var_sen[i] = NULL;
-		    obj->_var_sen[i] = thgsensor_new(NULL, NULL);
+		    obj->var_sen[i] = NULL;
+		    obj->var_sen[i] = thgsensor_new(NULL, NULL);
 
-		    thgsens_set_calibration_buffers(THOR_GSEN(obj->_var_sen[i]),
-					    obj->var_parent.var_configs[i].var_calib_x,			/* X calibration buffer */
-					    obj->var_parent.var_configs[i].var_calib_y,			/* Y calibration buffer */
-					    obj->var_parent.var_configs[i]._val_calib_elm_cnt);		/* Element count */
+		    thgsens_set_calibration_buffers(THOR_GSEN(obj->var_sen[i]),
+					    obj->var_parent._var_configs[i].var_calib_x,			/* X calibration buffer */
+					    obj->var_parent._var_configs[i].var_calib_y,			/* Y calibration buffer */
+					    obj->var_parent._var_configs[i]._val_calib_elm_cnt);		/* Element count */
 
 		    /* Set range */
-		    thgsensor_set_range(THOR_GSEN(obj->_var_sen[i]),
-					obj->var_parent.var_configs[i].var_range_min,			/* Minimum range */
-					obj->var_parent.var_configs[i].var_range_max);			/* Maximum range */					
+		    thgsensor_set_range(THOR_GSEN(obj->var_sen[i]),
+					obj->var_parent._var_configs[i].var_range_min,			/* Minimum range */
+					obj->var_parent._var_configs[i].var_range_max);			/* Maximum range */					
 		}
 
 	}
@@ -100,15 +100,15 @@ void thsmsen_delete(thsmsen* obj)
     /* Remove sensors */
     for(i=0; i<obj->var_sen_cnt; i++)
 	{
-	    thgsensor_delete(THOR_GSEN(obj->_var_sen[i]));
-	    obj->_var_sen[i] = NULL;
+	    thgsensor_delete(THOR_GSEN(obj->var_sen[i]));
+	    obj->var_sen[i] = NULL;
 	}
 
     if(obj->var_sen_cnt > 0)
-	free(obj->_var_sen);
-    obj->_var_sen = NULL;
+	free(obj->var_sen);
+    obj->var_sen = NULL;
 
-    obj->var_raw_val = NULL;
+    obj->var_raw_vals = NULL;
     obj->var_child = NULL;
 
     
@@ -149,7 +149,7 @@ int thsmsen_set_value_array(thsmsen* obj, const double* vals, size_t sz)
 
     /* Assign values to the configuration file */
     for(; i<obj->var_raw_val_sz; i++)
-	thgsens_set_value_ptr(THOR_GSEN(obj->_var_sen[i]), &obj->var_raw_vals[i]);
+	thgsens_set_value_ptr(THOR_GSEN(obj->var_sen[i]), &obj->var_raw_vals[i]);
 
     return 0;
 }
@@ -192,7 +192,7 @@ static double _thsmsen_get_val(void* obj)
 	{
 	    if(_obj->var_raw_vals[i] > 0.1 && _obj->var_raw_vals[i] < 9.5)
 		{
-		    _obj->var_val = thsen_get_value(_obj->_var_sen[i]);
+		    _obj->var_val = thsen_get_value(_obj->var_sen[i]);
 		    break;
 		}
 	    
@@ -203,7 +203,7 @@ static double _thsmsen_get_val(void* obj)
      * from the largest sensor in the range.
      */
     if(_obj->var_val <= 0.0)
-	_obj->var_val = thsen_get_value(_obj->_var_sen[i-1]);
+	_obj->var_val = thsen_get_value(_obj->var_sen[i-1]);
     
     return _obj->var_val;
 }

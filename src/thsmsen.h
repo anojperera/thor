@@ -20,7 +20,7 @@ typedef struct _thsmsen thsmsen;
 
 struct _thsmsen
 {
-    thsen _var_parent;					/* Inherited parent class */
+    thsen var_parent;					/* Inherited parent class */
 
     unsigned int var_int_flg;				/* Flag to indicate initialisation successful. */
 
@@ -63,6 +63,6 @@ extern "C" {
 
 #ifdef __cplusplus
 }
-endif
+#endif
 
 #endif /* __THSMSEN_H__ */
