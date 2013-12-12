@@ -53,8 +53,6 @@ struct _thapp_ahu
     double var_duct_loss;						/* Static pressure loss in duct */
     double var_t_ext_st;						/* Total external static pressure */
 
-    double* _var_act_arr;						/* Actuator array */
-
     /* Array of function pointers */
     struct _thapp_fptr_arr _var_fptr;    
     void* var_child;
