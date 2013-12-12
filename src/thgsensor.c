@@ -81,6 +81,12 @@ thsen* thgsensor_new(thgsensor* obj,			/* object pointer to initialise */
 /* Delete method */
 void thgsensor_delete(thgsensor* obj)
 {
+    if(obj == NULL)
+	return;
+    
+    /* Delete parent object */
+    thsen_delete(&obj->var_parent);
+    
     obj->_var_cal_buff_x = NULL;
     obj->_var_cal_buff_y = NULL;
 
@@ -89,9 +95,6 @@ void thgsensor_delete(thgsensor* obj)
     obj->var_out_range_flg = 0;    
     obj->var_init_flg = 0;
 
-    if(obj->var_fptr.var_del_fptr)
-	obj->var_fptr.var_del_fptr(obj->var_child);
-    
     /* Set delete pointers NULL */
     obj->var_child = NULL;
 
@@ -106,7 +109,7 @@ void thgsensor_delete(thgsensor* obj)
 
 
 /* reset all */
-int thgsens_reset_all(thgsens* obj)
+int thgsens_reset_all(thgsensor* obj)
 {
     int i = 0;
     if(obj == NULL)
@@ -119,7 +122,7 @@ int thgsens_reset_all(thgsens* obj)
     for(i=0; i<THGS_CH_RBUFF_SZ; i++)
 	obj->var_ave_buff[i] = 0.0;
 
-    obj->_var_ave_buff = 0.0;
+     obj->_var_ave_buff = 0.0;
 
     obj->_count = 0;
     obj->_count_flg = 0;
@@ -159,11 +162,11 @@ static double _thgsensor_get_val(void* obj)
         return 0.0;
 
     /* Set raw value from pointer */
-    if(_obj->_var_raw_ptr)
+    if(_obj->var_raw_ptr)
 	_obj->var_raw = *_obj->var_raw_ptr;
 
     /* If the raw value is negative, we return 0.0 */
-    if(_obj->_var_raw < 0.0)
+    if(_obj->var_raw < 0.0)
 	return 0.0;
 
     

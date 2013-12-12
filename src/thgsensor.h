@@ -79,7 +79,7 @@ extern "C" {
 
     /* Constructor with function pointer and channel name */
     thsen* thgsensor_new(thgsensor* obj,		/* object pointer to initialise */
-		      void* data);			/* optional external object pointer */
+			 void* data);			/* optional external object pointer */
     
     /* destructor */
     void thgsensor_delete(thgsensor* obj); 
@@ -103,7 +103,7 @@ extern "C" {
     }
 
     /* Add new raw value */
-    inline __attribute__ ((always_inline)) static int thgsens_set_value(thgsens* obj, double val)
+    inline __attribute__ ((always_inline)) static int thgsens_set_value(thgsensor* obj, double val)
     {
 	if(!obj)
 	    return -1;
@@ -119,7 +119,7 @@ extern "C" {
      * Set raw value pointer. When this method is used, there's no requirement to
      * call set value method every time before get value is called.
      */
-    inline __attribute__ ((always_inline)) static int thgsens_set_value_ptr(thgsens* obj, const double* val)
+    inline __attribute__ ((always_inline)) static int thgsens_set_value_ptr(thgsensor* obj, const double* val)
     {
 	if(!obj)
 	    return -1;
@@ -138,17 +138,17 @@ extern "C" {
      */
 
     /* Return parent */
-    inline __attribute__ ((always_inline)) static thsen* thgsens_return_parent(thgsens* obj)
+    inline __attribute__ ((always_inline)) static thsen* thgsens_return_parent(thgsensor* obj)
     {
 	return &obj->var_parent;
     }
 
 
     /* reset all */
-    int thgsens_reset_all(thgsens* obj);
+    int thgsens_reset_all(thgsensor* obj);
 
     /* set buffer and buffer size */
-    inline __attribute__ ((always_inline)) static int thgsens_set_calibration_buffers(thgsens* obj, const double* x, const double* y, int n)
+    inline __attribute__ ((always_inline)) static int thgsens_set_calibration_buffers(thgsensor* obj, const double* x, const double* y, int n)
     {
 	if(obj == NULL)
 	    return -1;
