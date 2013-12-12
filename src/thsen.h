@@ -37,9 +37,7 @@ struct _thsen
 {
     int var_init_flg;							/* flag to indicate the sensor object is initialised */
     const config_setting_t* var_setting;				/* setting object pointer */
-    
-    void* var_child;							/* pointer to a child object */
-    
+        
     size_t _var_num_config;						/* number of configuration files */
     struct senconfig* _var_configs;					/* Array of sensor configuration data loaded */
 
@@ -49,6 +47,7 @@ struct _thsen
      */
     struct thsen_vftpr var_fptr;
 
+    void* var_child;							/* pointer to a child object */
 };
 
 #ifdef __cpluscplus
@@ -111,7 +110,8 @@ extern "C" {
 
     /*
      * Read settings file and store calibration buffers
-     * into internal networks.
+     * into internal networks. These methods are helper methods
+     * to be used by child classes.
      */
     int thsen_read_config(thsen* obj);
     int thsen_read_array(const config_setting_t* setting, size_t sz, double** arr);    
