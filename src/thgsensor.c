@@ -161,6 +161,11 @@ static double _thgsensor_get_val(void* obj)
     /* Set raw value from pointer */
     if(_obj->_var_raw_ptr)
 	_obj->var_raw = *_obj->var_raw_ptr;
+
+    /* If the raw value is negative, we return 0.0 */
+    if(_obj->_var_raw < 0.0)
+	return 0.0;
+
     
     /* add to buffer */
     _obj->var_ave_buff[_obj->_count] = _obj->var_grad * _obj->var_raw + _obj->var_intc;
