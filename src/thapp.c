@@ -46,6 +46,7 @@ static void _thapp_queue_del_helper(void* data);
 /* Initialise the application object */
 int thapp_init(thapp* obj)
 {
+    int _stat = 0;
     /* Check for arguments */
     if(obj == NULL)
 	return -1;
@@ -71,6 +72,16 @@ int thapp_init(thapp* obj)
     obj->var_sleep_time = THAPP_DEFAULT_SLEEP;
     obj->var_child = NULL;
 
+    /* Call initialisation helper method to load configuration settings */
+    /*
+     * Add messaging for all child classes.
+     */
+    _stat = _thapp_init_helper(obj);
+    if(_stat)
+	{
+	    thcon_delete(&obj->_var_con);
+	    return -1;
+	}
     /*
      * Default is to run in master mode.
      */
