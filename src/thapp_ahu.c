@@ -10,8 +10,10 @@
 #define THAPP_SMT_KEY "lkg"
 
 /* Callback methods */
-static int _thapp_ahu_start(thapp* obj, void* obj);
-static int _thapp_ahu_stop(thapp* obj, void* obj);
+static int _thapp_ahu_init(thapp* obj, void* self);
+static int _thapp_ahu_start(thapp* obj, void* self);
+static int _thapp_ahu_stop(thapp* obj, void* self);
+static int _thapp_cmd(thapp* obj, void* self, int cmd);
 
 /* Helper method for loading configuration settings */
 static int _thapp_new_helper(thapp_ahu* obj);
@@ -39,6 +41,11 @@ thapp* thapp_ahu_new(void)
 
     /* Initialise function pointer array */
     THAPP_INIT_FPTR(_obj);
+
+    /* Set function pointers of parent object */
+    thapp_set_start_ptr(_obj, _thapp_ahu_start);
+    thapp_set_stop_ptr(_obj, _thapp_ahu_stop);
+    thapp_set_cmdhnd_ptr(_obj, _thapp_cmd);
 
     /* Load configurations and initialise sensors */
     if(_thapp_new_helper(_obj))
@@ -177,4 +184,66 @@ static int _thapp_new_helper(thapp_ahu* obj)
     if(_setting)
 	obj->_var_stm_sen = thsmsen_new(NULL, _setting);
 
+}
+
+
+/* Start callback */
+static int _thapp_ahu_start(thapp* obj, void* self)
+{
+    return 0;
+}
+
+/* Stop called back */
+static int _thapp_ahu_stop(thapp* obj, void* self)
+{
+    return 0;
+}
+
+static int _thapp_cmd(thapp* obj, void* self, int cmd)
+{
+    thapp_ahu* _obj;
+
+    if(self == NULL)
+	return 0;
+
+    _obj = (thapp_ahu*) self;
+    switch(cmd)
+	{
+
+	}
+
+    return 0;
+}
+
+/*
+ * Initialise application. This method also sets the raw
+ * value pointer to each sensors. Therefore when raw value
+ * buffers are poped from the queue and get methods are called,
+ * all raw voltage values shall be converted to physical properties.
+ */
+static int _thapp_ahu_init(thapp* obj, void* self)
+{
+    thapp_ahu* _obj;
+
+    if(self == NULL)
+	return -1;
+
+    _obj = (thapp_ahu*) self;
+
+    /* Set raw value pointers for the sensors */
+    /*----------------------------------------*/
+
+    /* Set velocity sensor update pointer */
+    thvsen_set_raw_buff(THOR_VSEN(_obj->_var_vsen), &_obj->_msg_buff._ai4_val);
+
+    /* Set temperature raw value set */
+    thgsens_set_value_ptr(THOR_GSEN(_obj->_var_tp_sen), &_obj->_msg_buff._ai0_val);
+
+    /* Set speed sensor */
+    thgsens_set_value_ptr(THOR_GSEN(_obj->_var_sp_sen), &_obj->_msg_buff._ai1_val);
+
+    /* Set static sensor */
+    thgsens_set_value_ptr(THOR_GSEN(_obj->_var_st_sen), &_obj->_msg_buff._ai2_val);
+
+    return 0;
 }
