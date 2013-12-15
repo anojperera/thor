@@ -2,6 +2,7 @@
 #include "thgsensor.h"
 #include <math.h>
 
+static int _thgsensor_set_config(void* obj);
 static void _thgsensor_delete(void* obj);
 static double _thgsensor_get_val(void* obj);
 
@@ -37,7 +38,7 @@ thsen* thgsensor_new(thgsensor* obj,			/* object pointer to initialise */
      */
     thsen_set_parent_del_fptr(obj, _thgsensor_delete);
     thsen_set_parent_get_fptr(obj, _thgsensor_get_val);
-
+    thsen_set_parent_setconfig_fptr(obj, _thgsensor_set_config);
 
     memset(obj->var_ch_name, 0, THGS_CH_NAME_SZ);
 
@@ -190,4 +191,43 @@ static double _thgsensor_get_val(void* obj)
 	return _obj->var_fptr.var_get_fptr(_obj->var_child);
     else
 	return _obj->var_val;
+}
+
+/* Callback method for setting configuration settings. */
+static int _thgsensor_set_config(void* obj)
+{
+    thgsensor* _obj = NULL;
+    if(obj == NULL)
+	return -1;
+
+    /* Cast object to the correct type */
+    _obj = (thgsensor*) obj;
+
+    /*
+     * Call helper method of parent class to load settings.
+     */
+    thsen_read_config(_obj->var_parent);
+
+    if(_obj->var_parent._var_num_config > 0)
+	{
+	    thgsensor_set_range(_obj,
+				_obj->var_parent._var_configs[0].var_range_min,
+				_obj->var_parent._var_configs[0].var_range_max);
+
+	    /* Check if calibration buffers are available */
+	    if(_obj->var_parent._var_configs[0]._val_calib_elm_cnt > 0)
+		{
+		    thgsens_set_calibration_buffers(_obj,
+						    _obj->var_parent._var_configs[0].var_calib_x,
+						    _obj->var_parent._var_configs[1].var_calib_y,
+						    _obj->var_parent._var_configs[0]._val_calib_elm_cnt);
+		}
+
+	}
+
+    /* If child pointer for set config was assigned, call it */
+    if(_obj->var_fptr.var_set_config_fptr)
+	return _obj->var_fptr.var_set_config_fptr(_obj->var_child);
+    else
+	return 0;
 }
