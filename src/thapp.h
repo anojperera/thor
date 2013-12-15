@@ -122,6 +122,26 @@ extern "C" {
     gqueue_out(&(obj)->_var_msg_queue, (msg));	\
     pthread_mutex_unlock(&(obj)->_var_mutex)
 
+    /* Helper macros for setting child methods */
+#define thapp_set_init_ptr(obj_ptr, fptr)			\
+    (obj_ptr)->_var_parent._var_fptr.var_init_ptr = fptr
+#define thapp_set_del_ptr(obj_ptr, fptr)		\
+    (obj_ptr)->_var_parent._var_fptr.var_del_ptr = fptr
+#define thapp_set_start_ptr(obj_ptr, fptr)			\
+    (obj_ptr)->_var_parent._var_fptr.var_start_ptr = fptr
+#define thapp_set_stop_ptr(obj_ptr, fptr)			\
+    (obj_ptr)->_var_parent._var_fptr.var_stop_ptr = fptr
+#define thapp_set_read_ptr(obj_ptr, fptr)			\
+    (obj_ptr)->_var_parent._var_fptr.var_read_ptr = fptr
+#define thapp_set_write_ptr(obj_ptr, fptr)			\
+    (obj_ptr)->_var_parent._var_fptr.var_write_ptr = fptr
+#define thapp_set_log_ptr(obj_ptr, fptr)		\
+    (obj_ptr)->_var_parent._var_fptr.var_log_ptr = fptr
+#define thapp_set_report_ptr(obj_ptr, fptr)			\
+    (obj_ptr)->_var_parent._var_fptr.var_report_ptr = fptr
+#define thapp_set_cmdhnd_ptr(obj_fptr, fptr)			\
+    (obj_ptr)->_var_parent._var_fptr.var_cmdhnd_ptr = fptr
+
 
 #endif __cplusplus
 }

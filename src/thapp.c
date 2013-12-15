@@ -192,6 +192,7 @@ static void* _thapp_start_handler(void* obj)
 {
     char _cmd;
     thapp* _obj;
+    struct thor_msg* _msg = NULL;    
 
     /* Check object pointer and cast to the correct type */
     if(obj == NULL)
@@ -225,7 +226,23 @@ static void* _thapp_start_handler(void* obj)
 		    _obj->_var_fptr.var_stop_ptr(_obj, _obj->var_child);
 		    break;
 		}
+	    
+	    /* Check the queue and get any elements */
+	    pthread_mutex_lock(&_obj->_var_mutex);
+	    if(gqueue_count(&_obj->_var_msg_queue) > 0)
+		{
+		    gqueue_out(&_obj->_var_msg_queue, &_msg);
+		    /* Copy message to buffer */
+		    if(_msg != NULL)
+			memcpy((void*) &_obj->_msg_buff, (void*) _msg, sizeof(struct thor_msg));
 
+		}
+	    pthread_mutex_unlock(&_obj->_var_mutex);
+
+	    /* Free message element */
+	    free(_msg);
+	    _msg = NULL;
+	    
 	    /* Passed Command handling to the child class */
 	    if(_obj->_var_fptr.var_cmdhnd_ptr)
 		_obj->_var_fptr.var_cmdhnd_ptr(_obj, _obj->var_child, _cmd);
