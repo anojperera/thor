@@ -109,35 +109,35 @@ typedef unsigned int (*gthor_disb_fptr)(void*, int);
 struct thor_msg
 {
     /* command to indicate read or write */
-    int _cmd __attribute__ ((aligned (8)));
+    int _cmd __attribute__ ((aligned (THORNIFIX_MSG_BUFF_ELM_SZ)));
 
     /* analogue output channels */
     /*--------------------------------------------*/
-    double _ao0_val __attribute__ ((aligned (8)));
-    double _ao1_val __attribute__ ((aligned (8)));
+    double _ao0_val __attribute__ ((aligned (THORNIFIX_MSG_BUFF_ELM_SZ)));
+    double _ao1_val __attribute__ ((aligned (THORNIFIX_MSG_BUFF_ELM_SZ)));
     /*--------------------------------------------*/
 
     /* analogue input channels */
     /*--------------------------------------------*/    
-    double _ai0_val __attribute__ ((aligned (8)));
-    double _ai1_val __attribute__ ((aligned (8)));
-    double _ai2_val __attribute__ ((aligned (8)));
-    double _ai3_val __attribute__ ((aligned (8)));
-    double _ai4_val __attribute__ ((aligned (8)));
-    double _ai5_val __attribute__ ((aligned (8)));
-    double _ai6_val __attribute__ ((aligned (8)));
-    double _ai7_val __attribute__ ((aligned (8)));
-    double _ai8_val __attribute__ ((aligned (8)));
-    double _ai9_val __attribute__ ((aligned (8)));
-    double _ai10_val __attribute__ ((aligned (8)));
-    double _ai11_val __attribute__ ((aligned (8)));
-    double _ai12_val __attribute__ ((aligned (8)));    
+    double _ai0_val __attribute__ ((aligned (THORNIFIX_MSG_BUFF_ELM_SZ)));
+    double _ai1_val __attribute__ ((aligned (THORNIFIX_MSG_BUFF_ELM_SZ)));
+    double _ai2_val __attribute__ ((aligned (THORNIFIX_MSG_BUFF_ELM_SZ)));
+    double _ai3_val __attribute__ ((aligned (THORNIFIX_MSG_BUFF_ELM_SZ)));
+    double _ai4_val __attribute__ ((aligned (THORNIFIX_MSG_BUFF_ELM_SZ)));
+    double _ai5_val __attribute__ ((aligned (THORNIFIX_MSG_BUFF_ELM_SZ)));
+    double _ai6_val __attribute__ ((aligned (THORNIFIX_MSG_BUFF_ELM_SZ)));
+    double _ai7_val __attribute__ ((aligned (THORNIFIX_MSG_BUFF_ELM_SZ)));
+    double _ai8_val __attribute__ ((aligned (THORNIFIX_MSG_BUFF_ELM_SZ)));
+    double _ai9_val __attribute__ ((aligned (THORNIFIX_MSG_BUFF_ELM_SZ)));
+    double _ai10_val __attribute__ ((aligned (THORNIFIX_MSG_BUFF_ELM_SZ)));
+    double _ai11_val __attribute__ ((aligned (THORNIFIX_MSG_BUFF_ELM_SZ)));
+    double _ai12_val __attribute__ ((aligned (THORNIFIX_MSG_BUFF_ELM_SZ)));    
     /*--------------------------------------------*/
     
     /* digital input channels */
     /*--------------------------------------------*/
-    double _di0_val __attribute__ ((aligned (8)));
-    double _di1_val __attribute__ ((aligned (8)));
+    double _di0_val __attribute__ ((aligned (THORNIFIX_MSG_BUFF_ELM_SZ)));
+    double _di1_val __attribute__ ((aligned (THORNIFIX_MSG_BUFF_ELM_SZ)));
     /*--------------------------------------------*/    
 };
 
