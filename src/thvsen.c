@@ -14,6 +14,7 @@ static int thvsen_set_config(void* obj);
 thsen* thvsen_new(thvsen* obj, config_setting_t* setting, size_t num)
 {
     int i;
+    double* _raw_val;
     
     if(setting == NULL || num <= 0)
 	return NULL;
@@ -70,7 +71,7 @@ thsen* thvsen_new(thvsen* obj, config_setting_t* setting, size_t num)
 	    obj->var_sens[i] = thvprb_new(NULL);
 
 	    /* Set range, calibration buffers and other parameters */
-	    thgsens_set_calibration_buffers(THOR_GSEN(obj->var_sens[i]),				/* Velocity probe */
+	    thgsens_set_calibration_buffers(THOR_GSEN(obj->var_sens[i]),					/* Velocity probe */
 					    obj->var_parent._var_configs[i].var_calib_x,			/* X calibration buffer */
 					    obj->var_parent._var_configs[i].var_calib_y,			/* Y calibration buffer */
 					    obj->var_parent._var_configs[i]._val_calib_elm_cnt);		/* Element count */

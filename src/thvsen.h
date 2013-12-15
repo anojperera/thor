@@ -52,6 +52,7 @@ extern "C" {
     inline __attribute__ ((always_inline)) static int thvsen_set_raw_buff(thvsen* obj, const double* buff, size_t sz)
     {
 	int i = 0;
+	double* _raw;
 	if(obj == NULL)
 	    return -1;
 
@@ -63,8 +64,9 @@ extern "C" {
 	    return -1;
 
 	/* Set raw buffer pointer to each generic sensor */
-	for(; i<sz; i++)
-	    thgsens_set_value_ptr(THOR_GSEN(obj->var_sens[i]), &obj->var_raw_buff[i]);
+	_raw = obj->var_raw_buff;
+	for(; i<sz; i++,_raw += THORNIFIX_MSG_BUFF_ELM_SZ;)
+	    thgsens_set_value_ptr(THOR_GSEN(obj->var_sens[i]), _raw);
 
 	return 0;
     }
