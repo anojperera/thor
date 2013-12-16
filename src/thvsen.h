@@ -49,7 +49,7 @@ extern "C" {
      * Once set, each time get value calls, buffer values are passed to
      * probe sensors to obtain the velocity.
      */
-    inline __attribute__ ((always_inline)) static int thvsen_set_raw_buff(thvsen* obj, const double* buff, size_t sz)
+    inline __attribute__ ((always_inline)) static int thvsen_set_raw_buff(thvsen* obj, double* buff, size_t sz)
     {
 	int i = 0;
 	double* _raw;
@@ -64,8 +64,8 @@ extern "C" {
 	    return -1;
 
 	/* Set raw buffer pointer to each generic sensor */
-	_raw = obj->var_raw_buff;
-	for(; i<sz; i++,_raw += THORNIFIX_MSG_BUFF_ELM_SZ;)
+	_raw = buff;
+	for(; i<sz; i++,_raw += THORNIFIX_MSG_BUFF_ELM_SZ)
 	    thgsens_set_value_ptr(THOR_GSEN(obj->var_sens[i]), _raw);
 
 	return 0;
@@ -84,7 +84,7 @@ extern "C" {
      */
 
     /* Get buffer of Differential pressure values */
-    int thvsen_get_dp_values(thvsen* obj, double* array, size_t sz);
+    int thvsen_get_dp_values(thvsen* obj, double* array, size_t* sz);
 
 #ifdef __cpluscplus
 }

@@ -14,7 +14,6 @@ static int thvsen_set_config(void* obj);
 thsen* thvsen_new(thvsen* obj, config_setting_t* setting, size_t num)
 {
     int i;
-    double* _raw_val;
     
     if(setting == NULL || num <= 0)
 	return NULL;
@@ -131,7 +130,7 @@ void thvsen_delete(thvsen* obj)
 int thvsen_get_dp_values(thvsen* obj, double* array, size_t* sz)
 {
     int i;
-    if(obj == NULL || array = NULL)
+    if(obj == NULL || array == NULL)
 	return -1;
 
     /* Get differential values of each velocity probe and fill the buffer */

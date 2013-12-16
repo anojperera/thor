@@ -206,7 +206,7 @@ static int _thgsensor_set_config(void* obj)
     /*
      * Call helper method of parent class to load settings.
      */
-    thsen_read_config(_obj->var_parent);
+    thsen_read_config(&_obj->var_parent);
 
     if(_obj->var_parent._var_num_config > 0)
 	{
