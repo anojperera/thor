@@ -2,6 +2,7 @@
  * Implementation of main application class. All applications are
  */
 #include <unistd.h>
+#include <signal.h>
 #include <stdio.h>
 #include "thapp.h"
 
@@ -25,6 +26,9 @@
 #define THAPP_QUIT_CODE1 81								/* Q */
 #define THAPP_QUIT_CODE2 113								/* q */
 
+volatile sig_atomic_t _flg = 1;
+static int _thapp_sig_handler(int signo);
+
 /*
  * Method for handling the main loop.
  */
@@ -35,7 +39,7 @@ static void* _thapp_start_handler(void* obj);
 static int _thapp_init_helper(thapp* obj);
 
 /*---------------------------------------------------------------------------*/
-static char _thapp_get_cmd(void);
+/* static char _thapp_get_cmd(void); */
 
 /*---------------------------------------------------------------------------*/
 /* Callback methods for handling connection related messages */
@@ -55,6 +59,9 @@ int thapp_init(thapp* obj)
     obj->var_config;
     memset(&obj->_msg_buff, 0, sizeof(struct thor_msg));
 
+    /* Set signal handler */
+    signal(SIGINT, _thapp_sig_handler);
+    
     /*
      * Initialise the connection object.
      * If failed, indicate error and exit the function
@@ -182,6 +189,12 @@ int thapp_start(thapp* obj)
 /* Stops the test */
 int thapp_stop(thapp* obj)
 {
+    if(obj == NULL)
+	return -1;
+    
+    obj->var_run_flg = 0;
+
+    sem_post(&obj->_var_sem);
     return 0;
 }
 
@@ -220,7 +233,7 @@ static void* _thapp_start_handler(void* obj)
     fprintf(stdout, "%s", _obj->var_disp_header);
     
     /* Main loop */
-    while(1)
+    while(_flg)
 	{
 	    /*
 	     * Check for keyboard input. Apart, from the quit and stop signals,
@@ -269,7 +282,7 @@ static void* _thapp_start_handler(void* obj)
 static int _thapp_init_helper(thapp* obj)
 {
     const char* _t_buff = NULL;
-    const config_setting_t* _setting = NULL;
+    config_setting_t* _setting = NULL;
     
     /* Initialise the configuration object */
     config_init(&obj->var_config);
@@ -319,7 +332,7 @@ static int _thapp_init_helper(thapp* obj)
 	}
 
     /* Get server name */
-    _setting = config_lookup(&obj->var_config, THAPP_SERVER_NAME_KEY);
+    _setting = config_lookup(&obj->var_config, THAPP_SERVER_NAME_KEY);    
     if(_setting != NULL)
 	{
 	    _t_buff = config_setting_get_string(_setting);
@@ -345,7 +358,7 @@ static void _thapp_queue_del_helper(void* data)
  */
 static int _thapp_con_recv_callback(void* obj, void* msg, size_t sz)
 {
-    struct thor_msg _msg;
+    struct thor_msg* _msg;
     thapp* _obj;
     
     /* Check for arguments */
@@ -364,12 +377,20 @@ static int _thapp_con_recv_callback(void* obj, void* msg, size_t sz)
     thorinifix_init_msg(&_msg);
 
     /* decode message */
-    thornifix_decode_msg((char*) msg, sz, &_msg);
+    thornifix_decode_msg((char*) msg, sz, _msg);
     
     /* Lock mutex and add to the queue */
     pthread_mutex_lock(&_obj->_var_mutex);
-    gqueue_in(&_obj->_var_msg_queue, (void*) &_msg);
+    gqueue_in(&_obj->_var_msg_queue, (void*) _msg);
     pthread_mutex_unlock(&_obj->_var_mutex);
 
+    return 0;
+}
+
+/* Signal handler for the quit method */
+static int _thapp_sig_handler(int signo)
+{
+    if(signo == SIGINT)
+	_flg = 0;
     return 0;
 }
