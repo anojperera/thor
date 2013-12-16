@@ -212,8 +212,12 @@ static int _thapp_ahu_stop(thapp* obj, void* self)
     return 0;
 }
 
+/* Command handler */
 static int _thapp_cmd(thapp* obj, void* self, int cmd)
 {
+    #define THAPP_SEN_BUFF_SZ 4
+    double _array[THAPP_SEN_BUFF_SZ];
+    double _vel;
     thapp_ahu* _obj;
 
     if(self == NULL)
@@ -243,6 +247,29 @@ static int _thapp_cmd(thapp* obj, void* self, int cmd)
 	default:
 	}
 
+    /* Get Values */
+    _vel = thsen_get_value(obj->_var_vsen);
+    thvsen_get_dp_values(THOR_VSEN(obj->_var_vsen), _array, THAPP_SEN_BUFF_SZ);
+    
+    /* Temporary message buffer */
+    fprintf(stdout,
+	    "%.2f\t"
+	    "%.2f\t"
+	    "%.2f\t"
+	    "%.2f\t"
+	    "%.2f\t"
+	    "%.2f\t"
+	    "%.2f\t"
+	    "%.2f\t"
+	    _array[0],
+	    _array[1],
+	    _array[2],
+	    _array[3],
+	    _val,
+	    thsen_get_value(obj->_var_st_sen),
+	    thsen_get_value(obj->_var_sp_sen),
+	    thsen_get_value(obj->_var_tp_sen));
+	    
     return 0;
 }
 
