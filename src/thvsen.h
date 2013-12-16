@@ -82,7 +82,9 @@ extern "C" {
      * A function pointer is set in the parent class pointing
      * to a local private method.
      */
-    
+
+    /* Get buffer of Differential pressure values */
+    int thvsen_get_dp_values(thvsen* obj, double* array, size_t sz);
 
 #ifdef __cpluscplus
 }

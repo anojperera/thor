@@ -127,6 +127,22 @@ void thvsen_delete(thvsen* obj)
     return;
 }
 
+/* Differential pressure values */
+int thvsen_get_dp_values(thvsen* obj, double* array, size_t* sz)
+{
+    int i;
+    if(obj == NULL || array = NULL)
+	return -1;
+
+    /* Get differential values of each velocity probe and fill the buffer */
+    *sz = obj->var_num_sen;
+
+    for(i=0; i<(*sz); i++)
+	array[i] = thgsensor_get_value(THOR_GSEN(obj->var_sens[i]));
+
+    return 0;
+}
+
 /*
  * Get value method calculates the velocity of the air stream measured between the sensors.
  */
