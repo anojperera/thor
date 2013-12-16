@@ -2,6 +2,7 @@
  * Implementation of main application class. All applications are
  */
 #include <unistd.h>
+#include <stdio.h>
 #include "thapp.h"
 
 #define THAPP_SLEEP_KEY "main_sleep"
@@ -200,6 +201,9 @@ static void* _thapp_start_handler(void* obj)
 
     _obj = (thapp*) obj;
 
+    memset(_obj->var_disp_header, 0, THAPP_DISP_BUFF_SZ);
+    memset(_obj->var_disp_vals, 0, THAPP_DISP_BUFF_SZ);
+
     /*
      * First thing we do is to check if the any derived child
      * classes has set initialise and start methods and call
@@ -211,6 +215,9 @@ static void* _thapp_start_handler(void* obj)
     if(_obj->_var_fptr.var_start_ptr)
 	_obj->_var_fptr.var_start_ptr(_obj, _obj->var_child);
 
+    /*---------------------------------------------------*/
+    /* Temporary print statements for the display values */
+    fprintf(stdout, "%s", _obj->var_disp_header);
     
     /* Main loop */
     while(1)
@@ -246,8 +253,12 @@ static void* _thapp_start_handler(void* obj)
 	    /* Passed Command handling to the child class */
 	    if(_obj->_var_fptr.var_cmdhnd_ptr)
 		_obj->_var_fptr.var_cmdhnd_ptr(_obj, _obj->var_child, _cmd);
+
+	    /* Temporary print statements for the display values */
+	    fprintf(stdout, "%s", obj->var_disp_vals);
 	    
 	    usleep(_obj->var_sleep_time);
+	    memset(_obj->var_disp_vals, 0, THAPP_DISP_BUFF_SZ);
 	}
 
     obj->var_run_flg = 0;

@@ -15,6 +15,8 @@
 #include "thornifix.h"
 #include "thcon.h"
 
+#define THAPP_DISP_BUFF_SZ 256
+
 /*
  * Macro for initialising the function pointer table.
  */
@@ -68,6 +70,10 @@ struct _thapp
     thcon _var_con;								/* connection object */
 
     void* var_child;								/* child object */
+
+    /* Display buffers */
+    char var_disp_header[THAPP_DISP_BUFF_SZ];
+    char var_disp_vals[THAPP_DISP_BUFF_SZ];
     
     /*
      * Queue for buffering the messages recieved from the
