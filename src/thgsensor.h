@@ -136,6 +136,13 @@ extern "C" {
      * A function pointer is set in the parent class pointing
      * to a local private method.
      */
+    inline __attribute__ ((always_inline)) static double thgsensor_get_value(thgsensor* obj)
+    {
+	if(obj == NULL)
+	    return 0.0;
+	else
+	    return obj->var_val;
+    }
 
     /* Return parent */
     inline __attribute__ ((always_inline)) static thsen* thgsens_return_parent(thgsensor* obj)
