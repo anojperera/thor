@@ -205,6 +205,10 @@ int thornifix_decode_msg(const char* buff, size_t size, struct thor_msg* msg);
 #define THOR_SMSEN(obj)				\
     (thsmsen*) (obj)->var_child
 
+
+#define THOR_AHU(obj) \
+    (thapp_ahu*) obj->var_child
+
 /*===========================================================================*/
 /* error check function */
 inline __attribute__ ((always_inline)) static int ERR_CHECK(int32 err)

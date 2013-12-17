@@ -11,7 +11,7 @@ static double thvsen_get_val(void* obj);
 static int thvsen_set_config(void* obj);
 
 /* Constructor */
-thsen* thvsen_new(thvsen* obj, config_setting_t* setting, size_t num)
+thsen* thvsen_new(thvsen* obj, const config_setting_t* setting, size_t num)
 {
     int i;
     

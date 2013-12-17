@@ -27,7 +27,7 @@
 #define THAPP_QUIT_CODE2 113								/* q */
 
 volatile sig_atomic_t _flg = 1;
-static int _thapp_sig_handler(int signo);
+static void _thapp_sig_handler(int signo);
 
 /*
  * Method for handling the main loop.
@@ -39,7 +39,7 @@ static void* _thapp_start_handler(void* obj);
 static int _thapp_init_helper(thapp* obj);
 
 /*---------------------------------------------------------------------------*/
-/* static char _thapp_get_cmd(void); */
+static char _thapp_get_cmd(void);
 
 /*---------------------------------------------------------------------------*/
 /* Callback methods for handling connection related messages */
@@ -56,7 +56,6 @@ int thapp_init(thapp* obj)
     if(obj == NULL)
 	return -1;
 
-    obj->var_config;
     memset(&obj->_msg_buff, 0, sizeof(struct thor_msg));
 
     /* Set signal handler */
@@ -97,7 +96,7 @@ int thapp_init(thapp* obj)
 
     /* Initialise the function poitner array */
     THAPP_INIT_FPTR(obj);
-    gueue_new(&obj->_var_msg_queue, _thapp_queue_del_helper);
+    gqueue_new(&obj->_var_msg_queue, _thapp_queue_del_helper);
     sem_init(&obj->_var_sem, 0, 0);
     pthread_mutex_init(&obj->_var_mutex, NULL);
     return _thapp_init_helper(obj);
@@ -121,7 +120,6 @@ void thapp_delete(thapp* obj)
 
     /* Check configuration pointer and delete it */
     config_destroy(&obj->var_config);
-    obj->var_config = NULL;
     
     /* /\* */
     /*  * If destructor function pointer for the child class was */
@@ -156,7 +154,7 @@ int thapp_start(thapp* obj)
 
     /* If the test is already running, return function */
     if(obj->var_run_flg == 1)
-	rerurn 0;
+	return 0;
 
     /*
      * Start connection object in a loop.
@@ -181,7 +179,7 @@ int thapp_start(thapp* obj)
 	    return 0;
 	}
     else
-	_thapp_statt_handler((void*) obj);
+	_thapp_start_handler((void*) obj);
 
     return 0;
 }
@@ -239,7 +237,7 @@ static void* _thapp_start_handler(void* obj)
 	     * Check for keyboard input. Apart, from the quit and stop signals,
 	     * all others are passed to the derived classes to handle.
 	     */
-	    _cmd = _thapp_get_cmd(void);
+	    _cmd = _thapp_get_cmd();
 	    if(_cmd == THAPP_QUIT_CODE1 || _cmd == THAPP_QUIT_CODE2)
 		{
 		    /* Handle quit event */
@@ -251,7 +249,7 @@ static void* _thapp_start_handler(void* obj)
 	    pthread_mutex_lock(&_obj->_var_mutex);
 	    if(gqueue_count(&_obj->_var_msg_queue) > 0)
 		{
-		    gqueue_out(&_obj->_var_msg_queue, &_msg);
+		    gqueue_out(&_obj->_var_msg_queue, (void*) &_msg);
 		    /* Copy message to buffer */
 		    if(_msg != NULL)
 			memcpy((void*) &_obj->_msg_buff, (void*) _msg, sizeof(struct thor_msg));
@@ -268,13 +266,13 @@ static void* _thapp_start_handler(void* obj)
 		_obj->_var_fptr.var_cmdhnd_ptr(_obj, _obj->var_child, _cmd);
 
 	    /* Temporary print statements for the display values */
-	    fprintf(stdout, "%s", obj->var_disp_vals);
+	    fprintf(stdout, "%s", _obj->var_disp_vals);
 	    
 	    usleep(_obj->var_sleep_time);
 	    memset(_obj->var_disp_vals, 0, THAPP_DISP_BUFF_SZ);
 	}
 
-    obj->var_run_flg = 0;
+    _obj->var_run_flg = 0;
     return NULL;
 }
 
@@ -326,9 +324,13 @@ static int _thapp_init_helper(thapp* obj)
 	{
 	    _t_buff = config_setting_get_string(_setting);
 	    if(_t_buff)
-		thcon_set_port_name(&obj->_var_con, _t_buff);
+		{
+		    thcon_set_port_name(&obj->_var_con, _t_buff);
+		}
 	    else
-		thcon_set_port_name(&obj->_var_con, THAPP_DEFAULT_PORT);
+		{
+		    thcon_set_port_name(&obj->_var_con, THAPP_DEFAULT_PORT);
+		}
 	}
 
     /* Get server name */
@@ -388,9 +390,15 @@ static int _thapp_con_recv_callback(void* obj, void* msg, size_t sz)
 }
 
 /* Signal handler for the quit method */
-static int _thapp_sig_handler(int signo)
+static void _thapp_sig_handler(int signo)
 {
     if(signo == SIGINT)
 	_flg = 0;
+    return;
+}
+
+/* Get command */
+static char _thapp_get_cmd(void)
+{
     return 0;
 }

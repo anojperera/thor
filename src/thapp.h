@@ -12,6 +12,7 @@
 #include <pthread.h>
 #include <semaphore.h>
 #include <gqueue.h>
+#include <libconfig.h>
 #include "thornifix.h"
 #include "thcon.h"
 
@@ -52,7 +53,7 @@ struct _thapp_fptr_arr
     thapp_gf_ptr var_start_ptr;							
     thapp_gf_ptr var_stop_ptr;
     thapp_gf_ptr var_read_ptr;
-    thapp_gr_ptr var_write_ptr;
+    thapp_gf_ptr var_write_ptr;
     thapp_gf_ptr var_log_ptr;
     thapp_gf_ptr var_report_ptr;
     int (*var_cmdhnd_ptr)(thapp*, void*, char);
@@ -145,11 +146,11 @@ extern "C" {
     (obj_ptr)->_var_parent._var_fptr.var_log_ptr = fptr
 #define thapp_set_report_ptr(obj_ptr, fptr)			\
     (obj_ptr)->_var_parent._var_fptr.var_report_ptr = fptr
-#define thapp_set_cmdhnd_ptr(obj_fptr, fptr)			\
+#define thapp_set_cmdhnd_ptr(obj_ptr, fptr)			\
     (obj_ptr)->_var_parent._var_fptr.var_cmdhnd_ptr = fptr
 
 
-#endif __cplusplus
+#ifdef __cplusplus
 }
 #endif
 

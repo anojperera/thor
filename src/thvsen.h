@@ -40,7 +40,7 @@ extern "C" {
 #endif
 
     /* Constructor and destructor */
-    thsen* thvsen_new(thvsen* obj, config_setting_t* setting, size_t num);
+    thsen* thvsen_new(thvsen* obj, const config_setting_t* setting, size_t num);
     void thvsen_delete(thvsen* obj);
 
     /*

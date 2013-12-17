@@ -51,7 +51,7 @@ extern "C" {
 #endif
 
     /* Constructor and destructor */
-    thsen* thsmsen_new(thsmsen* obj, config_setting_t* settings);
+    thsen* thsmsen_new(thsmsen* obj, const config_setting_t* settings);
     void thsmsen_delete(thsmsen* obj);
 
 

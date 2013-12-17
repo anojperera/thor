@@ -8,6 +8,7 @@
 
 #include <stdlib.h>
 #include "thornifix.h"
+#include "thsen.h"
 #include "thapp.h"
 
 #define THAPP_AHU_DMP_BUFF 100

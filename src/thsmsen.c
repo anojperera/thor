@@ -8,7 +8,7 @@ static double _thsmsen_get_val(void* obj);
 static int _thsmsen_set_config(void* obj);
 
 /* Constructor */
-thsen* thsmsen_new(thsmsen* obj, config_setting_t* settings)
+thsen* thsmsen_new(thsmsen* obj, const config_setting_t* settings)
 {
     int i = 0;
     

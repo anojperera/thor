@@ -1,5 +1,8 @@
 /* Implementation of the air handling unit test program. */
 
+#include "thgsensor.h"
+#include "thvsen.h"
+#include "thsmsen.h"
 #include "thapp_ahu.h"
 
 /* Settting keys */
@@ -25,7 +28,7 @@
 static int _thapp_ahu_init(thapp* obj, void* self);
 static int _thapp_ahu_start(thapp* obj, void* self);
 static int _thapp_ahu_stop(thapp* obj, void* self);
-static int _thapp_cmd(thapp* obj, void* self, int cmd);
+static int _thapp_cmd(thapp* obj, void* self, char cmd);
 
 /* Helper method for loading configuration settings */
 static int _thapp_new_helper(thapp_ahu* obj);
@@ -44,7 +47,7 @@ thapp* thapp_ahu_new(void)
     /* Call to initalise the parent object */
     if(thapp_init(&_obj->_var_parent))
 	{
-	    free(obj);
+	    free(_obj);
 	    return NULL;
 	}
 
@@ -90,11 +93,14 @@ thapp* thapp_ahu_new(void)
 }
 
 /* Desructor */
-void thapp_delete(thapp* obj)
+void thapp_ahu_delete(thapp_ahu* obj)
 {
     /* Check object pointer */
     if(obj == NULL)
-	retun;
+	return;
+
+    /* Delete parent object */
+    thapp_delete(&obj->_var_parent);
 
     /* Remove velocity sensor */
     thvsen_delete(THOR_VSEN(obj->_var_vsen));
@@ -197,6 +203,7 @@ static int _thapp_new_helper(thapp_ahu* obj)
     if(_setting)
 	obj->_var_stm_sen = thsmsen_new(NULL, _setting);
 
+    return 0;
 }
 
 
@@ -213,12 +220,13 @@ static int _thapp_ahu_stop(thapp* obj, void* self)
 }
 
 /* Command handler */
-static int _thapp_cmd(thapp* obj, void* self, int cmd)
+static int _thapp_cmd(thapp* obj, void* self, char cmd)
 {
-    #define THAPP_SEN_BUFF_SZ 4
+#define THAPP_SEN_BUFF_SZ 4
     double _array[THAPP_SEN_BUFF_SZ];
     double _vel;
     thapp_ahu* _obj;
+    unsigned int _num;
 
     if(self == NULL)
 	return 0;
@@ -227,29 +235,30 @@ static int _thapp_cmd(thapp* obj, void* self, int cmd)
     switch(cmd)
 	{
 	case THAPP_AHU_ACT_INCR_CODE:
-	  break;
+	    break;
 	case THAPP_AHU_ACT_DECR_CODE:
-	  break;
+	    break;
 	case THAPP_AHU_PRG_START_CODE:
-	  break;
+	    break;
 	case THAPP_AHU_PRG_STOP_CODE:
-	  break;
+	    break;
 	case THAPP_AHU_ACT_INCRF_CODE:
-	  break;
+	    break;
 	case THAPP_AHU_ACT_DECRF_CODE:
-	  break;
+	    break;
 	case THAPP_AHU_PAUSE_CODE:
-	  break;
+	    break;
 	case THAPP_AHU_YES_CODE:
-	  break;
+	    break;
 	case THAPP_AHU_YES2_CODE:
-	  break;
+	    break;
 	default:
+	    break;
 	}
 
     /* Get Values */
-    _vel = thsen_get_value(obj->_var_vsen);
-    thvsen_get_dp_values(THOR_VSEN(obj->_var_vsen), _array, THAPP_SEN_BUFF_SZ);
+    _vel = thsen_get_value(_obj->_var_vsen);
+    thvsen_get_dp_values(THOR_VSEN(_obj->_var_vsen), _array, &_num);
     
     /* Temporary message buffer */
     fprintf(stdout,
@@ -260,15 +269,15 @@ static int _thapp_cmd(thapp* obj, void* self, int cmd)
 	    "%.2f\t"
 	    "%.2f\t"
 	    "%.2f\t"
-	    "%.2f\t"
+	    "%.2f\t",
 	    _array[0],
 	    _array[1],
 	    _array[2],
 	    _array[3],
-	    _val,
-	    thsen_get_value(obj->_var_st_sen),
-	    thsen_get_value(obj->_var_sp_sen),
-	    thsen_get_value(obj->_var_tp_sen));
+	    _vel,
+	    thsen_get_value(_obj->_var_st_sen),
+	    thsen_get_value(_obj->_var_sp_sen),
+	    thsen_get_value(_obj->_var_tp_sen));
 	    
     return 0;
 }
@@ -292,16 +301,16 @@ static int _thapp_ahu_init(thapp* obj, void* self)
     /*----------------------------------------*/
 
     /* Set velocity sensor update pointer */
-    thvsen_set_raw_buff(THOR_VSEN(_obj->_var_vsen), &_obj->_msg_buff._ai4_val);
+    thvsen_set_raw_buff(THOR_VSEN(_obj->_var_vsen), &obj->_msg_buff._ai4_val, 4);
 
     /* Set temperature raw value set */
-    thgsens_set_value_ptr(THOR_GSEN(_obj->_var_tp_sen), &_obj->_msg_buff._ai0_val);
+    thgsens_set_value_ptr(THOR_GSEN(_obj->_var_tp_sen), &obj->_msg_buff._ai0_val);
 
     /* Set speed sensor */
-    thgsens_set_value_ptr(THOR_GSEN(_obj->_var_sp_sen), &_obj->_msg_buff._ai1_val);
+    thgsens_set_value_ptr(THOR_GSEN(_obj->_var_sp_sen), &obj->_msg_buff._ai1_val);
 
     /* Set static sensor */
-    thgsens_set_value_ptr(THOR_GSEN(_obj->_var_st_sen), &_obj->_msg_buff._ai2_val);
+    thgsens_set_value_ptr(THOR_GSEN(_obj->_var_st_sen), &obj->_msg_buff._ai2_val);
 
     return 0;
 }
