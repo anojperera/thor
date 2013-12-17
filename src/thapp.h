@@ -50,7 +50,7 @@ struct _thapp_fptr_arr
     thapp_gf_ptr var_init_ptr;
     thapp_gf_ptr var_del_ptr;
     thapp_gf_ptr var_start_ptr;							
-    thapp_gf_prt var_stop_ptr;
+    thapp_gf_ptr var_stop_ptr;
     thapp_gf_ptr var_read_ptr;
     thapp_gr_ptr var_write_ptr;
     thapp_gf_ptr var_log_ptr;
