@@ -261,7 +261,8 @@ static int _thapp_cmd(thapp* obj, void* self, char cmd)
     thvsen_get_dp_values(THOR_VSEN(_obj->_var_vsen), _array, &_num);
     
     /* Temporary message buffer */
-    fprintf(stdout,
+    memset(_obj->_var_parent.var_disp_vals, 0, THAPP_DISP_BUFF_SZ);
+    sprintf(_obj->_var_parent.var_disp_vals,
 	    "%.2f\t"
 	    "%.2f\t"
 	    "%.2f\t"
@@ -269,7 +270,7 @@ static int _thapp_cmd(thapp* obj, void* self, char cmd)
 	    "%.2f\t"
 	    "%.2f\t"
 	    "%.2f\t"
-	    "%.2f\t",
+	    "%.2f\t\r",
 	    _array[0],
 	    _array[1],
 	    _array[2],
