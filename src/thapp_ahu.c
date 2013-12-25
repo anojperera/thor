@@ -1,5 +1,5 @@
 /* Implementation of the air handling unit test program. */
-
+#include <math.h>
 #include "thgsensor.h"
 #include "thvsen.h"
 #include "thsmsen.h"
@@ -243,7 +243,7 @@ static int _thapp_cmd(thapp* obj, void* self, char cmd)
 {
 #define THAPP_SEN_BUFF_SZ 4
     double _array[THAPP_SEN_BUFF_SZ];
-    double _vel;
+    double _vel, _vol;
     thapp_ahu* _obj;
     unsigned int _num;
 
@@ -277,11 +277,16 @@ static int _thapp_cmd(thapp* obj, void* self, char cmd)
 
     /* Get Values */
     _vel = thsen_get_value(_obj->_var_vsen);
+    _vol = 0.0;
+    if(_obj->var_duct_dia > 0.0)
+	_vol = _vel * M_PI* pow((_obj->var_duct_dia/2), 2);
+
     thvsen_get_dp_values(THOR_VSEN(_obj->_var_vsen), _array, &_num);
     
     /* Temporary message buffer */
     memset(_obj->_var_parent.var_disp_vals, 0, THAPP_DISP_BUFF_SZ);
     sprintf(_obj->_var_parent.var_disp_vals,
+	    "%.2f\t"
 	    "%.2f\t"
 	    "%.2f\t"
 	    "%.2f\t"
@@ -295,6 +300,7 @@ static int _thapp_cmd(thapp* obj, void* self, char cmd)
 	    _array[2],
 	    _array[3],
 	    _vel,
+	    _vol,
 	    thsen_get_value(_obj->_var_st_sen),
 	    thsen_get_value(_obj->_var_sp_sen),
 	    thsen_get_value(_obj->_var_tp_sen));
@@ -344,7 +350,6 @@ static int _thapp_ahu_init(thapp* obj, void* self)
 
 	    fprintf(stdout, "\nAdd pulley ratio for motor speed (Y/n): ");
 	    scanf("%c", &_def_flg);
-	    fflush(stdin);
 	    
 	    if(_def_flg == THAPP_AHU_YES_CODE || _def_flg == THAPP_AHU_YES2_CODE)
 		{
