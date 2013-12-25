@@ -118,6 +118,10 @@ void thapp_delete(thapp* obj)
     obj->var_init_flg = 0;
     obj->var_run_flg = 0;
 
+    /* Delete config object */
+    thcon_stop(&obj->_var_con);
+    thcon_delete(&obj->_var_con);
+
     /* Check configuration pointer and delete it */
     config_destroy(&obj->var_config);
     
@@ -199,7 +203,7 @@ int thapp_stop(thapp* obj)
 	}
     else
 	_flg = 0;
-    thcon_delete(
+
     sem_post(&obj->_var_sem);
     return 0;
 }
