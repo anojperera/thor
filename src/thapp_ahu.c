@@ -317,7 +317,7 @@ static int _thapp_cmd(thapp* obj, void* self, char cmd)
 static int _thapp_ahu_init(thapp* obj, void* self)
 {
     unsigned int _duct_dia=0, _num_sensors=0, _def_static=0;
-    char _def_flg=0;
+    int _def_flg=0;
     float _f_dia=0.0, _m_dia=0.0;
     double _ratio=0.0;
     
@@ -349,7 +349,7 @@ static int _thapp_ahu_init(thapp* obj, void* self)
 	    fflush(stdin);
 
 	    fprintf(stdout, "\nAdd pulley ratio for motor speed (Y/n): ");
-	    scanf("%c", &_def_flg);
+	    _def_flg = getc(stdin);
 	    
 	    if(_def_flg == THAPP_AHU_YES_CODE || _def_flg == THAPP_AHU_YES2_CODE)
 		{
