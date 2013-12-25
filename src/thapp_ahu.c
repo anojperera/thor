@@ -210,6 +210,25 @@ static int _thapp_new_helper(thapp_ahu* obj)
 /* Start callback */
 static int _thapp_ahu_start(thapp* obj, void* self)
 {
+    thapp_ahu* _obj;
+
+    if(self == NULL)
+	return -1;
+    _obj = (thapp_ahu*) self;
+    
+    /* Add header information */
+    memset(_obj->_var_parent.var_disp_header, 0, THAPP_DISP_BUFF_SZ);
+    sprintf(_obj->_var_parent.var_disp_header,
+	    "\n"
+	    "DP1\t"
+	    "DP2\t"
+	    "DP3\t"
+	    "DP4\t"
+	    "Vel\t"
+	    "Vol\t"
+	    "ST\t"
+	    "F_SP\t"
+	    "TMP\n");
     return 0;
 }
 
@@ -329,6 +348,7 @@ static int _thapp_ahu_init(thapp* obj, void* self)
 	    
 	    if(_def_flg == THAPP_AHU_YES_CODE || _def_flg == THAPP_AHU_YES2_CODE)
 		{
+		    fflush(stdin);
 		    fprintf(stdout, "\nFan pulley diameter: ");
 		    scanf("%f", &_f_dia);
 		    fflush(stdin);
