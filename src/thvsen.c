@@ -47,7 +47,8 @@ thsen* thvsen_new(thvsen* obj, const config_setting_t* setting, size_t num)
     obj->var_val = 0.0;
     obj->var_sens = NULL;
     obj->var_child = NULL;
-
+    obj->var_config_sens = 0;
+    
     /* Initialise function pointer array */
     thsen_self_init_vtable(obj);
     
@@ -160,7 +161,7 @@ static double thvsen_get_val(void* obj)
 	return 0.0;
 
     _obj->var_val = 0.0;
-    for(i=0; i<_obj->var_num_sen; i++)
+    for(i=0; i<_obj->var_config_sens; i++)
 	{
 	    if(i >= _obj->var_buff_sz)
 		break;

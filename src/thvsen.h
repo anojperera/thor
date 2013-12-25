@@ -23,6 +23,7 @@ struct _thvsen
     unsigned int var_int_flg;
     unsigned int var_init_flg;						/* Flag to indicate initialised */
     unsigned int var_num_sen;
+    unsigned int var_config_sens;					/* Configured sensors */
     size_t var_buff_sz;							/* Buffer size */
 
     const double* var_raw_buff;						/* Raw buffer */
@@ -86,6 +87,9 @@ extern "C" {
     /* Get buffer of Differential pressure values */
     int thvsen_get_dp_values(thvsen* obj, double* array, size_t* sz);
 
+#define thvsen_configure_sensors(obj, num)	\
+    (obj)->var_config_sens = num
+    
 #ifdef __cpluscplus
 }
 #endif
