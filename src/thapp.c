@@ -270,7 +270,8 @@ static void* _thapp_start_handler(void* obj)
 	    pthread_mutex_unlock(&_obj->_var_mutex);
 
 	    /* Free message element */
-	    free(_msg);
+	    if(_msg != NULL)
+		free(_msg);
 	    _msg = NULL;
 	    
 	    /* Passed Command handling to the child class */
@@ -374,7 +375,7 @@ static int _thapp_con_recv_callback(void* obj, void* msg, size_t sz)
 {
     struct thor_msg* _msg;
     thapp* _obj;
-    
+    return 0;
     /* Check for arguments */
     if(obj == NULL || msg == NULL || sz <= 0)
 	return -1;
