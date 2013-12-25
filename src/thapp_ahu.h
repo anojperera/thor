@@ -47,7 +47,8 @@ struct _thapp_ahu
      * acurately measuring a diverse range of pressure.
      */
     thsen* _var_stm_sen;						/* Static smart sensor */
-    
+
+    double var_def_static;
     double var_duct_dia;
     double var_duct_vel;
     double var_duct_vol;

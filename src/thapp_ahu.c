@@ -79,7 +79,7 @@ thapp* thapp_ahu_new(void)
     /* Initialise actuator buffer */
     for(; i<THAPP_AHU_DMP_BUFF; i++)
 	_obj->var_dmp_buff[i] = 0.0;
-
+    _obj->var_def_static = 0.0;
     _obj->var_duct_dia = 0.0;
     _obj->var_duct_vel = 0.0;
     _obj->var_duct_vol = 0.0;
@@ -291,12 +291,61 @@ static int _thapp_cmd(thapp* obj, void* self, char cmd)
  */
 static int _thapp_ahu_init(thapp* obj, void* self)
 {
+    unsigned int _duct_dia=0, _num_sensors=0, _def_static=0;
+    char _def_flg=0;
+    float _f_dia=0.0, _m_dia=0.0;
+    double _ratio=0.0
+    
     thapp_ahu* _obj;
 
     if(self == NULL)
 	return -1;
 
     _obj = (thapp_ahu*) self;
+
+    /*
+     * If the app is not running in headless mode, query for
+     * other options.
+     */
+    if(obj->var_op_mode != thapp_headless)
+	{
+	    fflush(stdin);
+	    fprintf(stdout, "\nEnter Duct Diameter (200/300/600/1120): ");
+	    scanf("%i", &_duct_dia);
+	    _obj->var_duct_dia = (double) _duct_dia;
+	    fflush(stdin);
+
+	    fprintf(stdout, "\nEnter number of sensors (4/2): ");
+	    scanf("%i", &_num_sensors);
+	    fflush(stdin);
+
+	    fprintf(stdout, "\nEnter external static pressure: ");
+	    scanf("%i", &_def_static);
+	    fflush(stdin);
+
+	    fprintf(stdout, "\nAdd pulley ratio for motor speed (Y/n): ");
+	    scanf("%c", &_def_flg);
+	    fflush(stdin);
+	    
+	    if(_def_flg == THAPP_AHU_YES_CODE || _def_flg == THAPP_AHU_YES2_CODE)
+		{
+		    fprintf(stdout, "\nFan pulley diameter: ");
+		    scanf(stdin, "%f", &_f_dia);
+		    fflush(stdin);
+
+		    fprintf(stdout, "\nMotor pulley diameter: ");
+		    scanf(stdin, "%f", &_m_dia);
+		    fflush(stdin);
+
+		    if(_m_dia > 0.0)
+			_ratio = (double) _f_dia / _m_dia;
+
+		    fprintf(stdout, "\nPulley Ratio: %.2f\n", (float) _ratio);
+		}
+	}
+
+    thvsen_configure_sensors(THOR_VSEN(_obj->_var_vsen), _num_sensors);
+    _obj->var_def_static = (double) _def_static;
 
     /* Set raw value pointers for the sensors */
     /*----------------------------------------*/
