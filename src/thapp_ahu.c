@@ -330,11 +330,11 @@ static int _thapp_ahu_init(thapp* obj, void* self)
 	    if(_def_flg == THAPP_AHU_YES_CODE || _def_flg == THAPP_AHU_YES2_CODE)
 		{
 		    fprintf(stdout, "\nFan pulley diameter: ");
-		    scanf(stdin, "%f", &_f_dia);
+		    scanf("%f", &_f_dia);
 		    fflush(stdin);
 
 		    fprintf(stdout, "\nMotor pulley diameter: ");
-		    scanf(stdin, "%f", &_m_dia);
+		    scanf("%f", &_m_dia);
 		    fflush(stdin);
 
 		    if(_m_dia > 0.0)
