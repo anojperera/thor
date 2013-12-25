@@ -294,7 +294,7 @@ static int _thapp_ahu_init(thapp* obj, void* self)
     unsigned int _duct_dia=0, _num_sensors=0, _def_static=0;
     char _def_flg=0;
     float _f_dia=0.0, _m_dia=0.0;
-    double _ratio=0.0
+    double _ratio=0.0;
     
     thapp_ahu* _obj;
 
