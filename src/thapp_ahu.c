@@ -348,8 +348,8 @@ static int _thapp_ahu_init(thapp* obj, void* self)
 	    scanf("%i", &_def_static);
 	    fflush(stdin);
 
-    	    fflush(stdin);
 	    fprintf(stdout, "\nAdd pulley ratio for motor speed (Y/n): ");
+    	    fflush(stdin);	    
 	    scanf("%c", &_def_flg);
 	    
 	    if(_def_flg == THAPP_AHU_YES_CODE || _def_flg == THAPP_AHU_YES2_CODE)
