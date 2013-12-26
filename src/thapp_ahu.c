@@ -1,6 +1,7 @@
 /* Implementation of the air handling unit test program. */
 #include <math.h>
 #include <string.h>
+#include <ncurses.h>
 #include "thgsensor.h"
 #include "thvsen.h"
 #include "thsmsen.h"
