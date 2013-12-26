@@ -103,7 +103,7 @@ void thvsen_delete(thvsen* obj)
 	return;
 
     /* Delete parent object */
-    
+    thsen_delete(&obj->var_parent);
 
     /* Delete sensor collection */
     for(i=0; i<obj->var_num_sen; i++)
