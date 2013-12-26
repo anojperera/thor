@@ -89,6 +89,7 @@ thapp* thapp_ahu_new(void)
     _obj->var_t_ext_st = 0.0;
     _obj->var_fm_ratio = 1.0;
 
+
     _obj->var_child = NULL;
 
     /* Return thapp object */
@@ -144,6 +145,15 @@ static int _thapp_new_helper(thapp_ahu* obj)
 {
     int _num = 0;
     const config_setting_t* _setting;
+
+    /*
+     * Initialise sensor variables of the class to NULL first
+     */
+    obj->_var_vsen = NULL;
+    obj->_var_tp_sen = NULL;
+    obj->_var_sp_sen = NULL;
+    obj->_var_st_sen = NULL;
+    obj->_var_stm_sen = NULL;
 
     /* Get Configuration settings for the velocity sensor array */
     _setting = config_lookup(&obj->_var_parent.var_config, THAPP_AHU_KEY);
