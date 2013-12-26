@@ -110,7 +110,7 @@ void thvsen_delete(thvsen* obj)
 	{
 	    if(obj->var_sens == NULL)
 		break;
-	    thgsensor_delete(THOR_GSEN(obj->var_sens[i]));
+	    thvprb_delete(THOR_VPRB(obj->var_sens[i]));
 	    obj->var_sens[i] = NULL;
 	}
 
