@@ -91,7 +91,7 @@ void thsmsen_delete(thsmsen* obj)
 	return;
 
     /* Check if the object is initialised */
-    if(obj->var_int_flg != 0 || obj->var_int_flg != 1)
+    if(obj->var_int_flg != 0 && obj->var_int_flg != 1)
 	return;
     
     /* Call destructor of parent object */
