@@ -54,6 +54,7 @@ struct _thapp_ahu
     double var_duct_vol;
     double var_duct_loss;						/* Static pressure loss in duct */
     double var_t_ext_st;						/* Total external static pressure */
+    double var_fm_ratio;						/* fan motor pulley ratio */
 
     /* Array of function pointers */
     struct _thapp_fptr_arr _var_fptr;    

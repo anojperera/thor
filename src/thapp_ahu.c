@@ -87,6 +87,7 @@ thapp* thapp_ahu_new(void)
     _obj->var_duct_vol = 0.0;
     _obj->var_duct_loss = 0.0;
     _obj->var_t_ext_st = 0.0;
+    _obj->var_fm_ratio = 1.0;
 
     _obj->var_child = NULL;
 
@@ -230,6 +231,7 @@ static int _thapp_ahu_start(thapp* obj, void* self)
 	    "Vol\t"
 	    "ST\t"
 	    "F_SP\t"
+	    "M_SP\t"
 	    "TMP\n");
     return 0;
 }
@@ -248,7 +250,7 @@ static int _thapp_cmd(thapp* obj, void* self, char cmd)
 {
 #define THAPP_SEN_BUFF_SZ 4
     double _array[THAPP_SEN_BUFF_SZ];
-    double _vel, _vol;
+    double _vel = 0.0, _vol = 0.0, _f_sp = 0.0;
     thapp_ahu* _obj;
     unsigned int _num;
     int _rt_val = 1;
@@ -283,12 +285,12 @@ static int _thapp_cmd(thapp* obj, void* self, char cmd)
 
     /* Get Values */
     _vel = thsen_get_value(_obj->_var_vsen);
-    _vol = 0.0;
     if(_obj->var_duct_dia > 0.0)
 	_vol = _vel * M_PI* pow((_obj->var_duct_dia/2), 2);
 
     thvsen_get_dp_values(THOR_VSEN(_obj->_var_vsen), _array, &_num);
 
+    _f_sp = thsen_get_value(_obj->_var_sp_sen);
     /* Temporary message buffer */
     memset(_obj->_var_parent.var_disp_vals, 0, THAPP_DISP_BUFF_SZ);
     sprintf(_obj->_var_parent.var_disp_vals,
@@ -300,6 +302,7 @@ static int _thapp_cmd(thapp* obj, void* self, char cmd)
 	    "%.2f\t"
 	    "%.2f\t"
 	    "%.2f\t"
+    	    "%.2f\t"
 	    "%.2f\t\r",
 	    _array[0],
 	    _array[1],
@@ -308,7 +311,8 @@ static int _thapp_cmd(thapp* obj, void* self, char cmd)
 	    _vel,
 	    _vol,
 	    thsen_get_value(_obj->_var_st_sen),
-	    thsen_get_value(_obj->_var_sp_sen),
+	    _f_sp,
+	    _obj->var_fm_ratio*_f_sp,
 	    thsen_get_value(_obj->_var_tp_sen));
 
     return _rt_val;
@@ -390,6 +394,7 @@ static int _thapp_ahu_init(thapp* obj, void* self)
 			_ratio = (double) _f_dia / _m_dia;
 
 		    printw("Pulley Ratio: %.2f\n", (float) _ratio);
+		    _obj->var_fm_ratio = _ratio;
 		    refresh();
 		}
 	}
