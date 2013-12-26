@@ -77,6 +77,7 @@ int thapp_init(thapp* obj)
     thcon_set_recv_callback(&obj->_var_con, _thapp_con_recv_callback);
     
     obj->var_init_flg = 1;
+    obj->var_run_flg = 0;
     obj->var_sleep_time = THAPP_DEFAULT_SLEEP;
     obj->var_child = NULL;
 
