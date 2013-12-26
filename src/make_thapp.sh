@@ -1,2 +1,2 @@
 #!/bin/bash
-gcc -g -Wall -O0 -o thahu thappe.c thapp_ahu.c thapp.c thcon.c thsen.c thgsensor.c thvprb.c thvsen.c thsmsen.c thornifix.c -I/usr/local/natinst/nidaqmxbase/include/ -I/usr/include/libxml2/ -lalist -lxml2 -lconfig -lm -lalist -lncurses -lpthread
+gcc -g -Wall -O0 -o thahu thappe.c thapp_ahu.c thapp.c thcon.c thsen.c thgsensor.c thvprb.c thvsen.c thsmsen.c thornifix.c -I/usr/local/natinst/nidaqmxbase/include/ -I/usr/include/libxml2/ -lalist -lxml2 -lcurl -lconfig -lm -lalist -lncurses -lpthread
