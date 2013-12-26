@@ -240,7 +240,10 @@ static int _thapp_ahu_stop(thapp* obj, void* self)
     return 0;
 }
 
-/* Command handler */
+/*
+ * Command handler.
+ * We always return a true if the program were to continue.
+ */
 static int _thapp_cmd(thapp* obj, void* self, char cmd)
 {
 #define THAPP_SEN_BUFF_SZ 4
@@ -248,9 +251,10 @@ static int _thapp_cmd(thapp* obj, void* self, char cmd)
     double _vel, _vol;
     thapp_ahu* _obj;
     unsigned int _num;
+    int _rt_val = 1;
 
     if(self == NULL)
-	return 0;
+	return _rt_val;
 
     _obj = (thapp_ahu*) self;
     switch(cmd)
@@ -307,7 +311,7 @@ static int _thapp_cmd(thapp* obj, void* self, char cmd)
 	    thsen_get_value(_obj->_var_sp_sen),
 	    thsen_get_value(_obj->_var_tp_sen));
 
-    return 0;
+    return _rt_val;
 }
 
 /*

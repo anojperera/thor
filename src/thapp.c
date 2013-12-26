@@ -253,6 +253,14 @@ static void* _thapp_start_handler(void* obj)
     /* Temporary print statements for the display values */
     printw("%s", _obj->var_disp_header);
     refresh();
+
+    /* Disable line buffering and keyboard echo */
+    raw();
+    keypad(stdscr, TRUE);
+    noecho();
+
+    /* set time out to zero */
+    timeout(0);
     
     /* Main loop */
     while(_flg)
@@ -286,9 +294,15 @@ static void* _thapp_start_handler(void* obj)
 		free(_msg);
 	    _msg = NULL;
 	    
-	    /* Passed Command handling to the child class */
+	    /*
+	     * Passed Command handling to the child class.
+	     * Check if the return value is true. By using the return
+	     * value of the derived class's command routine, we give
+	     * a chance to indicate any derived class to terminate
+	     * the program in a safe mannar.
+	     */
 	    if(_obj->_var_fptr.var_cmdhnd_ptr)
-		_obj->_var_fptr.var_cmdhnd_ptr(_obj, _obj->var_child, _cmd);
+		_flg = _obj->_var_fptr.var_cmdhnd_ptr(_obj, _obj->var_child, _cmd);
 
 	    /* Temporary print statements for the display values */
 	    printw("%s", _obj->var_disp_vals);
@@ -427,5 +441,7 @@ static void _thapp_sig_handler(int signo)
 /* Get command */
 static char _thapp_get_cmd(void)
 {
-    return 0;
+    int _cmd = 0;
+    _cmd = getch();
+    return (char) _cmd;
 }
