@@ -3,6 +3,7 @@
  */
 #include <unistd.h>
 #include <signal.h>
+#include <ncurses.h>
 #include <stdio.h>
 #include "thapp.h"
 
@@ -193,8 +194,7 @@ int thapp_stop(thapp* obj)
 {
     if(obj == NULL)
 	return -1;
-    
-    obj->var_run_flg = 0;
+
     if(obj->var_op_mode == thapp_headless)
 	{
 	    pthread_cancel(obj->_var_thread);
@@ -203,6 +203,12 @@ int thapp_stop(thapp* obj)
 	}
     else
 	_flg = 0;
+    
+    if(obj->var_run_flg)
+	endwin();
+    
+    obj->var_run_flg = 0;
+
 
     sem_post(&obj->_var_sem);
     return 0;
@@ -226,6 +232,11 @@ static void* _thapp_start_handler(void* obj)
 
     memset(_obj->var_disp_header, 0, THAPP_DISP_BUFF_SZ);
     memset(_obj->var_disp_vals, 0, THAPP_DISP_BUFF_SZ);
+
+    /*
+     * Initialise ncurses system.
+     */
+    initscr();
 
     /*
      * First thing we do is to check if the any derived child
@@ -286,6 +297,7 @@ static void* _thapp_start_handler(void* obj)
 	    memset(_obj->var_disp_vals, 0, THAPP_DISP_BUFF_SZ);
 	}
 
+    endwin();
     _obj->var_run_flg = 0;
     return NULL;
 }
