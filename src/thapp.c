@@ -251,7 +251,8 @@ static void* _thapp_start_handler(void* obj)
 
     /*---------------------------------------------------*/
     /* Temporary print statements for the display values */
-    fprintf(stdout, "%s", _obj->var_disp_header);
+    printw("%s", _obj->var_disp_header);
+    refresh();
     
     /* Main loop */
     while(_flg)
@@ -290,8 +291,8 @@ static void* _thapp_start_handler(void* obj)
 		_obj->_var_fptr.var_cmdhnd_ptr(_obj, _obj->var_child, _cmd);
 
 	    /* Temporary print statements for the display values */
-	    fprintf(stdout, "%s", _obj->var_disp_vals);
-	    fflush(stdout);
+	    printw("%s", _obj->var_disp_vals);
+	    refresh();
 	    
 	    usleep(_obj->var_sleep_time);
 	    memset(_obj->var_disp_vals, 0, THAPP_DISP_BUFF_SZ);

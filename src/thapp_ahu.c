@@ -1,5 +1,6 @@
 /* Implementation of the air handling unit test program. */
 #include <math.h>
+#include <string.h>
 #include "thgsensor.h"
 #include "thvsen.h"
 #include "thsmsen.h"
@@ -141,7 +142,7 @@ static int _thapp_new_helper(thapp_ahu* obj)
 {
     int _num = 0;
     const config_setting_t* _setting;
-    
+
     /* Get Configuration settings for the velocity sensor array */
     _setting = config_lookup(&obj->_var_parent.var_config, THAPP_AHU_KEY);
     /* Get number of elements */
@@ -215,7 +216,7 @@ static int _thapp_ahu_start(thapp* obj, void* self)
     if(self == NULL)
 	return -1;
     _obj = (thapp_ahu*) self;
-    
+
     /* Add header information */
     memset(_obj->_var_parent.var_disp_header, 0, THAPP_DISP_BUFF_SZ);
     sprintf(_obj->_var_parent.var_disp_header,
@@ -282,7 +283,7 @@ static int _thapp_cmd(thapp* obj, void* self, char cmd)
 	_vol = _vel * M_PI* pow((_obj->var_duct_dia/2), 2);
 
     thvsen_get_dp_values(THOR_VSEN(_obj->_var_vsen), _array, &_num);
-    
+
     /* Temporary message buffer */
     memset(_obj->_var_parent.var_disp_vals, 0, THAPP_DISP_BUFF_SZ);
     sprintf(_obj->_var_parent.var_disp_vals,
@@ -304,7 +305,7 @@ static int _thapp_cmd(thapp* obj, void* self, char cmd)
 	    thsen_get_value(_obj->_var_st_sen),
 	    thsen_get_value(_obj->_var_sp_sen),
 	    thsen_get_value(_obj->_var_tp_sen));
-	    
+
     return 0;
 }
 
@@ -316,11 +317,11 @@ static int _thapp_cmd(thapp* obj, void* self, char cmd)
  */
 static int _thapp_ahu_init(thapp* obj, void* self)
 {
-    unsigned int _duct_dia=0, _num_sensors=0, _def_static=0;
+    unsigned int _num_sensors=0;
     char _def_flg=0;
     float _f_dia=0.0, _m_dia=0.0;
     double _ratio=0.0;
-    
+    char _scr_input_buff[THAPP_DISP_BUFF_SZ];
     thapp_ahu* _obj;
 
     if(self == NULL)
@@ -334,44 +335,61 @@ static int _thapp_ahu_init(thapp* obj, void* self)
      */
     if(obj->var_op_mode != thapp_headless)
 	{
-	    fflush(stdin);
-	    fprintf(stdout, "\nEnter Duct Diameter (200/300/600/1120): ");
-	    scanf("%i", &_duct_dia);
-	    _obj->var_duct_dia = (double) _duct_dia;
-	    fflush(stdin);
+	    memset(_scr_input_buff, 0, THAPP_DISP_BUFF_SZ);
+	    printw("Enter Duct Diameter (200/300/600/1120): ");
+	    refresh();
+	    getnstr(_scr_input_buff, THAPP_DISP_BUFF_SZ-1);
 
-	    fprintf(stdout, "\nEnter number of sensors (4/2): ");
-	    scanf("%i", &_num_sensors);
-	    fflush(stdin);
+	    _obj->var_duct_dia = atof(_scr_input_buff);
+	    clear();
 
-	    fprintf(stdout, "\nEnter external static pressure: ");
-	    scanf("%i", &_def_static);
-	    fflush(stdin);
+    	    memset(_scr_input_buff, 0, THAPP_DISP_BUFF_SZ);
+	    printw("Enter number of sensors (4/2): ");
+	    refresh();
+	    getnstr(_scr_input_buff, THAPP_DISP_BUFF_SZ-1);
 
-	    fprintf(stdout, "\nAdd pulley ratio for motor speed (Y/n): ");
-    	    fflush(stdin);	    
-	    scanf("%c", &_def_flg);
-	    
+	    _num_sensors = atoi(_scr_input_buff);
+	    clear();
+
+	    memset(_scr_input_buff, 0, THAPP_DISP_BUFF_SZ);
+	    printw("Enter external static pressure: ");
+	    refresh();
+	    getnstr(_scr_input_buff, THAPP_DISP_BUFF_SZ-1);
+
+	    _obj->var_def_static = atof(_scr_input_buff);
+	    clear();
+
+	    printw("Add pulley ratio for motor speed (Y/n): ");
+	    refresh();
+	    _def_flg = getch();
+	    clear();
+
 	    if(_def_flg == THAPP_AHU_YES_CODE || _def_flg == THAPP_AHU_YES2_CODE)
 		{
-		    fflush(stdin);
-		    fprintf(stdout, "\nFan pulley diameter: ");
-		    scanf("%f", &_f_dia);
-		    fflush(stdin);
+		    memset(_scr_input_buff, 0, THAPP_DISP_BUFF_SZ);
+		    printw("Fan pulley diameter: ");
+		    refresh();
+		    getnstr(_scr_input_buff, THAPP_DISP_BUFF_SZ-1);
+		    
+		    _f_dia = atof(_scr_input_buff);
+		    clear();
 
-		    fprintf(stdout, "\nMotor pulley diameter: ");
-		    scanf("%f", &_m_dia);
-		    fflush(stdin);
+    		    memset(_scr_input_buff, 0, THAPP_DISP_BUFF_SZ);
+		    printw("Motor pulley diameter: ");
+		    refresh();
+		    getnstr(_scr_input_buff, THAPP_DISP_BUFF_SZ-1);
+		    _m_dia = atof(_scr_input_buff);
+		    clear();
 
 		    if(_m_dia > 0.0)
 			_ratio = (double) _f_dia / _m_dia;
 
-		    fprintf(stdout, "\nPulley Ratio: %.2f\n", (float) _ratio);
+		    printw("Pulley Ratio: %.2f\n", (float) _ratio);
+		    refresh();
 		}
 	}
 
     thvsen_configure_sensors(THOR_VSEN(_obj->_var_vsen), _num_sensors);
-    _obj->var_def_static = (double) _def_static;
 
     /* Set raw value pointers for the sensors */
     /*----------------------------------------*/
