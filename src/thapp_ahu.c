@@ -273,10 +273,6 @@ static int _thapp_cmd(thapp* obj, void* self, char cmd)
 	    break;
 	case THAPP_AHU_ACT_DECR_CODE:
 	    break;
-	case THAPP_AHU_PRG_START_CODE:
-	    break;
-	case THAPP_AHU_PRG_STOP_CODE:
-	    break;
 	case THAPP_AHU_ACT_INCRF_CODE:
 	    break;
 	case THAPP_AHU_ACT_DECRF_CODE:
