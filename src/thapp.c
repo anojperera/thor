@@ -325,7 +325,7 @@ static int _thapp_init_helper(thapp* obj)
     config_setting_t* _setting = NULL;
     
     /* Initialise the configuration object */
-    config_init(&obj->var_config);
+    /* config_init(&obj->var_config); */
 
     /* Try and read the file from the first path */
     while(1)
