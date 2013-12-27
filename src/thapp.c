@@ -7,6 +7,8 @@
 #include <stdio.h>
 #include "thapp.h"
 
+
+#define THAPP_START_MSG "Press 'Shift + s' to begin"
 #define THAPP_SLEEP_KEY "main_sleep"
 #define THAPP_PORT_KEY "main_con_port"
 #define THAPP_SERVER_NAME_KEY "self_url"
@@ -26,6 +28,8 @@
 
 #define THAPP_QUIT_CODE1 81								/* Q */
 #define THAPP_QUIT_CODE2 113								/* q */
+#define THAPP_START_CODE 83								/* S */
+#define THAPP_STOP_CODE 115								/* s */
 
 volatile sig_atomic_t _flg = 1;
 static void _thapp_sig_handler(int signo);
@@ -61,7 +65,7 @@ int thapp_init(thapp* obj)
 
     /* Set signal handler */
     signal(SIGINT, _thapp_sig_handler);
-    
+
     /*
      * Initialise the connection object.
      * If failed, indicate error and exit the function
@@ -75,7 +79,7 @@ int thapp_init(thapp* obj)
      */
     thcon_set_ext_obj(&obj->_var_con, ((void*) obj));
     thcon_set_recv_callback(&obj->_var_con, _thapp_con_recv_callback);
-    
+
     obj->var_init_flg = 1;
     obj->var_run_flg = 0;
     obj->var_sleep_time = THAPP_DEFAULT_SLEEP;
@@ -134,7 +138,7 @@ void thapp_delete(thapp* obj)
     /*  *\/ */
     /* if(obj->_var_fptr.var_del_ptr) */
     /* 	obj->_var_fptr.var_del_ptr(obj, obj->var_child); */
-   
+
     obj->var_child = NULL;
     sem_destroy(&obj->_var_sem);
     pthread_mutex_destroy(&obj->_var_mutex);
@@ -152,8 +156,7 @@ void thapp_delete(thapp* obj)
  */
 int thapp_start(thapp* obj)
 {
-    int cnt = THAPP_DEFAULT_TRY_COUNT;
-    
+
     /* Check for arguments */
     if(obj == NULL)
 	return -1;
@@ -161,17 +164,6 @@ int thapp_start(thapp* obj)
     /* If the test is already running, return function */
     if(obj->var_run_flg == 1)
 	return 0;
-
-    /*
-     * Start connection object in a loop.
-     * Try for 5seconds with a wait of 2seconds.
-     */
-    while(thcon_start(&obj->_var_con))
-	{
-	    if(--cnt < 1)
-		break;
-	    sleep(THAPP_DEFAULT_WAIT_TIME);
-	}
 
     /* Check the operation mode execute the start handler method */
     if(obj->var_op_mode == thapp_headless)
@@ -200,14 +192,14 @@ int thapp_stop(thapp* obj)
 	{
 	    pthread_cancel(obj->_var_thread);
 	    pthread_join(obj->_var_thread, NULL);
-	    
+
 	}
     else
 	_flg = 0;
-    
+
     if(obj->var_run_flg)
 	endwin();
-    
+
     obj->var_run_flg = 0;
 
 
@@ -220,10 +212,14 @@ int thapp_stop(thapp* obj)
 
 /* Main loop method */
 static void* _thapp_start_handler(void* obj)
-{
+{   
+    int cnt = THAPP_DEFAULT_TRY_COUNT;    
     char _cmd;
+    char _start_msg[] = THAPP_START_MSG;
     thapp* _obj;
-    struct thor_msg* _msg = NULL;    
+    unsigned int _st_flg = 0;
+    int _max_row, _max_col;
+    struct thor_msg* _msg = NULL;
 
     /* Check object pointer and cast to the correct type */
     if(obj == NULL)
@@ -239,29 +235,15 @@ static void* _thapp_start_handler(void* obj)
      */
     initscr();
 
-    /*
-     * First thing we do is to check if the any derived child
-     * classes has set initialise and start methods and call
-     * them if they were set. This gives a chance to initialise
-     * any variables before loop start.
-     */
-    if(_obj->_var_fptr.var_init_ptr)
-	_obj->_var_fptr.var_init_ptr(_obj, _obj->var_child);
-    if(_obj->_var_fptr.var_start_ptr)
-	_obj->_var_fptr.var_start_ptr(_obj, _obj->var_child);
-
-    /*---------------------------------------------------*/
-    /* Temporary print statements for the display values */
-    printw("%s", _obj->var_disp_header);
-    refresh();
+    keypad(stdscr, TRUE);
 
     /* Disable line buffering and keyboard echo */
     raw();
-    keypad(stdscr, TRUE);
     noecho();
 
     /* set time out to zero */
     timeout(0);
+
     
     /* Main loop */
     while(_flg)
@@ -277,6 +259,83 @@ static void* _thapp_start_handler(void* obj)
 		    _obj->_var_fptr.var_stop_ptr(_obj, _obj->var_child);
 		    break;
 		}
+
+	    /* If program is not running display message to start */
+	    if(_st_flg == 0)
+		{
+		    clear();
+		    getmaxyx(stdscr, _max_row, _max_col);
+		    mvprintw(_max_row/2, _max_col-strlen(_start_msg)/2, "%s", _start_msg);
+		    refresh();
+		}
+
+	    /* Check for commands */
+	    switch(_cmd)
+		{
+		case THAPP_START_CODE:
+		    /*
+		     * If the start method program have been
+		     * started no further processing is required.
+		     */
+		    if(_st_flg > 0)
+			break;
+
+		    /*
+		     * Start connection object in a loop.
+		     * Try for 5seconds with a wait of 2seconds.
+		     */
+		    while(thcon_start(&_obj->_var_con))
+			{
+			    if(--cnt < 1)
+				break;
+			    sleep(THAPP_DEFAULT_WAIT_TIME);
+			}
+		    
+		    /*
+		     * Disable line buffering as interactive session is
+		     * about to be begin by a derrived child class.
+		     */
+		    noraw();
+		    echo();
+		    timeout(-1);
+		    /*
+		     * First thing we do is to check if the any derived child
+		     * classes has set initialise and start methods and call
+		     * them if they were set. This gives a chance to initialise
+		     * any variables before loop start.
+		     */
+		    if(_obj->_var_fptr.var_init_ptr)
+			_obj->_var_fptr.var_init_ptr(_obj, _obj->var_child);
+		    if(_obj->_var_fptr.var_start_ptr)
+			_obj->_var_fptr.var_start_ptr(_obj, _obj->var_child);
+
+		    /*---------------------------------------------------*/
+		    /* Temporary print statements for the display values */
+		    printw("%s", _obj->var_disp_header);
+		    refresh();
+
+		    /* Disable line buffering and keyboard echo */
+		    raw();
+		    noecho();
+		    timeout(0);
+		    _st_flg = 1;
+		    break;
+		case THAPP_STOP_CODE:
+		    /* Handle quit event */
+		    _obj->_var_fptr.var_stop_ptr(_obj, _obj->var_child);
+
+		    /* Stop connection */
+		    thcon_stop(&_obj->_var_con);
+		    _st_flg = 0;
+		    break;
+		default:
+		    break;
+		}
+
+
+	    /* If the program is not started continue here */
+	    if(_st_flg < 1)
+		continue;
 	    
 	    /* Check the queue and get any elements */
 	    pthread_mutex_lock(&_obj->_var_mutex);
@@ -294,7 +353,7 @@ static void* _thapp_start_handler(void* obj)
 	    if(_msg != NULL)
 		free(_msg);
 	    _msg = NULL;
-	    
+
 	    /*
 	     * Passed Command handling to the child class.
 	     * Check if the return value is true. By using the return
@@ -308,7 +367,7 @@ static void* _thapp_start_handler(void* obj)
 	    /* Temporary print statements for the display values */
 	    printw("%s", _obj->var_disp_vals);
 	    refresh();
-	    
+
 	    usleep(_obj->var_sleep_time);
 	    memset(_obj->var_disp_vals, 0, THAPP_DISP_BUFF_SZ);
 	}
@@ -323,7 +382,7 @@ static int _thapp_init_helper(thapp* obj)
 {
     const char* _t_buff = NULL;
     config_setting_t* _setting = NULL;
-    
+
     /* Initialise the configuration object */
     config_init(&obj->var_config);
 
@@ -376,14 +435,14 @@ static int _thapp_init_helper(thapp* obj)
 	}
 
     /* Get server name */
-    _setting = config_lookup(&obj->var_config, THAPP_SERVER_NAME_KEY);    
+    _setting = config_lookup(&obj->var_config, THAPP_SERVER_NAME_KEY);
     if(_setting != NULL)
 	{
 	    _t_buff = config_setting_get_string(_setting);
 	    if(_t_buff)
 		thcon_set_server_name(&obj->_var_con, _t_buff);
 	}
-    
+
     return 0;
 }
 
@@ -416,13 +475,13 @@ static int _thapp_con_recv_callback(void* obj, void* msg, size_t sz)
     /* Create memory */
     _msg = (struct thor_msg*) malloc(sizeof(struct thor_msg));
 
-    
+
     /* Initialise struct */
     thorinifix_init_msg(&_msg);
 
     /* decode message */
     thornifix_decode_msg((char*) msg, sz, _msg);
-    
+
     /* Lock mutex and add to the queue */
     pthread_mutex_lock(&_obj->_var_mutex);
     gqueue_in(&_obj->_var_msg_queue, (void*) _msg);

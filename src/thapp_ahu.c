@@ -18,8 +18,6 @@
 /* Control Keys */
 #define THAPP_AHU_ACT_INCR_CODE 43							/* + */
 #define THAPP_AHU_ACT_DECR_CODE 45							/* - */
-#define THAPP_AHU_PRG_START_CODE 83							/* S */
-#define THAPP_AHU_PRG_STOP_CODE 115							/* s */
 #define THAPP_AHU_ACT_INCRF_CODE 42							/* * */
 #define THAPP_AHU_ACT_DECRF_CODE 47							/* / */
 #define THAPP_AHU_PAUSE_CODE 112							/* p */
