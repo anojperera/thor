@@ -265,7 +265,7 @@ static void* _thapp_start_handler(void* obj)
 		{
 		    clear();
 		    getmaxyx(stdscr, _max_row, _max_col);
-		    mvprintw(_max_row/2, _max_col-strlen(_start_msg)/2, "%s", _start_msg);
+		    mvprintw(_max_row/2, (_max_col-strlen(_start_msg))/2, "%s", _start_msg);
 		    refresh();
 		}
 
@@ -335,7 +335,7 @@ static void* _thapp_start_handler(void* obj)
 
 	    /* If the program is not started continue here */
 	    if(_st_flg < 1)
-		continue;
+		goto thapp_main_loop_cont;
 	    
 	    /* Check the queue and get any elements */
 	    pthread_mutex_lock(&_obj->_var_mutex);
@@ -368,8 +368,9 @@ static void* _thapp_start_handler(void* obj)
 	    printw("%s", _obj->var_disp_vals);
 	    refresh();
 
-	    usleep(_obj->var_sleep_time);
 	    memset(_obj->var_disp_vals, 0, THAPP_DISP_BUFF_SZ);
+	thapp_main_loop_cont:	    
+	    usleep(_obj->var_sleep_time);	    
 	}
 
     endwin();
