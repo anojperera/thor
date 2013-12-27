@@ -126,7 +126,9 @@ void thapp_delete(thapp* obj)
 
     /* Check configuration pointer and delete it */
     config_destroy(&obj->var_config);
-    
+    if(obj->var_config)
+	free(obj->var_config);
+    obj->var_config = NULL;
     /* /\* */
     /*  * If destructor function pointer for the child class was */
     /*  * assigned, call it before uninitialising the variables */
@@ -325,7 +327,7 @@ static int _thapp_init_helper(thapp* obj)
     config_setting_t* _setting = NULL;
     
     /* Initialise the configuration object */
-    /* config_init(&obj->var_config); */
+    config_init(&obj->var_config);
 
     /* Try and read the file from the first path */
     while(1)
