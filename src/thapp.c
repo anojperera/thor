@@ -298,6 +298,7 @@ static void* _thapp_start_handler(void* obj)
 		    noraw();
 		    echo();
 		    timeout(-1);
+		    clear();
 		    /*
 		     * First thing we do is to check if the any derived child
 		     * classes has set initialise and start methods and call
