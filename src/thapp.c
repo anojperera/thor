@@ -126,9 +126,7 @@ void thapp_delete(thapp* obj)
 
     /* Check configuration pointer and delete it */
     config_destroy(&obj->var_config);
-    if(obj->var_config)
-	free(obj->var_config);
-    obj->var_config = NULL;
+
     /* /\* */
     /*  * If destructor function pointer for the child class was */
     /*  * assigned, call it before uninitialising the variables */
