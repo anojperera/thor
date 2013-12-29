@@ -221,11 +221,79 @@ static int _thapp_new_helper(thapp_ahu* obj)
 /* Start callback */
 static int _thapp_ahu_start(thapp* obj, void* self)
 {
+    unsigned int _num_sensors=0;
+    char _def_flg=0;
+    float _f_dia=0.0, _m_dia=0.0;
+    double _ratio=0.0;
+    char _scr_input_buff[THAPP_DISP_BUFF_SZ];    
     thapp_ahu* _obj;
 
     if(self == NULL)
 	return -1;
     _obj = (thapp_ahu*) self;
+
+    /*
+     * If the app is not running in headless mode, query for
+     * other options.
+     */
+    if(obj->var_op_mode != thapp_headless)
+	{
+	    memset(_scr_input_buff, 0, THAPP_DISP_BUFF_SZ);
+	    printw("Enter Duct Diameter (200/300/600/1120): ");
+	    refresh();
+	    getnstr(_scr_input_buff, THAPP_DISP_BUFF_SZ-1);
+
+	    _obj->var_duct_dia = atof(_scr_input_buff);
+	    clear();
+
+    	    memset(_scr_input_buff, 0, THAPP_DISP_BUFF_SZ);
+	    printw("Enter number of sensors (4/2): ");
+	    refresh();
+	    getnstr(_scr_input_buff, THAPP_DISP_BUFF_SZ-1);
+
+	    _num_sensors = atoi(_scr_input_buff);
+	    clear();
+
+	    memset(_scr_input_buff, 0, THAPP_DISP_BUFF_SZ);
+	    printw("Enter external static pressure: ");
+	    refresh();
+	    getnstr(_scr_input_buff, THAPP_DISP_BUFF_SZ-1);
+
+	    _obj->var_def_static = atof(_scr_input_buff);
+	    clear();
+
+	    printw("Add pulley ratio for motor speed (Y/n): ");
+	    refresh();
+	    _def_flg = getch();
+	    clear();
+
+	    if(_def_flg == THAPP_AHU_YES_CODE || _def_flg == THAPP_AHU_YES2_CODE)
+		{
+		    memset(_scr_input_buff, 0, THAPP_DISP_BUFF_SZ);
+		    printw("Fan pulley diameter: ");
+		    refresh();
+		    getnstr(_scr_input_buff, THAPP_DISP_BUFF_SZ-1);
+		    
+		    _f_dia = atof(_scr_input_buff);
+		    clear();
+
+    		    memset(_scr_input_buff, 0, THAPP_DISP_BUFF_SZ);
+		    printw("Motor pulley diameter: ");
+		    refresh();
+		    getnstr(_scr_input_buff, THAPP_DISP_BUFF_SZ-1);
+		    _m_dia = atof(_scr_input_buff);
+		    clear();
+
+		    if(_m_dia > 0.0)
+			_ratio = (double) _f_dia / _m_dia;
+
+		    printw("Pulley Ratio: %.2f\n", (float) _ratio);
+		    _obj->var_fm_ratio = _ratio;
+		    refresh();
+		}
+	}
+
+    thvsen_configure_sensors(THOR_VSEN(_obj->_var_vsen), _num_sensors);    
 
     /* Add header information */
     memset(_obj->_var_parent.var_disp_header, 0, THAPP_DISP_BUFF_SZ);
@@ -243,6 +311,7 @@ static int _thapp_ahu_start(thapp* obj, void* self)
 	    "TMP\n");
     return 0;
 }
+
 
 /* Stop called back */
 static int _thapp_ahu_stop(thapp* obj, void* self)
@@ -330,11 +399,7 @@ static int _thapp_cmd(thapp* obj, void* self, char cmd)
  */
 static int _thapp_ahu_init(thapp* obj, void* self)
 {
-    unsigned int _num_sensors=0;
-    char _def_flg=0;
-    float _f_dia=0.0, _m_dia=0.0;
-    double _ratio=0.0;
-    char _scr_input_buff[THAPP_DISP_BUFF_SZ];
+
     thapp_ahu* _obj;
 
     if(self == NULL)
@@ -342,68 +407,6 @@ static int _thapp_ahu_init(thapp* obj, void* self)
 
     _obj = (thapp_ahu*) self;
 
-    /*
-     * If the app is not running in headless mode, query for
-     * other options.
-     */
-    if(obj->var_op_mode != thapp_headless)
-	{
-	    memset(_scr_input_buff, 0, THAPP_DISP_BUFF_SZ);
-	    printw("Enter Duct Diameter (200/300/600/1120): ");
-	    refresh();
-	    getnstr(_scr_input_buff, THAPP_DISP_BUFF_SZ-1);
-
-	    _obj->var_duct_dia = atof(_scr_input_buff);
-	    clear();
-
-    	    memset(_scr_input_buff, 0, THAPP_DISP_BUFF_SZ);
-	    printw("Enter number of sensors (4/2): ");
-	    refresh();
-	    getnstr(_scr_input_buff, THAPP_DISP_BUFF_SZ-1);
-
-	    _num_sensors = atoi(_scr_input_buff);
-	    clear();
-
-	    memset(_scr_input_buff, 0, THAPP_DISP_BUFF_SZ);
-	    printw("Enter external static pressure: ");
-	    refresh();
-	    getnstr(_scr_input_buff, THAPP_DISP_BUFF_SZ-1);
-
-	    _obj->var_def_static = atof(_scr_input_buff);
-	    clear();
-
-	    printw("Add pulley ratio for motor speed (Y/n): ");
-	    refresh();
-	    _def_flg = getch();
-	    clear();
-
-	    if(_def_flg == THAPP_AHU_YES_CODE || _def_flg == THAPP_AHU_YES2_CODE)
-		{
-		    memset(_scr_input_buff, 0, THAPP_DISP_BUFF_SZ);
-		    printw("Fan pulley diameter: ");
-		    refresh();
-		    getnstr(_scr_input_buff, THAPP_DISP_BUFF_SZ-1);
-		    
-		    _f_dia = atof(_scr_input_buff);
-		    clear();
-
-    		    memset(_scr_input_buff, 0, THAPP_DISP_BUFF_SZ);
-		    printw("Motor pulley diameter: ");
-		    refresh();
-		    getnstr(_scr_input_buff, THAPP_DISP_BUFF_SZ-1);
-		    _m_dia = atof(_scr_input_buff);
-		    clear();
-
-		    if(_m_dia > 0.0)
-			_ratio = (double) _f_dia / _m_dia;
-
-		    printw("Pulley Ratio: %.2f\n", (float) _ratio);
-		    _obj->var_fm_ratio = _ratio;
-		    refresh();
-		}
-	}
-
-    thvsen_configure_sensors(THOR_VSEN(_obj->_var_vsen), _num_sensors);
 
     /* Set raw value pointers for the sensors */
     /*----------------------------------------*/

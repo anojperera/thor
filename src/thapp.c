@@ -212,8 +212,8 @@ int thapp_stop(thapp* obj)
 
 /* Main loop method */
 static void* _thapp_start_handler(void* obj)
-{   
-    int cnt = THAPP_DEFAULT_TRY_COUNT;    
+{
+    int cnt = THAPP_DEFAULT_TRY_COUNT;
     char _cmd;
     char _start_msg[] = THAPP_START_MSG;
     thapp* _obj;
@@ -231,6 +231,15 @@ static void* _thapp_start_handler(void* obj)
     memset(_obj->var_disp_vals, 0, THAPP_DISP_BUFF_SZ);
 
     /*
+     * First thing we do is to check if the any derived child
+     * classes has set initialise and start methods and call
+     * them if they were set. This gives a chance to initialise
+     * any variables before loop start.
+     */
+    if(_obj->_var_fptr.var_init_ptr)
+	_obj->_var_fptr.var_init_ptr(_obj, _obj->var_child);
+
+    /*
      * Initialise ncurses system.
      */
     initscr();
@@ -244,7 +253,7 @@ static void* _thapp_start_handler(void* obj)
     /* set time out to zero */
     timeout(0);
 
-    
+
     /* Main loop */
     while(_flg)
 	{
@@ -290,7 +299,7 @@ static void* _thapp_start_handler(void* obj)
 				break;
 			    sleep(THAPP_DEFAULT_WAIT_TIME);
 			}
-		    
+
 		    /*
 		     * Disable line buffering as interactive session is
 		     * about to be begin by a derrived child class.
@@ -299,14 +308,13 @@ static void* _thapp_start_handler(void* obj)
 		    echo();
 		    timeout(-1);
 		    clear();
+
+		    
 		    /*
-		     * First thing we do is to check if the any derived child
-		     * classes has set initialise and start methods and call
-		     * them if they were set. This gives a chance to initialise
-		     * any variables before loop start.
+		     *  The user has entered start therefore we call the
+		     *  derived classes start callback method to start the
+		     *  interactive configuration session.
 		     */
-		    if(_obj->_var_fptr.var_init_ptr)
-			_obj->_var_fptr.var_init_ptr(_obj, _obj->var_child);
 		    if(_obj->_var_fptr.var_start_ptr)
 			_obj->_var_fptr.var_start_ptr(_obj, _obj->var_child);
 
@@ -337,7 +345,7 @@ static void* _thapp_start_handler(void* obj)
 	    /* If the program is not started continue here */
 	    if(_st_flg < 1)
 		goto thapp_main_loop_cont;
-	    
+
 	    /* Check the queue and get any elements */
 	    pthread_mutex_lock(&_obj->_var_mutex);
 	    if(gqueue_count(&_obj->_var_msg_queue) > 0)
@@ -370,8 +378,8 @@ static void* _thapp_start_handler(void* obj)
 	    refresh();
 
 	    memset(_obj->var_disp_vals, 0, THAPP_DISP_BUFF_SZ);
-	thapp_main_loop_cont:	    
-	    usleep(_obj->var_sleep_time);	    
+	thapp_main_loop_cont:
+	    usleep(_obj->var_sleep_time);
 	}
 
     endwin();
