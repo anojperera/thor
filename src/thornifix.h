@@ -146,10 +146,10 @@ struct thor_msg
     sizeof(struct thor_msg)
 
 /* initialise message struct */
-#define thorinifix_init_msg(obj)		\
-    memset((void*) (obj), 0, THORINIFIX_MSG_SZ)
+#define thorinifix_init_msg(t_obj)		\
+    memset((void*) (t_obj), 0, THORINIFIX_MSG_SZ)
 
-#define thornifix_encode_msg(obj, buff, size)	\
+#define thornifix_encode_msg(t_obj, buff, size)	\
     memset((void*) (buff), 0, size);		\
     sprintf((buff),				\
 	    "%i|"				\
@@ -170,24 +170,24 @@ struct thor_msg
 	    "%.2f|"				\
 	    "%.2f|"				\
 	    "%.2f|",				\
-	    (obj)->_cmd,			\
-	    (obj)->_ao0_val,			\
-	    (obj)->_ao1_val,			\
-	    (obj)->_ai0_val,			\
-	    (obj)->_ai1_val,			\
-	    (obj)->_ai2_val,			\
-	    (obj)->_ai3_val,			\
-	    (obj)->_ai4_val,			\
-	    (obj)->_ai5_val,			\
-	    (obj)->_ai6_val,			\
-	    (obj)->_ai7_val,			\
-	    (obj)->_ai8_val,			\
-	    (obj)->_ai9_val,			\
-	    (obj)->_ai10_val,			\
-	    (obj)->_ai11_val,			\
-	    (obj)->_ai12_val,			\
-	    (obj)->_di0_val,			\
-	    (obj)->_di1_val)
+	    (t_obj)->_cmd,			\
+	    (t_obj)->_ao0_val,			\
+	    (t_obj)->_ao1_val,			\
+	    (t_obj)->_ai0_val,			\
+	    (t_obj)->_ai1_val,			\
+	    (t_obj)->_ai2_val,			\
+	    (t_obj)->_ai3_val,			\
+	    (t_obj)->_ai4_val,			\
+	    (t_obj)->_ai5_val,			\
+	    (t_obj)->_ai6_val,			\
+	    (t_obj)->_ai7_val,			\
+	    (t_obj)->_ai8_val,			\
+	    (t_obj)->_ai9_val,			\
+	    (t_obj)->_ai10_val,			\
+	    (t_obj)->_ai11_val,			\
+	    (t_obj)->_ai12_val,			\
+	    (t_obj)->_di0_val,			\
+	    (t_obj)->_di1_val)
 
 /* decode message */
 int thornifix_decode_msg(const char* buff, size_t size, struct thor_msg* msg);
