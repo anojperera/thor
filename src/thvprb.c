@@ -107,7 +107,7 @@ static double _thvprb_get_value(void* obj)
 
     /* Calculate velocity based on differential pressure */
     _obj->var_val = _obj->var_parent.var_val / (0.5 * THVPRB_AIR_DENSITY);
-    _obj->var_val = sqrt(_obj->var_val);
+    _obj->var_val = _obj->var_val<0.0? 0.0 : sqrt(_obj->var_val);
 
     /* Call get function pointer if set */
     if(_obj->var_fptr.var_get_fptr)
