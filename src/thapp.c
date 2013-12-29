@@ -491,10 +491,6 @@ static int _thapp_con_recv_callback(void* obj, void* msg, size_t sz)
     /* Create memory */
     _msg = (struct thor_msg*) malloc(sizeof(struct thor_msg));
 
-
-    /* Initialise struct */
-    thorinifix_init_msg(&_msg);
-
     /* decode message */
     thornifix_decode_msg((char*) msg, sz, _msg);
 
