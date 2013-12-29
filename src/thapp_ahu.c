@@ -359,7 +359,10 @@ static int _thapp_cmd(thapp* obj, void* self, char cmd)
     /* Get Values */
     _vel = thsen_get_value(_obj->_var_vsen);
     if(_obj->var_duct_dia > 0.0)
-	_vol = _vel * M_PI* pow((_obj->var_duct_dia/2), 2);
+	{
+	    _vol = _vel * M_PI* pow((_obj->var_duct_dia/2), 2);
+	    _vol /= 1000000;
+	}
 
     thvsen_get_dp_values(THOR_VSEN(_obj->_var_vsen), _array, &_num);
 
