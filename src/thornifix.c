@@ -59,7 +59,7 @@ int thor_interpol(const double* x, const double* y, int n, double* z, double* fz
 int thornifix_decode_msg(const char* buff, size_t size, struct thor_msg* msg)
 {
     int _cnt;
-    char* _t_buff;
+    char _t_buff[THORNIFIX_MSG_BUFF_SZ];
     char* _tok;
     char _msg_buff[THORNIFIX_MSG_ELM_NUM][THORNIFIX_MSG_BUFF_ELM_SZ];
     
@@ -71,9 +71,9 @@ int thornifix_decode_msg(const char* buff, size_t size, struct thor_msg* msg)
     thorinifix_init_msg(msg);
 
     /* copy message to a local buffer */
-    _t_buff = (char*) malloc(sizeof(char)*(size+1));
-    strncpy(_t_buff, buff, size);
-    _t_buff[size] = '\0';
+    memset((void*) _t_buff, 0, THORNIFIX_MSG_BUFF_SZ);
+    strncpy(_t_buff, buff, THORNIFIX_MSG_BUFF_SZ-1);
+    _t_buff[THORNIFIX_MSG_BUFF_SZ-1] = '\0';
 
     /* initialise char message buffer */
     for(_cnt=0; _cnt<THORNIFIX_MSG_ELM_NUM; _cnt++)
