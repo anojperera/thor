@@ -476,6 +476,7 @@ static void _thapp_queue_del_helper(void* data)
 static int _thapp_con_recv_callback(void* obj, void* msg, size_t sz)
 {
     struct thor_msg* _msg;
+    char t_msg[THORINIFIX_MSG_SZ];    
     thapp* _obj;
 
     /* Check for arguments */
@@ -485,7 +486,10 @@ static int _thapp_con_recv_callback(void* obj, void* msg, size_t sz)
     /* Cast object to the correct pointer */
     _obj = (thapp*) obj;
 
-
+    memset(t_msg, 0, THORINIFIX_MSG_SZ);
+    strncpy(t_msg, msg, THORINIFIX_MSG_SZ-1);
+    t_msg[THORINIFIX_MSG_SZ-1] = '\0';
+    
     /* Create memory */
     _msg = (struct thor_msg*) malloc(sizeof(struct thor_msg));
 
@@ -494,7 +498,7 @@ static int _thapp_con_recv_callback(void* obj, void* msg, size_t sz)
     thorinifix_init_msg(&_msg);
 
     /* decode message */
-    thornifix_decode_msg((char*) msg, sz, _msg);
+    thornifix_decode_msg(t_msg, sz, _msg);
 
     /* Lock mutex and add to the queue */
     pthread_mutex_lock(&_obj->_var_mutex);
