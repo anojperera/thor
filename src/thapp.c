@@ -489,6 +489,8 @@ static int _thapp_con_recv_callback(void* obj, void* msg, size_t sz)
     memset(t_msg, 0, THORINIFIX_MSG_SZ);
     strncpy(t_msg, msg, THORINIFIX_MSG_SZ-1);
     t_msg[THORINIFIX_MSG_SZ-1] = '\0';
+    if(strlen(t_msg) <= 1)
+	return 0;
     
     /* Create memory */
     _msg = (struct thor_msg*) malloc(sizeof(struct thor_msg));
