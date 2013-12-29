@@ -378,6 +378,10 @@ static void* _thapp_start_handler(void* obj)
 	    refresh();
 
 	    memset(_obj->var_disp_vals, 0, THAPP_DISP_BUFF_SZ);
+
+	    /*
+	     * Label to continue the loop.
+	     */
 	thapp_main_loop_cont:
 	    usleep(_obj->var_sleep_time);
 	}
