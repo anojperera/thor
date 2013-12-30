@@ -330,8 +330,14 @@ static void* _thapp_start_handler(void* obj)
 		    _st_flg = 1;
 		    break;
 		case THAPP_STOP_CODE:
+
+		    /*  Check if the program has already been stopped. */
+		    if(_st_flg == 0)
+			break;
+		    
 		    /* Handle quit event */
-		    _obj->_var_fptr.var_stop_ptr(_obj, _obj->var_child);
+		    if(_obj->_var_fptr.var_stop_ptr)
+			_obj->_var_fptr.var_stop_ptr(_obj, _obj->var_child);
 
 		    /* Stop connection */
 		    thcon_stop(&_obj->_var_con);
