@@ -5,6 +5,7 @@
 static int _thgsensor_set_config(void* obj);
 static void _thgsensor_delete(void* obj);
 static double _thgsensor_get_val(void* obj);
+static int _thgsensor_reset(void* obj);
 
 /* Constructor */
 thsen* thgsensor_new(thgsensor* obj,			/* object pointer to initialise */
@@ -39,6 +40,7 @@ thsen* thgsensor_new(thgsensor* obj,			/* object pointer to initialise */
     thsen_set_parent_del_fptr(obj, _thgsensor_delete);
     thsen_set_parent_get_fptr(obj, _thgsensor_get_val);
     thsen_set_parent_setconfig_fptr(obj, _thgsensor_set_config);
+    thsen_set_parent_reset_fptr(obj, _thgsensor_reset);
 
     memset(obj->var_ch_name, 0, THGS_CH_NAME_SZ);
 
@@ -233,4 +235,17 @@ static int _thgsensor_set_config(void* obj)
 	return _obj->var_fptr.var_set_config_fptr(_obj->var_child);
     else
 	return 0;
+}
+
+/* Reset sensor */
+static int _thgsensor_reset(void* obj)
+{
+    thgsensor* _obj;
+    if(obj == NULL)
+	return -1;
+
+    _obj = (thgsensor*) obj;
+    thgsens_reset_all(_obj);
+
+    return 0;
 }
