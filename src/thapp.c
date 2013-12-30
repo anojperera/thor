@@ -341,6 +341,11 @@ static void* _thapp_start_handler(void* obj)
 
 		    /* Stop connection */
 		    thcon_stop(&_obj->_var_con);
+
+		    /* Reset the queue */
+		    gqueue_delete(&_obj->_var_msg_queue);
+		    gqueue_new(&obj->_var_msg_queue, _thapp_queue_del_helper);
+		    
 		    _st_flg = 0;
 		    break;
 		default:
