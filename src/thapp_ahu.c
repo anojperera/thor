@@ -24,6 +24,8 @@
 #define THAPP_AHU_YES_CODE 121								/* y */
 #define THAPP_AHU_YES2_CODE 89								/* Y */
 
+#define THAPP_AHU_NUM_MAX_PROBES 4
+
 /* Callback methods */
 static int _thapp_ahu_init(thapp* obj, void* self);
 static int _thapp_ahu_start(thapp* obj, void* self);
@@ -415,7 +417,7 @@ static int _thapp_ahu_init(thapp* obj, void* self)
     /*----------------------------------------*/
 
     /* Set velocity sensor update pointer */
-    thvsen_set_raw_buff(THOR_VSEN(_obj->_var_vsen), &obj->_msg_buff._ai4_val, 4);
+    thvsen_set_raw_buff(THOR_VSEN(_obj->_var_vsen), &obj->_msg_buff._ai4_val, THAPP_AHU_NUM_MAX_PROBES);
 
     /* Set temperature raw value set */
     thgsens_set_value_ptr(THOR_GSEN(_obj->_var_tp_sen), &obj->_msg_buff._ai0_val);
