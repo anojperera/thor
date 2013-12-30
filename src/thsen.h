@@ -19,6 +19,7 @@ struct thsen_vftpr
     void (*var_del_fptr)(void*);					/* Delete function pointer */
     double (*var_get_fptr)(void*);					/* Get function pointer */
     int (*var_set_config_fptr)(void*);					/* Calls when set configuration method is invoked */
+    int (*var_reset_fptr)(void*);					/* Reset function pointer */
 };
 
 /* Sensor configuration struct */
@@ -63,14 +64,17 @@ extern "C" {
 #define thsen_self_init_vtable(obj_ptr)			\
     (obj_ptr)->var_fptr.var_del_fptr = NULL;		\
     (obj_ptr)->var_fptr.var_get_fptr = NULL;		\
-    (obj_ptr)->var_fptr.var_set_config_fptr = NULL
+    (obj_ptr)->var_fptr.var_set_config_fptr = NULL;	\
+    (obj_ptr)->var_fptr.var_reset_fptr = NULL
 #define thsen_set_parent_del_fptr(obj_ptr, fptr)	\
     (obj_ptr)->var_parent.var_fptr.var_del_fptr = fptr
 #define thsen_set_parent_get_fptr(obj_ptr, fptr)	\
     (obj_ptr)->var_parent.var_fptr.var_get_fptr = fptr
 #define thsen_set_parent_setconfig_fptr(obj_ptr, fptr)		\
     (obj_ptr)->var_parent.var_fptr.var_set_config_fptr = fptr
-
+#define thsen_set_parent_reset_fptr(obj_ptr, fptr)		\
+    (obj_ptr)->var_parent.var_fptr.var_reset_fptr = fptr
+    
     /* Return parent */
 #define thsen_return_parent(obj_ptr)		\
     &(obj_ptr)->var_parent
@@ -107,6 +111,17 @@ extern "C" {
 	if(obj->var_fptr.var_set_config_fptr)
 	    obj->var_fptr.var_set_config_fptr(obj->var_child);
 
+	return 0;
+    }
+
+    /* Reset all counters and averaging buffers */
+    inline __attribute__ ((always_inline)) static int thsen_reset_sensor(thsen* obj)
+    {
+	if(obj == NULL)
+	    return -1;
+
+	if(obj->var_fptr.var_reset_fptr)
+	    return obj->var_fptr.var_reset_fptr(obj->var_child);
 	return 0;
     }
 
