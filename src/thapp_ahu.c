@@ -20,7 +20,6 @@
 #define THAPP_AHU_ACT_DECR_CODE 45							/* - */
 #define THAPP_AHU_ACT_INCRF_CODE 42							/* * */
 #define THAPP_AHU_ACT_DECRF_CODE 47							/* / */
-#define THAPP_AHU_PAUSE_CODE 112							/* p */
 #define THAPP_AHU_YES_CODE 121								/* y */
 #define THAPP_AHU_YES2_CODE 89								/* Y */
 

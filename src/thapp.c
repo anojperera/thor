@@ -30,6 +30,7 @@
 #define THAPP_QUIT_CODE2 113								/* q */
 #define THAPP_START_CODE 83								/* S */
 #define THAPP_STOP_CODE 115								/* s */
+#define THAPP_PAUSE_CODE 112								/* p */
 
 volatile sig_atomic_t _flg = 1;
 static void _thapp_sig_handler(int signo);
@@ -219,6 +220,7 @@ static void* _thapp_start_handler(void* obj)
     thapp* _obj;
     unsigned int _st_flg = 0;
     int _max_row, _max_col;
+    unsigned int _p_flg = 0;						/* pause flag */
     struct thor_msg* _msg = NULL;
 
     /* Check object pointer and cast to the correct type */
@@ -348,6 +350,12 @@ static void* _thapp_start_handler(void* obj)
 		    
 		    _st_flg = 0;
 		    break;
+		case THAPP_PAUSE_CODE:
+		    if(_p_flg == 0)
+			_p_flg = 1;
+		    else
+			_p_flg = 0;
+		    break;
 		default:
 		    break;
 		}
@@ -380,8 +388,11 @@ static void* _thapp_start_handler(void* obj)
 	     * value of the derived class's command routine, we give
 	     * a chance to indicate any derived class to terminate
 	     * the program in a safe mannar.
+	     * The pause code is checked. Messages from the system
+	     * is popped from the message queue. However processing on
+	     * the popped messages shall not be performed.
 	     */
-	    if(_obj->_var_fptr.var_cmdhnd_ptr)
+	    if(_obj->_var_fptr.var_cmdhnd_ptr && !_p_flg)
 		_flg = _obj->_var_fptr.var_cmdhnd_ptr(_obj, _obj->var_child, _cmd);
 
 	    /* Temporary print statements for the display values */
