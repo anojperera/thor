@@ -240,6 +240,13 @@ static int _thapp_ahu_start(thapp* obj, void* self)
 	return -1;
     _obj = (thapp_ahu*) self;
 
+    /* Reset all sensors before start */
+    thsen_reset_sensor(_obj->_var_vsen);
+    thsen_reset_sensor(_obj->_var_tp_sen);
+    thsen_reset_sensor(_obj->_var_sp_sen);
+    thsen_reset_sensor(_obj->_var_st_sen);
+    thsen_reset_sensor(_obj->_var_stm_sen);
+
     /*
      * If the app is not running in headless mode, query for
      * other options.
