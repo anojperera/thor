@@ -344,7 +344,7 @@ static void* _thapp_start_handler(void* obj)
 
 		    /* Reset the queue */
 		    gqueue_delete(&_obj->_var_msg_queue);
-		    gqueue_new(&obj->_var_msg_queue, _thapp_queue_del_helper);
+		    gqueue_new(&_obj->_var_msg_queue, _thapp_queue_del_helper);
 		    
 		    _st_flg = 0;
 		    break;
