@@ -9,6 +9,7 @@
 
 static double _thvsen_get_val(void* obj);
 static int _thvsen_set_config(void* obj);
+static int _thvsen_reset_sensor(void* obj);
 
 /* Constructor */
 thsen* thvsen_new(thvsen* obj, const config_setting_t* setting, size_t num)
@@ -41,7 +42,8 @@ thsen* thvsen_new(thvsen* obj, const config_setting_t* setting, size_t num)
     /* Set function pointers of parent object */
     thsen_set_parent_get_fptr(obj, _thvsen_get_val);
     thsen_set_parent_setconfig_fptr(obj, _thvsen_set_config);
-
+    thsen_set_parent_reset_fptr(obj, _thvsen_reset_sensor);
+    
     obj->var_num_sen = 0;
     obj->var_raw_buff = NULL;
     obj->var_val = 0.0;
@@ -182,5 +184,24 @@ static int _thvsen_set_config(void* obj)
     
     _obj = (thvsen*) obj;
     _obj->var_num_sen = _obj->var_parent._var_num_config;
+    return 0;
+}
+
+/* Reset sensor */
+static int _thvsen_reset_sensor(void* obj)
+{
+    int _i=0;
+    thvsen* _obj;
+    if(obj == NULL)
+	return -1;
+
+    _obj = (thvsen*) obj;
+
+    if(_obj->var_sens == NULL)
+	return -1;
+
+    for(_i=0; _i<_obj->var_num_sen; _i++)
+	thsen_reset_sensor(_obj->var_sens[_i]);
+
     return 0;
 }
