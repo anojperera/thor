@@ -7,8 +7,8 @@
 
 #include "thvsen.h"
 
-static double thvsen_get_val(void* obj);
-static int thvsen_set_config(void* obj);
+static double _thvsen_get_val(void* obj);
+static int _thvsen_set_config(void* obj);
 
 /* Constructor */
 thsen* thvsen_new(thvsen* obj, const config_setting_t* setting, size_t num)
@@ -39,8 +39,8 @@ thsen* thvsen_new(thvsen* obj, const config_setting_t* setting, size_t num)
     obj->var_parent.var_child = (void*) obj;
 
     /* Set function pointers of parent object */
-    thsen_set_parent_get_fptr(obj, thvsen_get_val);
-    thsen_set_parent_setconfig_fptr(obj, thvsen_set_config);
+    thsen_set_parent_get_fptr(obj, _thvsen_get_val);
+    thsen_set_parent_setconfig_fptr(obj, _thvsen_set_config);
 
     obj->var_num_sen = 0;
     obj->var_raw_buff = NULL;
@@ -146,7 +146,7 @@ int thvsen_get_dp_values(thvsen* obj, double* array, size_t* sz)
 /*
  * Get value method calculates the velocity of the air stream measured between the sensors.
  */
-static double thvsen_get_val(void* obj)
+static double _thvsen_get_val(void* obj)
 {
     thvsen* _obj;
     int i;
@@ -173,7 +173,7 @@ static double thvsen_get_val(void* obj)
 }
 
 /* Set cofiguration file */
-static int thvsen_set_config(void* obj)
+static int _thvsen_set_config(void* obj)
 {
     thvsen* _obj;
 
