@@ -279,10 +279,10 @@ static int _thapp_ahu_start(thapp* obj, void* self)
 
 	    printw("Add pulley ratio for motor speed (Y/n): ");
 	    refresh();
-	    timeout(-1);
-	    _def_flg = getch();
+	    getnstr(_scr_input_buff, THAPP_DISP_BUFF_SZ-1);	    
+	    _def_flg = _scr_input_buff[0];
 	    clear();
-
+	    
 	    if(_def_flg == THAPP_AHU_YES_CODE || _def_flg == THAPP_AHU_YES2_CODE)
 		{
 		    memset(_scr_input_buff, 0, THAPP_DISP_BUFF_SZ);
