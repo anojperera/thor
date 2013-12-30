@@ -20,7 +20,7 @@
 
 /* macros for calculating gradient and intercept */
 #define THGS_CALC_GRAD(sensor)						\
-    (sensor)->var_grad = (sensor)->var_max - (sensor)->var_min /	\
+    (sensor)->var_grad = ((sensor)->var_max - (sensor)->var_min) /	\
 	(THGS_MAX_VOLT - THGS_MIN_VOLT)
 
 #define THGS_CALC_INTR(sensor)						\
