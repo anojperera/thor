@@ -260,6 +260,13 @@ static int _thapp_ahu_start(thapp* obj, void* self)
 	    getnstr(_scr_input_buff, THAPP_DISP_BUFF_SZ-1);
 
 	    _num_sensors = atoi(_scr_input_buff);
+	    
+	    /* Adjust for actual number of sensors */
+	    if(_num_sensors > 2)
+		_num_sensors = 4;
+	    else
+		_num_sensors = 2;
+	    
 	    clear();
 
 	    memset(_scr_input_buff, 0, THAPP_DISP_BUFF_SZ);
@@ -272,6 +279,7 @@ static int _thapp_ahu_start(thapp* obj, void* self)
 
 	    printw("Add pulley ratio for motor speed (Y/n): ");
 	    refresh();
+	    timeout(-1);
 	    _def_flg = getch();
 	    clear();
 
