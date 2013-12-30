@@ -149,7 +149,12 @@ extern "C" {
 #define thapp_set_cmdhnd_ptr(obj_ptr, fptr)			\
     (obj_ptr)->_var_parent._var_fptr.var_cmdhnd_ptr = fptr
 
-
+    /*
+     * Helper macro for derrived classes to get the connection
+     * object.
+     */
+#define thapp_get_con_obj_ptr(obj_ptr)		\
+    &(obj_ptr)->_var_con
 #ifdef __cplusplus
 }
 #endif

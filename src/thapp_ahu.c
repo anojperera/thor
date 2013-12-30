@@ -25,12 +25,18 @@
 #define THAPP_AHU_YES2_CODE 89								/* Y */
 
 #define THAPP_AHU_NUM_MAX_PROBES 4
+#define THAPP_AHU_MAX_ACT_PER 99
+#define THAPP_AHU_MIN_ACT_PER 0
+
+#define THAPP_AHU_INCR_PER 5
+#define THAPP_AHU_INCRF_PER 1
 
 /* Callback methods */
 static int _thapp_ahu_init(thapp* obj, void* self);
 static int _thapp_ahu_start(thapp* obj, void* self);
 static int _thapp_ahu_stop(thapp* obj, void* self);
 static int _thapp_cmd(thapp* obj, void* self, char cmd);
+static int _thapp_act_ctrl(thapp_ahu* obj, int incr, int* per);
 
 /* Helper method for loading configuration settings */
 static int _thapp_new_helper(thapp_ahu* obj);
@@ -341,12 +347,16 @@ static int _thapp_cmd(thapp* obj, void* self, char cmd)
     switch(cmd)
 	{
 	case THAPP_AHU_ACT_INCR_CODE:
+	    _thapp_act_ctrl(_obj, THAPP_AHU_INCR_PER, NULL);
 	    break;
 	case THAPP_AHU_ACT_DECR_CODE:
+	    _thapp_act_ctrl(_obj, -1*THAPP_AHU_INCR_PER, NULL);	    
 	    break;
 	case THAPP_AHU_ACT_INCRF_CODE:
+	    _thapp_act_ctrl(_obj, THAPP_AHU_INCRF_PER, NULL);
 	    break;
 	case THAPP_AHU_ACT_DECRF_CODE:
+	    _thapp_act_ctrl(_obj, -1*THAPP_AHU_INCRF_PER, NULL);	    
 	    break;
 	case THAPP_AHU_PAUSE_CODE:
 	    break;
@@ -428,5 +438,43 @@ static int _thapp_ahu_init(thapp* obj, void* self)
     /* Set static sensor */
     thgsens_set_value_ptr(THOR_GSEN(_obj->_var_st_sen), &obj->_msg_buff._ai2_val);
 
+    return 0;
+}
+
+/*
+ * Controls the actuator position and sends the control signal to the
+ * server. This method handles both increment and decremnt methods.
+ * Uses percentages to calculate the voltage to be sent.
+ */
+static int _thapp_act_ctrl(thapp_ahu* obj, int incr, int* per)
+{
+    struct thor_msg _msg;						/* message */
+    char _msg_buff[THORNIFIX_MSG_BUFF_SZ];
+    double _val;
+
+    /* Increment the value temporarily. */
+    obj->var_act_pct += incr;
+
+    /* Check if its within bounds. */
+    if(obj->var_act_pct > THAPP_AHU_MAX_ACT_PER || obj->var_act_pct < THAPP_AHU_MIN_ACT_PER)
+	{
+	    /* Reset the value to the original and set the external value */
+	    obj->var_act_pct -= incr;
+	    if(per != NULL)
+		*per = obj->var_act_pct;
+	    return 0;
+	}
+
+    _val = obj->var_act_pct;
+    /* memset buffer */
+    thorinifix_init_msg(&_msg);
+    thorinifix_init_msg(&_msg_buff);
+
+    _msg._ao0_val = 0.0;
+    _msg._ao1_val = 9.95 * _val / 100;
+
+    /* Encode the message and send to the server */
+    thornifix_encode_msg(&_msg, _msg_buff, THORNIFIX_MSG_BUFF_SZ);
+    thcon_send_info(thapp_get_con_obj_ptr(&obj->_var_parent), (void*) &_msg_buff, THORNIFIX_MSG_BUFF_SZ);    
     return 0;
 }
