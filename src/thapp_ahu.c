@@ -372,8 +372,6 @@ static int _thapp_cmd(thapp* obj, void* self, char cmd)
 	case THAPP_AHU_ACT_DECRF_CODE:
 	    _thapp_act_ctrl(_obj, -1*THAPP_AHU_INCRF_PER, NULL);	    
 	    break;
-	case THAPP_AHU_PAUSE_CODE:
-	    break;
 	case THAPP_AHU_YES_CODE:
 	    break;
 	case THAPP_AHU_YES2_CODE:
