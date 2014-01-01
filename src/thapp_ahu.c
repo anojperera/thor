@@ -14,7 +14,7 @@
 #define THAPP_AHU_OPT4 "Add pulley ratio for motor speed (Y/n): "
 #define THAPP_AHU_OPT5 "Fan pulley diameter: "
 #define THAPP_AHU_OPT6 "Motor pulley diameter: "
-#define THAPP_AHU_OPT7 "Pulley Ratio: %.2f\n"
+#define THAPP_AHU_OPT7 "Pulley Ratio: "
 
 
 /* Settting keys */
@@ -325,7 +325,6 @@ static int _thapp_ahu_start(thapp* obj, void* self)
 			_ratio = (double) _f_dia / _m_dia;
 
 		    _pos += sprintf(&obj->var_disp_opts[_pos], "%s%.1f\n", THAPP_AHU_OPT7, _ratio);
-		    printw(THAPP_AHU_OPT7, (float) _ratio);
 		    _obj->var_fm_ratio = _ratio;
 		    refresh();
 		}
