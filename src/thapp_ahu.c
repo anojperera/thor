@@ -330,7 +330,7 @@ static int _thapp_ahu_start(thapp* obj, void* self)
 	    "ST\t"
 	    "F_SP\t"
 	    "M_SP\t"
-	    "TMP\n");
+	    "TMP\r");
     return 0;
 }
 
