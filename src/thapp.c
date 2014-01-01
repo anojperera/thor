@@ -272,10 +272,10 @@ static void* _thapp_start_handler(void* obj)
 		}
 
 	    /* If program is not running display message to start */
+	    getmaxyx(stdscr, _max_row, _max_col);
 	    if(_st_flg == 0)
 		{
 		    clear();
-		    getmaxyx(stdscr, _max_row, _max_col);
 		    mvprintw(_max_row/2, (_max_col-strlen(_start_msg))/2, "%s", _start_msg);
 		    refresh();
 		}
@@ -396,7 +396,7 @@ static void* _thapp_start_handler(void* obj)
 		_flg = _obj->_var_fptr.var_cmdhnd_ptr(_obj, _obj->var_child, _cmd);
 
 	    /* Temporary print statements for the display values */
-	    printw("%s", _obj->var_disp_vals);
+	    mvprintw(5, (_max_col*3)/2,"%s", _obj->var_disp_vals);
 	    refresh();
 
 	    memset(_obj->var_disp_vals, 0, THAPP_DISP_BUFF_SZ);
