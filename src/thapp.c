@@ -396,7 +396,7 @@ static void* _thapp_start_handler(void* obj)
 		_flg = _obj->_var_fptr.var_cmdhnd_ptr(_obj, _obj->var_child, _cmd);
 
 	    /* Temporary print statements for the display values */
-	    mvprintw(5, (_max_col*3)/2,"%s", _obj->var_disp_vals);
+	    mvprintw(5, (_max_col*2)/3,"%s", _obj->var_disp_vals);
 	    refresh();
 
 	    memset(_obj->var_disp_vals, 0, THAPP_DISP_BUFF_SZ);
