@@ -34,8 +34,8 @@
 #define THAPP_PAUSE_CODE2 32								/* p */
 
 
-#define THAPP_PAUSED_MSG "<==================== Paused =========================>"
-#define THAPP_MSG_BLANK ""
+#define THAPP_PAUSED_MSG "<============================== Paused ===================================>"
+#define THAPP_MSG_BLANK "                                                                           "
 
 volatile sig_atomic_t _flg = 1;
 static void _thapp_sig_handler(int signo);
@@ -366,12 +366,12 @@ static void* _thapp_start_handler(void* obj)
 		    if(_p_flg == 0)
 			{
 			    _p_flg = 1;
-			    mvprintw(((_max_row*2)/3)-2, 0, THAPP_PAUSED_MSG);
+			    mvprintw(((_max_row*2)/3)-1, 0, THAPP_PAUSED_MSG);
 			}
 		    else
 			{
 			    _p_flg = 0;
-			    mvprintw(((_max_row*2)/3)-2, 0, THAPP_MSG_BLANK);
+			    mvprintw(((_max_row*2)/3)-1, 0, THAPP_MSG_BLANK);
 			}
 		    break;
 		default:
