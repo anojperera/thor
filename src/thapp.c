@@ -394,7 +394,8 @@ static void* _thapp_start_handler(void* obj)
 
 	    /* Temporary print statements for the display values */
 	    clear();
-	    mvprintw(0, 0, "%s", _obj->var_disp_opts);
+	    if(_obj->var_disp_opts != NULL || _obj->var_disp_opts[0] != 0)
+		mvprintw(0, 0, "%s", _obj->var_disp_opts);
 	    mvprintw((_max_row*2)/3, 0,"%s", _obj->var_disp_header);
 	    mvprintw(((_max_row*2)/3)+2, 0,"%s", _obj->var_disp_vals);
 	    refresh();
