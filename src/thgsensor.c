@@ -176,6 +176,8 @@ static double _thgsensor_get_val(void* obj)
     /* If the ring buffer is complete, then we removed first added value */
     if(_obj->_count_flg > 0)
 	_obj->_var_ave_buff -= _obj->var_ave_buff[_obj->_count];
+    if(_obj->_var_ave_buff < 0.0)
+	_obj->_var_ave_buff = 0.0;
     
     /* add to buffer */
     _obj->var_ave_buff[_obj->_count] = _obj->var_grad * _obj->var_raw + _obj->var_intc;
