@@ -225,7 +225,7 @@ static void* _thapp_start_handler(void* obj)
     char _start_msg[] = THAPP_START_MSG;
     thapp* _obj;
     unsigned int _st_flg = 0;
-    int _max_row, _max_col;
+    int _max_row, _max_col, _t_msg_pos;
     unsigned int _p_flg = 0;						/* pause flag */
     struct thor_msg* _msg = NULL;
 
@@ -276,6 +276,7 @@ static void* _thapp_start_handler(void* obj)
 
 	    /* If program is not running display message to start */
 	    getmaxyx(stdscr, _max_row, _max_col);
+	    _t_msg_pos = (_max_row*2)/3;
 	    if(_st_flg == 0)
 		{
 		    clear();
@@ -336,7 +337,7 @@ static void* _thapp_start_handler(void* obj)
 		    /* Temporary print statements for the display values */
 		    if(_obj->var_disp_opts != NULL || _obj->var_disp_opts[0] != 0)
 			mvprintw(0, 0, "%s", _obj->var_disp_opts);
-		    mvprintw((_max_row*2)/3, 0,"%s", _obj->var_disp_header);
+		    mvprintw(_t_msg_pos, 0,"%s", _obj->var_disp_header);
 		    break;
 		case THAPP_STOP_CODE:
 
@@ -366,12 +367,12 @@ static void* _thapp_start_handler(void* obj)
 		    if(_p_flg == 0)
 			{
 			    _p_flg = 1;
-			    mvprintw(((_max_row*2)/3)-1, 0, THAPP_PAUSED_MSG);
+			    mvprintw(_t_msg_pos-1, 0, THAPP_PAUSED_MSG);
 			}
 		    else
 			{
 			    _p_flg = 0;
-			    mvprintw(((_max_row*2)/3)-1, 0, THAPP_MSG_BLANK);
+			    mvprintw(_t_msg_pos-1, 0, THAPP_MSG_BLANK);
 			}
 		    break;
 		default:
@@ -413,7 +414,8 @@ static void* _thapp_start_handler(void* obj)
 	    if(_obj->_var_fptr.var_cmdhnd_ptr && !_p_flg)
 		_flg = _obj->_var_fptr.var_cmdhnd_ptr(_obj, _obj->var_child, _cmd);
 
-	    mvprintw(((_max_row*2)/3)+2, 0,"%s", _obj->var_disp_vals);
+	    /* Print the result  values */
+	    mvprintw(_t_msg_pos+2, 0,"%s", _obj->var_disp_vals);
 	    refresh();
 
 	    memset(_obj->var_disp_vals, 0, THAPP_DISP_BUFF_SZ);
