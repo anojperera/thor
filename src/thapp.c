@@ -327,6 +327,11 @@ static void* _thapp_start_handler(void* obj)
 		    noecho();
 		    timeout(0);
 		    _st_flg = 1;
+
+		    /* Temporary print statements for the display values */
+		    if(_obj->var_disp_opts != NULL || _obj->var_disp_opts[0] != 0)
+			mvprintw(0, 0, "%s", _obj->var_disp_opts);
+		    mvprintw((_max_row*2)/3, 0,"%s", _obj->var_disp_header);
 		    break;
 		case THAPP_STOP_CODE:
 
@@ -392,11 +397,6 @@ static void* _thapp_start_handler(void* obj)
 	    if(_obj->_var_fptr.var_cmdhnd_ptr && !_p_flg)
 		_flg = _obj->_var_fptr.var_cmdhnd_ptr(_obj, _obj->var_child, _cmd);
 
-	    /* Temporary print statements for the display values */
-	    clear();
-	    if(_obj->var_disp_opts != NULL || _obj->var_disp_opts[0] != 0)
-		mvprintw(0, 0, "%s", _obj->var_disp_opts);
-	    mvprintw((_max_row*2)/3, 0,"%s", _obj->var_disp_header);
 	    mvprintw(((_max_row*2)/3)+2, 0,"%s", _obj->var_disp_vals);
 	    refresh();
 
