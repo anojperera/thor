@@ -173,14 +173,15 @@ static double _thgsensor_get_val(void* obj)
 	return 0.0;
 
     
+    /* If the ring buffer is complete, then we removed first added value */
+    if(_obj->_count_flg > 0)
+	_obj->_var_ave_buff -= _obj->var_ave_buff[_obj->_count];
+    
     /* add to buffer */
     _obj->var_ave_buff[_obj->_count] = _obj->var_grad * _obj->var_raw + _obj->var_intc;
     
     _obj->_var_ave_buff += _obj->var_ave_buff[_obj->_count];
 
-    /* If the ring buffer is complete, then we removed first added value */
-    if(_obj->_count_flg > 0)
-	_obj->_var_ave_buff -= _obj->var_ave_buff[(int) fabs(_obj->_count-THGS_CH_RBUFF_SZ)];
     _obj->var_val = _obj->_var_ave_buff / (_obj->_count_flg > 0? THGS_CH_RBUFF_SZ : _obj->_count+1);
 
     /* increment counter and reset at max */
