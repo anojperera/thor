@@ -392,7 +392,6 @@ static void* _thapp_start_handler(void* obj)
 
 	    /* Temporary print statements for the display values */
 	    mvprintw((_max_row*2)/3, 0,"%s", _obj->var_disp_header);
-	    refresh();
 	    mvprintw(((_max_row*2)/3)+2, 0,"%s", _obj->var_disp_vals);
 	    refresh();
 
