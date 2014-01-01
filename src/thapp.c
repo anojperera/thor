@@ -21,7 +21,7 @@
 #define THAPP_DEFAULT_SLEEP 100000
 #define THAPP_DEFAULT_WAIT_TIME 1
 #define THAPP_DEFAULT_TRY_COUNT 5
-#define THAPP_DEFAULT_CMD_MSG_TIME 3000000
+#define THAPP_DEFAULT_CMD_MSG_TIME 6000000
 /*
  * Configuration paths. The default is to look in the home
  * directory if not in /etc/
