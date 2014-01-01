@@ -90,6 +90,7 @@ int thapp_init(thapp* obj)
     obj->var_init_flg = 1;
     obj->var_run_flg = 0;
     obj->var_max_opt_rows = 0;
+    obj->_msg_cnt = 0;
     obj->var_sleep_time = THAPP_DEFAULT_SLEEP;
     obj->var_child = NULL;
 
@@ -227,7 +228,7 @@ static void* _thapp_start_handler(void* obj)
     thapp* _obj;
     unsigned int _st_flg = 0;
     int _max_row, _max_col, _t_msg_pos;
-    int _msg_cnt = 0, _sec_cnt = 0, _msg_cnt_max = 0;
+    int _sec_cnt = 0, _msg_cnt_max = 0;
     unsigned int _p_flg = 0;						/* pause flag */
     struct thor_msg* _msg = NULL;
 
@@ -428,13 +429,13 @@ static void* _thapp_start_handler(void* obj)
 
 	    if(_obj->var_cmd_vals[0] != 0)
 		{
-		    if(_msg_cnt%_sec_cnt)
+		    if(_obj->_msg_cnt%_sec_cnt)
 			mvprintw(_t_msg_pos-1, 0,"%s", _obj->var_cmd_vals);
 		    else
 			mvprintw(_t_msg_pos-1, 0,"%s", THAPP_MSG_BLANK);
-		    if(++_msg_cnt >= _msg_cnt_max)
+		    if(++_obj->_msg_cnt >= _msg_cnt_max)
 			{
-			    _msg_cnt = 0;
+			    _obj->_msg_cnt = 0;
 			    memset((void*) _obj->var_cmd_vals, 0, THAPP_DISP_BUFF_SZ);
 			    mvprintw(_t_msg_pos-1, 0, "%s", THAPP_MSG_BLANK);
 			}
