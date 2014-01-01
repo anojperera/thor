@@ -492,6 +492,11 @@ static int _thapp_act_ctrl(thapp_ahu* obj, int incr, int* per)
 	    return 0;
 	}
 
+    /* Update command message */
+    sprintf(obj->_var_parent.var_cmd_vals,
+	    "<==================== Actuator - %i\% ====================>",
+	    obj->var_act_pct);
+
     _val = obj->var_act_pct;
     /* memset buffer */
     thorinifix_init_msg(&_msg);
