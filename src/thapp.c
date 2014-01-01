@@ -9,15 +9,19 @@
 
 
 #define THAPP_START_MSG "Press 'Shift + s' to begin"
+#define THAPP_PAUSED_MSG "<============================== Paused ===================================>"
+#define THAPP_MSG_BLANK "                                                                           "
+
 #define THAPP_SLEEP_KEY "main_sleep"
 #define THAPP_PORT_KEY "main_con_port"
 #define THAPP_SERVER_NAME_KEY "self_url"
 
 
 #define THAPP_DEFAULT_PORT "9000"
-#define THAPP_DEFAULT_SLEEP 100
+#define THAPP_DEFAULT_SLEEP 100000
 #define THAPP_DEFAULT_WAIT_TIME 1
 #define THAPP_DEFAULT_TRY_COUNT 5
+#define THAPP_DEFAULT_CMD_MSG_TIME 3000000
 /*
  * Configuration paths. The default is to look in the home
  * directory if not in /etc/
@@ -33,9 +37,6 @@
 #define THAPP_PAUSE_CODE1 112								/* p */
 #define THAPP_PAUSE_CODE2 32								/* p */
 
-
-#define THAPP_PAUSED_MSG "<============================== Paused ===================================>"
-#define THAPP_MSG_BLANK "                                                                           "
 
 volatile sig_atomic_t _flg = 1;
 static void _thapp_sig_handler(int signo);
@@ -226,6 +227,7 @@ static void* _thapp_start_handler(void* obj)
     thapp* _obj;
     unsigned int _st_flg = 0;
     int _max_row, _max_col, _t_msg_pos;
+    int _msg_cnt = 0, _sec_cnt = 0, _msg_cnt_max = 0;
     unsigned int _p_flg = 0;						/* pause flag */
     struct thor_msg* _msg = NULL;
 
@@ -234,7 +236,7 @@ static void* _thapp_start_handler(void* obj)
 	return NULL;
 
     _obj = (thapp*) obj;
-
+    
     /*
      * First thing we do is to check if the any derived child
      * classes has set initialise and start methods and call
@@ -258,7 +260,9 @@ static void* _thapp_start_handler(void* obj)
     /* set time out to zero */
     timeout(0);
 
-
+    /* Calculate number of second divisions */
+    _sec_cnt = 1000000 / _obj->var_sleep_time;
+    _msg_cnt_max = THAPP_DEFAULT_CMD_MSG_TIME / _obj->var_sleep_time;
     /* Main loop */
     while(_flg)
 	{
@@ -319,6 +323,7 @@ static void* _thapp_start_handler(void* obj)
 		    memset(_obj->var_disp_opts, 0, THOR_BUFF_SZ);
 		    memset(_obj->var_disp_header, 0, THAPP_DISP_BUFF_SZ);
 		    memset(_obj->var_disp_vals, 0, THAPP_DISP_BUFF_SZ);
+		    memset(_obj->var_disp_opts, 0, THOR_BUFF_SZ);
 		    
 		    /*
 		     *  The user has entered start therefore we call the
@@ -413,6 +418,28 @@ static void* _thapp_start_handler(void* obj)
 	     */
 	    if(_obj->_var_fptr.var_cmdhnd_ptr && !_p_flg)
 		_flg = _obj->_var_fptr.var_cmdhnd_ptr(_obj, _obj->var_child, _cmd);
+
+	    /*
+	     * If any commands were executed by the derived classes, the
+	     * command message buffer would be populated with a message.
+	     * we check for message and display to the user by flashing
+	     * the message for 3 seconds.
+	     */
+
+	    if(_obj->var_cmd_vals[0] != 0)
+		{
+		    if(_msg_cnt%_sec_cnt)
+			mvprintw(_t_msg_pos-1, 0,"%s", _obj->_obj->var_cmd_vals[0]);
+		    else
+			mvprintw(_t_msg_pos-1, 0,"%s", THAPP_MSG_BLANK);
+		    if(++_msg_cnt >= _msg_cnt_max)
+			{
+			    _msg_cnt = 0;
+			    memset((void*) _obj->_obj->var_cmd_vals, 0, THAPP_DISP_BUFF_SZ);
+			    mvprintw(_t_msg_pos-1, 0,"%s", THAPP_MSG_BLANK);
+			}
+		}
+	       
 
 	    /* Print the result  values */
 	    mvprintw(_t_msg_pos+2, 0,"%s", _obj->var_disp_vals);
