@@ -31,7 +31,7 @@
 #define THAPP_START_CODE 83								/* S */
 #define THAPP_STOP_CODE 115								/* s */
 #define THAPP_PAUSE_CODE1 112								/* p */
-#define THAPP_PAUSE_CODE2 112								/* p */
+#define THAPP_PAUSE_CODE2 32								/* p */
 
 
 #define THAPP_PAUSED_MSG "<==================== Paused =========================>"
