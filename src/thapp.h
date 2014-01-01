@@ -64,6 +64,7 @@ struct _thapp
     unsigned int var_init_flg;
     unsigned int var_run_flg;							/* flag to indicate test is running */
     unsigned int var_sleep_time;						/* sleep time (miliseconds) */
+    unsigned int var_max_opt_rows;						/* Maximum optional rows */
 
     thapp_opmode var_op_mode;							/* operation mode */
     config_t var_config;							/* configuration pointer */
@@ -75,6 +76,7 @@ struct _thapp
     /* Display buffers */
     char var_disp_header[THAPP_DISP_BUFF_SZ];
     char var_disp_vals[THAPP_DISP_BUFF_SZ];
+    char var_disp_opts[THOR_BUFF_SZ]; 						/* Option buffer */
     
     /*
      * Queue for buffering the messages recieved from the

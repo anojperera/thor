@@ -7,6 +7,16 @@
 #include "thsmsen.h"
 #include "thapp_ahu.h"
 
+/* Options */
+#define THAPP_AHU_OPT1 "Enter Duct Diameter (200/300/600/1120): "
+#define THAPP_AHU_OPT2 "Enter number of sensors (4/2): "
+#define THAPP_AHU_OPT3 "Enter external static pressure: "
+#define THAPP_AHU_OPT4 "Add pulley ratio for motor speed (Y/n): "
+#define THAPP_AHU_OPT5 "Fan pulley diameter: "
+#define THAPP_AHU_OPT6 "Motor pulley diameter: "
+#define THAPP_AHU_OPT7 "Pulley Ratio: %.2f\n"
+
+
 /* Settting keys */
 #define THAPP_AHU_KEY "ahu"
 #define THAPP_TMP_KEY "tp1"
@@ -29,7 +39,7 @@
 
 #define THAPP_AHU_INCR_PER 5
 #define THAPP_AHU_INCRF_PER 1
-
+#define THAPP_MAX_OPT_MESSAGE_LINES 6
 /* Callback methods */
 static int _thapp_ahu_init(thapp* obj, void* self);
 static int _thapp_ahu_start(thapp* obj, void* self);
@@ -234,11 +244,12 @@ static int _thapp_ahu_start(thapp* obj, void* self)
     double _ratio=0.0;
     char _scr_input_buff[THAPP_DISP_BUFF_SZ];    
     thapp_ahu* _obj;
+    int _pos = 0;
 
     if(self == NULL)
 	return -1;
     _obj = (thapp_ahu*) self;
-
+    
     /* Reset all sensors before start */
     thsen_reset_sensor(_obj->_var_vsen);
     thsen_reset_sensor(_obj->_var_tp_sen);
@@ -253,20 +264,21 @@ static int _thapp_ahu_start(thapp* obj, void* self)
     if(obj->var_op_mode != thapp_headless)
 	{
 	    memset(_scr_input_buff, 0, THAPP_DISP_BUFF_SZ);
-	    printw("Enter Duct Diameter (200/300/600/1120): ");
+	    printw(THAPP_AHU_OPT1);
 	    refresh();
 	    getnstr(_scr_input_buff, THAPP_DISP_BUFF_SZ-1);
 
 	    _obj->var_duct_dia = atof(_scr_input_buff);
+	    _pos += sprintf(obj->var_disp_opts, "%s%i\n", THAPP_AHU_OPT1, (int) _obj->var_duct_dia);
 	    clear();
 
     	    memset(_scr_input_buff, 0, THAPP_DISP_BUFF_SZ);
-	    printw("Enter number of sensors (4/2): ");
+	    printw(THAPP_AHU_OPT2);
 	    refresh();
 	    getnstr(_scr_input_buff, THAPP_DISP_BUFF_SZ-1);
 
 	    _num_sensors = atoi(_scr_input_buff);
-	    
+	    _pos += sprintf(&obj->var_disp_opts[_pos], "%s%i\n", THAPP_AHU_OPT2, _num_sensors);
 	    /* Adjust for actual number of sensors */
 	    if(_num_sensors > 2)
 		_num_sensors = 4;
@@ -276,14 +288,15 @@ static int _thapp_ahu_start(thapp* obj, void* self)
 	    clear();
 
 	    memset(_scr_input_buff, 0, THAPP_DISP_BUFF_SZ);
-	    printw("Enter external static pressure: ");
+	    printw(THAPP_AHU_OPT3);
 	    refresh();
 	    getnstr(_scr_input_buff, THAPP_DISP_BUFF_SZ-1);
 
 	    _obj->var_def_static = atof(_scr_input_buff);
 	    clear();
-
-	    printw("Add pulley ratio for motor speed (Y/n): ");
+	    _pos += sprintf(&obj->var_disp_opts[_pos], "%s%i\n", THAPP_AHU_OPT3, (int) _obj->var_def_static);
+	    
+	    printw(THAPP_AHU_OPT4);
 	    refresh();
 	    getnstr(_scr_input_buff, THAPP_DISP_BUFF_SZ-1);	    
 	    _def_flg = _scr_input_buff[0];
@@ -292,29 +305,32 @@ static int _thapp_ahu_start(thapp* obj, void* self)
 	    if(_def_flg == THAPP_AHU_YES_CODE || _def_flg == THAPP_AHU_YES2_CODE)
 		{
 		    memset(_scr_input_buff, 0, THAPP_DISP_BUFF_SZ);
-		    printw("Fan pulley diameter: ");
+		    printw(THAPP_AHU_OPT5);
 		    refresh();
 		    getnstr(_scr_input_buff, THAPP_DISP_BUFF_SZ-1);
 		    
 		    _f_dia = atof(_scr_input_buff);
 		    clear();
-
+		    _pos += sprintf(&obj->var_disp_opts[_pos], "%s%i\n", THAPP_AHU_OPT5, (int) _f_dia);
+		    
     		    memset(_scr_input_buff, 0, THAPP_DISP_BUFF_SZ);
-		    printw("Motor pulley diameter: ");
+		    printw(THAPP_AHU_OPT6);
 		    refresh();
 		    getnstr(_scr_input_buff, THAPP_DISP_BUFF_SZ-1);
 		    _m_dia = atof(_scr_input_buff);
 		    clear();
 
+		    _pos += sprintf(&obj->var_disp_opts[_pos], "%s%i\n", THAPP_AHU_OPT6, (int) _m_dia);
 		    if(_m_dia > 0.0)
 			_ratio = (double) _f_dia / _m_dia;
 
-		    printw("Pulley Ratio: %.2f\n", (float) _ratio);
+		    _pos += sprintf(&obj->var_disp_opts[_pos], "%s%.1f\n", THAPP_AHU_OPT7, _ratio);
+		    printw(THAPP_AHU_OPT7, (float) _ratio);
 		    _obj->var_fm_ratio = _ratio;
 		    refresh();
 		}
 	}
-
+    obj->var_max_opt_rows = THAPP_MAX_OPT_MESSAGE_LINES;
     thvsen_configure_sensors(THOR_VSEN(_obj->_var_vsen), _num_sensors);    
 
     /* Add header information */

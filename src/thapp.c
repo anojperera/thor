@@ -83,6 +83,7 @@ int thapp_init(thapp* obj)
 
     obj->var_init_flg = 1;
     obj->var_run_flg = 0;
+    obj->var_max_opt_rows = 0;
     obj->var_sleep_time = THAPP_DEFAULT_SLEEP;
     obj->var_child = NULL;
 
@@ -229,9 +230,6 @@ static void* _thapp_start_handler(void* obj)
 
     _obj = (thapp*) obj;
 
-    memset(_obj->var_disp_header, 0, THAPP_DISP_BUFF_SZ);
-    memset(_obj->var_disp_vals, 0, THAPP_DISP_BUFF_SZ);
-
     /*
      * First thing we do is to check if the any derived child
      * classes has set initialise and start methods and call
@@ -311,7 +309,11 @@ static void* _thapp_start_handler(void* obj)
 		    timeout(-1);
 		    clear();
 
-
+		    /* Initialise message buffers */
+		    memset(_obj->var_disp_opts, 0, THOR_BUFF_SZ);
+		    memset(_obj->var_disp_header, 0, THAPP_DISP_BUFF_SZ);
+		    memset(_obj->var_disp_vals, 0, THAPP_DISP_BUFF_SZ);
+		    
 		    /*
 		     *  The user has entered start therefore we call the
 		     *  derived classes start callback method to start the
@@ -391,6 +393,8 @@ static void* _thapp_start_handler(void* obj)
 		_flg = _obj->_var_fptr.var_cmdhnd_ptr(_obj, _obj->var_child, _cmd);
 
 	    /* Temporary print statements for the display values */
+	    clear();
+	    mvprintw(0, 0, "%s", _obj->var_disp_opts);
 	    mvprintw((_max_row*2)/3, 0,"%s", _obj->var_disp_header);
 	    mvprintw(((_max_row*2)/3)+2, 0,"%s", _obj->var_disp_vals);
 	    refresh();
