@@ -30,7 +30,12 @@
 #define THAPP_QUIT_CODE2 113								/* q */
 #define THAPP_START_CODE 83								/* S */
 #define THAPP_STOP_CODE 115								/* s */
-#define THAPP_PAUSE_CODE 112								/* p */
+#define THAPP_PAUSE_CODE1 112								/* p */
+#define THAPP_PAUSE_CODE2 112								/* p */
+
+
+#define THAPP_PAUSED_MSG "<==================== Paused =========================>"
+#define THAPP_MSG_BLANK ""
 
 volatile sig_atomic_t _flg = 1;
 static void _thapp_sig_handler(int signo);
@@ -352,11 +357,22 @@ static void* _thapp_start_handler(void* obj)
 
 		    _st_flg = 0;
 		    break;
-		case THAPP_PAUSE_CODE:
+		case THAPP_PAUSE_CODE1:
+		case THAPP_PAUSE_CODE2:		    
+		    /*
+		     * If the application is paused,
+		     * Indicate to the user that its paused.
+		     */
 		    if(_p_flg == 0)
-			_p_flg = 1;
+			{
+			    _p_flg = 1;
+			    mvprintw(((_max_row*2)/3)-2, 0, THAPP_PAUSED_MSG);
+			}
 		    else
-			_p_flg = 0;
+			{
+			    _p_flg = 0;
+			    mvprintw(((_max_row*2)/3)-2, 0, THAPP_MSG_BLANK);
+			}
 		    break;
 		default:
 		    break;
