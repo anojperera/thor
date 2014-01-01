@@ -429,14 +429,14 @@ static void* _thapp_start_handler(void* obj)
 	    if(_obj->var_cmd_vals[0] != 0)
 		{
 		    if(_msg_cnt%_sec_cnt)
-			mvprintw(_t_msg_pos-1, 0,"%s", _obj->_obj->var_cmd_vals[0]);
+			mvprintw(_t_msg_pos-1, 0,"%s", _obj->_obj->var_cmd_vals);
 		    else
 			mvprintw(_t_msg_pos-1, 0,"%s", THAPP_MSG_BLANK);
 		    if(++_msg_cnt >= _msg_cnt_max)
 			{
 			    _msg_cnt = 0;
-			    memset((void*) _obj->_obj->var_cmd_vals, 0, THAPP_DISP_BUFF_SZ);
-			    mvprintw(_t_msg_pos-1, 0,"%s", THAPP_MSG_BLANK);
+			    memset((void*) _obj->var_cmd_vals, 0, THAPP_DISP_BUFF_SZ);
+			    mvprintw(_t_msg_pos-1, 0, "%s", THAPP_MSG_BLANK);
 			}
 		}
 	       
