@@ -144,7 +144,7 @@ struct thor_msg
 /* size of the message struct */
 /* #define THORINIFIX_MSG_SZ 			\ */
 /*     sizeof(struct thor_msg) */
-#define THORINIFIX_MSG_SZ THORNIFIX_MSG_BUFF_SZ;
+#define THORINIFIX_MSG_SZ THORNIFIX_MSG_BUFF_SZ
 
 /* initialise message struct */
 #define thorinifix_init_msg(t_obj)		\
