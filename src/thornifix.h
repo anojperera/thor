@@ -118,7 +118,7 @@ struct thor_msg
     /*--------------------------------------------*/
 
     /* analogue input channels */
-    /*--------------------------------------------*/    
+    /*--------------------------------------------*/
     double _ai0_val __attribute__ ((aligned (THORNIFIX_MSG_BUFF_ELM_SZ)));
     double _ai1_val __attribute__ ((aligned (THORNIFIX_MSG_BUFF_ELM_SZ)));
     double _ai2_val __attribute__ ((aligned (THORNIFIX_MSG_BUFF_ELM_SZ)));
@@ -131,19 +131,20 @@ struct thor_msg
     double _ai9_val __attribute__ ((aligned (THORNIFIX_MSG_BUFF_ELM_SZ)));
     double _ai10_val __attribute__ ((aligned (THORNIFIX_MSG_BUFF_ELM_SZ)));
     double _ai11_val __attribute__ ((aligned (THORNIFIX_MSG_BUFF_ELM_SZ)));
-    double _ai12_val __attribute__ ((aligned (THORNIFIX_MSG_BUFF_ELM_SZ)));    
+    double _ai12_val __attribute__ ((aligned (THORNIFIX_MSG_BUFF_ELM_SZ)));
     /*--------------------------------------------*/
-    
+
     /* digital input channels */
     /*--------------------------------------------*/
     double _di0_val __attribute__ ((aligned (THORNIFIX_MSG_BUFF_ELM_SZ)));
     double _di1_val __attribute__ ((aligned (THORNIFIX_MSG_BUFF_ELM_SZ)));
-    /*--------------------------------------------*/    
+    /*--------------------------------------------*/
 };
 
 /* size of the message struct */
-#define THORINIFIX_MSG_SZ			\
-    sizeof(struct thor_msg)
+/* #define THORINIFIX_MSG_SZ 			\ */
+/*     sizeof(struct thor_msg) */
+#define THORINIFIX_MSG_SZ THORNIFIX_MSG_BUFF_SZ;
 
 /* initialise message struct */
 #define thorinifix_init_msg(t_obj)		\
@@ -263,4 +264,3 @@ inline __attribute__ ((always_inline)) static double Mean(const double* data, un
 int thor_interpol(const double* x, const double* y, int n, double* z, double* fz, int m);
 
 #endif /* _THORNIFIX_H_ */
-
