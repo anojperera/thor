@@ -11,7 +11,7 @@
 #include "thsen.h"
 #include "thapp.h"
 
-#define THAPP_AHU_DMP_BUFF 100
+#define THAPP_AHU_DMP_BUFF 500
 
 typedef struct _thapp_ahu thapp_ahu;
 
@@ -25,7 +25,7 @@ struct _thapp_ahu
      * 1 - auto.
      */
     int var_mode;							/* Running mode. */
-
+    unsigned int var_calib_flg;						/* Calibration flag is in progress */
     int var_act_pct;							/* Actuator percentage */
     
     double var_dmp_buff[THAPP_AHU_DMP_BUFF];

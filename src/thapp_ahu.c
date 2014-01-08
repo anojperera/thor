@@ -32,6 +32,7 @@
 #define THAPP_AHU_ACT_DECRF_CODE 47							/* / */
 #define THAPP_AHU_YES_CODE 121								/* y */
 #define THAPP_AHU_YES2_CODE 89								/* Y */
+#define THAPP_AHU_CALIBRATION_CODE 99							/* c */
 
 #define THAPP_AHU_NUM_MAX_PROBES 4
 #define THAPP_AHU_MAX_ACT_PER 99
@@ -96,6 +97,7 @@ thapp* thapp_ahu_new(void)
     /* Initialise actuator buffer */
     for(; i<THAPP_AHU_DMP_BUFF; i++)
 	_obj->var_dmp_buff[i] = 0.0;
+    _obj->var_calib_flg = 0;
     _obj->var_def_static = 0.0;
     _obj->var_duct_dia = 0.0;
     _obj->var_duct_vel = 0.0;
@@ -391,9 +393,17 @@ static int _thapp_cmd(thapp* obj, void* self, char cmd)
 	    break;
 	case THAPP_AHU_YES2_CODE:
 	    break;
+	case THAPP_AHU_CALIBRATION_CODE:
+	    if(!_obj->var_calib_flg)
+		_obj->var_calib_flg = 1;
+	    break;
 	default:
 	    break;
 	}
+
+    /*
+     * Handle calibration
+     */
 
     /* Get Values */
     _vel = thsen_get_value(_obj->_var_vsen);
@@ -441,6 +451,7 @@ static int _thapp_cmd(thapp* obj, void* self, char cmd)
  */
 static int _thapp_ahu_init(thapp* obj, void* self)
 {
+    int i;
 
     thapp_ahu* _obj;
 
@@ -449,6 +460,9 @@ static int _thapp_ahu_init(thapp* obj, void* self)
 
     _obj = (thapp_ahu*) self;
 
+    /* Generate actuator control values */
+    for(i=0; i<THAPP_AHU_DMP_BUFF; i++)
+	_obj->var_dmp_buff[i] = sin(M_PI*(double)i/THAPP_AHU_DMP_BUFF)*10.0;
 
     /* Set raw value pointers for the sensors */
     /*----------------------------------------*/
