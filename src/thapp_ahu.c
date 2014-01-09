@@ -417,16 +417,29 @@ static int _thapp_cmd(thapp* obj, void* self, char cmd)
 	    if(!_obj->var_calib_flg)
 		_obj->var_calib_flg = 1;
 	    break;
-	case KEY_F(5):
-	    if(_obj->var_raw_flg > 0)
-		_obj->var_raw_flg = 0;
-	    else
-		_obj->var_raw_flg = 1;
-	    break;
 	default:
 	    break;
 	}
 
+    /* F5 keypress handle to display raw voltage values instead */
+    if(cmd == KEY_F(5))
+	{
+	    if(_obj->var_raw_flg > 0)
+		{
+		    _obj->var_raw_flg = 0;
+		    sprintf(obj->_var_parent.var_cmd_vals,
+			    "<==================== Physical Values ====================>");
+		}
+	    else
+		{
+		    _obj->var_raw_flg = 1;
+
+		    /* Message to indicate raw voltage values instead of physical values */
+		    sprintf(obj->_var_parent.var_cmd_vals,
+			    "<==================== Raw Voltage Values ====================>");
+		}
+	    break;
+	}
     /*
      * Handle calibration
      */
