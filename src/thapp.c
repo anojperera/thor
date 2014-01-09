@@ -433,7 +433,8 @@ static void* _thapp_start_handler(void* obj)
 			mvprintw(_t_msg_pos-1, 0,"%s", _obj->var_cmd_vals);
 		    else
 			mvprintw(_t_msg_pos-1, 0,"%s", THAPP_MSG_BLANK);
-		    if(++_obj->_msg_cnt >= _msg_cnt_max)
+		    
+		    if(++_obj->_msg_cnt >= _msg_cnt_max && _flg != 2)
 			{
 			    _obj->_msg_cnt = 0;
 			    memset((void*) _obj->var_cmd_vals, 0, THAPP_DISP_BUFF_SZ);
