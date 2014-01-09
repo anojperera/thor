@@ -66,7 +66,7 @@ extern "C" {
 
 	/* Set raw buffer pointer to each generic sensor */
 	_raw = buff;
-	for(; i<sz; i++,_raw += THORNIFIX_MSG_BUFF_ELM_SZ)
+	for(; i<sz; i++,_raw++)
 	    thgsens_set_value_ptr(THOR_GSEN(obj->var_sens[i]), _raw);
 
 	return 0;
