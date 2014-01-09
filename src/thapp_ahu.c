@@ -420,11 +420,7 @@ static int _thapp_cmd(thapp* obj, void* self, char cmd)
 	    break;
 	case THAPP_AHU_RAW_VALUES:
 	    if(_obj->var_raw_flg > 0)
-		{
-		    _obj->var_raw_flg = 0;
-		    sprintf(_obj->_var_parent.var_cmd_vals,
-			    "<==================== Physical Values ====================>");
-		}
+		_obj->var_raw_flg = 0;
 	    else
 		{
 		    _obj->var_raw_flg = 1;
