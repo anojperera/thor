@@ -105,6 +105,7 @@ thapp* thapp_ahu_new(void)
     /* Initialise actuator buffer */
     for(; i<THAPP_AHU_DMP_BUFF; i++)
 	_obj->var_dmp_buff[i] = 0.0;
+    _obj->var_raw_flg = 0;
     _obj->var_calib_flg = 0;
     _obj->var_def_static = 0.0;
     _obj->var_duct_dia = 0.0;
@@ -416,6 +417,12 @@ static int _thapp_cmd(thapp* obj, void* self, char cmd)
 	    if(!_obj->var_calib_flg)
 		_obj->var_calib_flg = 1;
 	    break;
+	case KEY_F(5):
+	    if(_obj->var_raw_flg > 0)
+		_obj->var_raw_flg = 0;
+	    else
+		_obj->var_raw_flg = 1;
+	    break;
 	default:
 	    break;
 	}
@@ -446,16 +453,16 @@ static int _thapp_cmd(thapp* obj, void* self, char cmd)
 	    "%.2f\t"
     	    "%.2f\t"
 	    "%.2f\t\r",
-	    (_obj->_var_dp_val_ptr? *_obj->_var_dp_val_ptr[0] : 0.0),
-	    (_obj->_var_dp_val_ptr? *_obj->_var_dp_val_ptr[1] : 0.0),
-	    (_obj->_var_dp_val_ptr? *_obj->_var_dp_val_ptr[2] : 0.0),
-	    (_obj->_var_dp_val_ptr? *_obj->_var_dp_val_ptr[3] : 0.0),
-	    _vel,
-	    _vol,
-	    thsen_get_value(_obj->_var_st_sen),
-	    _f_sp,
-	    _obj->var_fm_ratio*_f_sp,
-	    thsen_get_value(_obj->_var_tp_sen));
+	    _obj->var_raw_flg? _obj->_var_parent._msg_buff._ai4_val : (_obj->_var_dp_val_ptr? *_obj->_var_dp_val_ptr[0] : 0.0),
+	    _obj->var_raw_flg? _obj->_var_parent._msg_buff._ai5_val : (_obj->_var_dp_val_ptr? *_obj->_var_dp_val_ptr[1] : 0.0),
+	    _obj->var_raw_flg? _obj->_var_parent._msg_buff._ai6_val : (_obj->_var_dp_val_ptr? *_obj->_var_dp_val_ptr[2] : 0.0),
+	    _obj->var_raw_flg? _obj->_var_parent._msg_buff._ai7_val : (_obj->_var_dp_val_ptr? *_obj->_var_dp_val_ptr[3] : 0.0),
+	    _obj->var_raw_flg? 0.0 :_vel,
+	    _obj->var_raw_flg? 0.0 :_vol,
+	    _obj->var_raw_flg? _obj->_var_parent._msg_buff._ai2_val : thsen_get_value(_obj->_var_st_sen),
+	    _obj->var_raw_flg? _obj->_var_parent._msg_buff._ai1_val : _f_sp,
+	    _obj->var_raw_flg? 0.0 :_obj->var_fm_ratio*_f_sp,
+	    _obj->var_raw_flg? _obj->_var_parent._msg_buff._ai0_val : thsen_get_value(_obj->_var_tp_sen));
 
     return _rt_val;
 }
