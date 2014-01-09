@@ -80,6 +80,9 @@ thapp* thapp_ahu_new(void)
     thapp_set_stop_ptr(_obj, _thapp_ahu_stop);
     thapp_set_cmdhnd_ptr(_obj, _thapp_cmd);
 
+    /* Initialise dp value pointer */
+    _obj->_var_dp_val_ptr = NULL;
+    
     /* Load configurations and initialise sensors */
     if(_thapp_new_helper(_obj))
 	{
@@ -121,10 +124,19 @@ thapp* thapp_ahu_new(void)
 /* Desructor */
 void thapp_ahu_delete(thapp_ahu* obj)
 {
+    int i;
     /* Check object pointer */
     if(obj == NULL)
 	return;
 
+    /* Free dp value pinters if set. */
+    if(obj->_var_dp_val_ptr)
+	{
+	    for(i=0; i<thvsen_get_num_sensors(THOR_VSEN(obj->_var_vsen)); i++)
+		obj->_var_dp_val_ptr[i] = NULL;
+	    free(obj->_var_dp_val_ptr);
+	}
+    
     /* Delete parent object */
     thapp_delete(&obj->_var_parent);
 
@@ -185,10 +197,14 @@ static int _thapp_new_helper(thapp_ahu* obj)
 	    /* Count the number of sensors available */
 	    _num = config_setting_length(_setting);
 	    obj->_var_vsen = thvsen_new(NULL, _setting, _num);
-
+	   
 	    /* Check if sensor object was created */
 	    if(obj->_var_vsen == NULL)
 		return -1;
+
+	    /* Create dp value pointer array */
+	    obj->_var_dp_val_ptr = (double**) calloc(_num, sizeof(double*));
+	    thvsen_get_dp_values(THOR_VSEN(obj->_var_vsen), obj->_var_dp_val_ptr, _num);
 	}
     else
 	{
@@ -370,7 +386,6 @@ static int _thapp_ahu_stop(thapp* obj, void* self)
 static int _thapp_cmd(thapp* obj, void* self, char cmd)
 {
 #define THAPP_SEN_BUFF_SZ 4
-    double _array[THAPP_SEN_BUFF_SZ];
     double _vel = 0.0, _vol = 0.0, _f_sp = 0.0;
     thapp_ahu* _obj;
     unsigned int _num;
@@ -418,8 +433,6 @@ static int _thapp_cmd(thapp* obj, void* self, char cmd)
 	    _vol /= 1000000;
 	}
 
-    thvsen_get_dp_values(THOR_VSEN(_obj->_var_vsen), _array, &_num);
-
     _f_sp = thsen_get_value(_obj->_var_sp_sen);
     /* Temporary message buffer */
     memset(_obj->_var_parent.var_disp_vals, 0, THAPP_DISP_BUFF_SZ);
@@ -434,10 +447,10 @@ static int _thapp_cmd(thapp* obj, void* self, char cmd)
 	    "%.2f\t"
     	    "%.2f\t"
 	    "%.2f\t\r",
-	    _array[0],
-	    _array[1],
-	    _array[2],
-	    _array[3],
+	    (_obj->_var_dp_val_ptr? : *_obj->_var_dp_val_ptr[0] : 0.0),
+	    (_obj->_var_dp_val_ptr? : *_obj->_var_dp_val_ptr[1] : 0.0),
+	    (_obj->_var_dp_val_ptr? : *_obj->_var_dp_val_ptr[2] : 0.0),
+	    (_obj->_var_dp_val_ptr? : *_obj->_var_dp_val_ptr[3] : 0.0),
 	    _vel,
 	    _vol,
 	    thsen_get_value(_obj->_var_st_sen),

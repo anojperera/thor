@@ -171,7 +171,8 @@ extern "C" {
     /* Sets the initial value of the sensor. */
 #define thgsens_set_init_val(obj, val)		\
     (obj)->var_min_val = val;
-    
+#define thgsensor_get_val_ptr(obj_ptr)		\
+    &(obj_ptr)->var_val
 #ifdef __cplusplus
 }
 #endif

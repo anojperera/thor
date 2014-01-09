@@ -48,6 +48,8 @@ struct _thapp_ahu
      */
     double* _var_msg_addr[THAPP_AHU_NUM_MAX_PROBES];
 
+    double** _var_dp_val_ptr;						/* Array of pointers to dp values */
+
     /*
      * This sensor is used for measuring the loss in static pressure in
      * the test set up.

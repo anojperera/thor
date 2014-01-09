@@ -130,7 +130,7 @@ void thvsen_delete(thvsen* obj)
 }
 
 /* Differential pressure values */
-int thvsen_get_dp_values(thvsen* obj, double* array, size_t* sz)
+int thvsen_get_dp_values(thvsen* obj, double** array, size_t* sz)
 {
     int i;
     if(obj == NULL || array == NULL)
@@ -140,7 +140,7 @@ int thvsen_get_dp_values(thvsen* obj, double* array, size_t* sz)
     *sz = obj->var_num_sen;
 
     for(i=0; i<(*sz); i++)
-	array[i] = thgsensor_get_value(THOR_GSEN(obj->var_sens[i]));
+	array[i] = thgsensor_get_val_ptr(THOR_GSEN(obj->var_sens[i]));
 
     return 0;
 }
