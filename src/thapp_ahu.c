@@ -33,6 +33,7 @@
 #define THAPP_AHU_YES_CODE 121								/* y */
 #define THAPP_AHU_YES2_CODE 89								/* Y */
 #define THAPP_AHU_CALIBRATION_CODE 99							/* c */
+#define THAPP_AHU_RAW_VALUES 82								/* R */
 
 #define THAPP_AHU_MAX_ACT_PER 99
 #define THAPP_AHU_MIN_ACT_PER 0
@@ -417,13 +418,7 @@ static int _thapp_cmd(thapp* obj, void* self, char cmd)
 	    if(!_obj->var_calib_flg)
 		_obj->var_calib_flg = 1;
 	    break;
-	default:
-	    break;
-	}
-
-    /* F5 keypress handle to display raw voltage values instead */
-    if(cmd == KEY_F(5))
-	{
+	case THAPP_AHU_RAW_VALUES:
 	    if(_obj->var_raw_flg > 0)
 		{
 		    _obj->var_raw_flg = 0;
@@ -438,7 +433,11 @@ static int _thapp_cmd(thapp* obj, void* self, char cmd)
 		    sprintf(_obj->_var_parent.var_cmd_vals,
 			    "<==================== Raw Voltage Values ====================>");
 		}
+	    break;
+	default:
+	    break;
 	}
+
     /*
      * Handle calibration
      */
