@@ -427,7 +427,7 @@ static int _thapp_cmd(thapp* obj, void* self, char cmd)
 	    if(_obj->var_raw_flg > 0)
 		{
 		    _obj->var_raw_flg = 0;
-		    sprintf(obj->_var_parent.var_cmd_vals,
+		    sprintf(_obj->_var_parent.var_cmd_vals,
 			    "<==================== Physical Values ====================>");
 		}
 	    else
@@ -435,7 +435,7 @@ static int _thapp_cmd(thapp* obj, void* self, char cmd)
 		    _obj->var_raw_flg = 1;
 
 		    /* Message to indicate raw voltage values instead of physical values */
-		    sprintf(obj->_var_parent.var_cmd_vals,
+		    sprintf(_obj->_var_parent.var_cmd_vals,
 			    "<==================== Raw Voltage Values ====================>");
 		}
 	    break;
