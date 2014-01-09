@@ -438,7 +438,6 @@ static int _thapp_cmd(thapp* obj, void* self, char cmd)
 		    sprintf(_obj->_var_parent.var_cmd_vals,
 			    "<==================== Raw Voltage Values ====================>");
 		}
-	    break;
 	}
     /*
      * Handle calibration
