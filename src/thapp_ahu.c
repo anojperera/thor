@@ -424,7 +424,6 @@ static int _thapp_cmd(thapp* obj, void* self, char cmd)
 		    _obj->var_raw_flg = 0;
 		    sprintf(_obj->_var_parent.var_cmd_vals,
 			    "<==================== Physical Values ====================>");
-		    _rt_val = 2;
 		}
 	    else
 		{
@@ -433,12 +432,20 @@ static int _thapp_cmd(thapp* obj, void* self, char cmd)
 		    /* Message to indicate raw voltage values instead of physical values */
 		    sprintf(_obj->_var_parent.var_cmd_vals,
 			    "<==================== Raw Voltage Values ====================>");
-		    _rt_val = 1;
 		}
 	    break;
 	default:
 	    break;
 	}
+
+    /*
+     * If the raw flag was set, continue and return flag 2 to
+     * display message continuously.
+     */
+    if(_obj->var_raw_flg)
+	_rt_val = 2;
+    else
+	_rt_val = 1;
 
     /*
      * Handle calibration
