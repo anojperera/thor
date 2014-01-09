@@ -446,10 +446,10 @@ static int _thapp_cmd(thapp* obj, void* self, char cmd)
 	    "%.2f\t"
     	    "%.2f\t"
 	    "%.2f\t\r",
-	    (_obj->_var_dp_val_ptr? : *(_obj->_var_dp_val_ptr[0]) : 0.0),
-	    (_obj->_var_dp_val_ptr? : *(_obj->_var_dp_val_ptr[1]) : 0.0),
-	    (_obj->_var_dp_val_ptr? : *(_obj->_var_dp_val_ptr[2]) : 0.0),
-	    (_obj->_var_dp_val_ptr? : *(_obj->_var_dp_val_ptr[3]) : 0.0),
+	    (_obj->_var_dp_val_ptr? : (*_obj->_var_dp_val_ptr[0]) : 0.0),
+	    (_obj->_var_dp_val_ptr? : (*_obj->_var_dp_val_ptr[1]) : 0.0),
+	    (_obj->_var_dp_val_ptr? : (*_obj->_var_dp_val_ptr[2]) : 0.0),
+	    (_obj->_var_dp_val_ptr? : (*_obj->_var_dp_val_ptr[3]) : 0.0),
 	    _vel,
 	    _vol,
 	    thsen_get_value(_obj->_var_st_sen),
