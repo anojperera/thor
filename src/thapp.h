@@ -77,7 +77,8 @@ struct _thapp
     /* Display buffers */
     char var_disp_header[THAPP_DISP_BUFF_SZ];
     char var_disp_vals[THAPP_DISP_BUFF_SZ];
-    char var_cmd_vals[THAPP_DISP_BUFF_SZ];    
+    char var_cmd_vals[THAPP_DISP_BUFF_SZ];
+		      
     char var_disp_opts[THOR_BUFF_SZ]; 						/* Option buffer */
 
     /* Buffers to hold job number and tag number if applicable */

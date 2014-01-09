@@ -256,6 +256,7 @@ static void* _thapp_start_handler(void* obj)
     /* Calculate number of second divisions */
     _sec_cnt = 1000000 / _obj->var_sleep_time;
     _msg_cnt_max = THAPP_DEFAULT_CMD_MSG_TIME / _obj->var_sleep_time;
+    
     /* Main loop */
     while(_flg)
 	{
