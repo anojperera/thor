@@ -130,7 +130,7 @@ void thvsen_delete(thvsen* obj)
 }
 
 /* Differential pressure values */
-int thvsen_get_dp_values(thvsen* obj, double** array, size_t* sz)
+int thvsen_get_dp_values(thvsen* obj, double** array, int* sz)
 {
     int i;
     if(obj == NULL || array == NULL)

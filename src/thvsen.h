@@ -85,7 +85,7 @@ extern "C" {
      */
 
     /* Get buffer of Differential pressure values */
-    int thvsen_get_dp_values(thvsen* obj, double** array, size_t* sz);
+    int thvsen_get_dp_values(thvsen* obj, double** array, int* sz);
 
 #define thvsen_configure_sensors(obj, num)	\
     (obj)->var_config_sens = num
