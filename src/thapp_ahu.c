@@ -8,6 +8,8 @@
 #include "thapp_ahu.h"
 
 /* Options */
+#define THAPP_AHU_OPT_1 "Enter Job Number: "
+#define THAPP_AHU_OPT_2 "Enter Tag Number: "
 #define THAPP_AHU_OPT1 "Enter Duct Diameter (200/300/600/1120): "
 #define THAPP_AHU_OPT2 "Enter number of sensors (4/2): "
 #define THAPP_AHU_OPT3 "Enter external static pressure: "
@@ -288,6 +290,15 @@ static int _thapp_ahu_start(thapp* obj, void* self)
      */
     if(obj->var_op_mode != thapp_headless)
 	{
+	    /* Get job number and tag number */
+	    printw(THAPP_AHU_OPT_1);
+	    refresh();
+	    getnstr(obj->var_job_num, THAPP_DISP_BUFF_SZ-1);
+
+	    printw(THAPP_AHU_OPT_2);
+	    refresh();
+	    getnstr(obj->var_tag_num, THAPP_DISP_BUFF_SZ-1);
+	    
 	    memset(_scr_input_buff, 0, THAPP_DISP_BUFF_SZ);
 	    printw(THAPP_AHU_OPT1);
 	    refresh();
