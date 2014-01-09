@@ -12,6 +12,7 @@
 #include "thapp.h"
 
 #define THAPP_AHU_DMP_BUFF 500
+#define THAPP_AHU_NUM_MAX_PROBES 4
 
 typedef struct _thapp_ahu thapp_ahu;
 
@@ -39,6 +40,13 @@ struct _thapp_ahu
     thsen* _var_tp_sen;							/* Temperature sensor */
     thsen* _var_sp_sen;							/* Speed sensor */
     thsen* _var_st_sen;							/* Static sensor */
+
+    /*
+     * Array of pointers to hold addr of message struct.
+     * The array elements are set to the memory address of
+     * message struct's channels values dealing with v-probes.
+     */
+    double* _var_msg_addr[THAPP_AHU_NUM_MAX_PROBES];
 
     /*
      * This sensor is used for measuring the loss in static pressure in

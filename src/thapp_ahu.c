@@ -34,7 +34,6 @@
 #define THAPP_AHU_YES2_CODE 89								/* Y */
 #define THAPP_AHU_CALIBRATION_CODE 99							/* c */
 
-#define THAPP_AHU_NUM_MAX_PROBES 4
 #define THAPP_AHU_MAX_ACT_PER 99
 #define THAPP_AHU_MIN_ACT_PER 0
 
@@ -90,6 +89,12 @@ thapp* thapp_ahu_new(void)
 	    return NULL;
 	}
 
+    /* Set addr pointers of message struct */
+    _obj->_var_msg_addr[0] = &_obj->_var_parent._msg_buff._ai4_val;
+    _obj->_var_msg_addr[1] = &_obj->_var_parent._msg_buff._ai5_val;
+    _obj->_var_msg_addr[2] = &_obj->_var_parent._msg_buff._ai6_val;
+    _obj->_var_msg_addr[3] = &_obj->_var_parent._msg_buff._ai7_val;
+    
     /* Set default running mode to manual */
     _obj->var_mode = 0;
     _obj->var_act_pct = 0;
@@ -468,7 +473,7 @@ static int _thapp_ahu_init(thapp* obj, void* self)
     /*----------------------------------------*/
 
     /* Set velocity sensor update pointer */
-    thvsen_set_raw_buff(THOR_VSEN(_obj->_var_vsen), &obj->_msg_buff._ai4_val, THAPP_AHU_NUM_MAX_PROBES);
+    thvsen_set_raw_buff(THOR_VSEN(_obj->_var_vsen), _obj->_var_msg_addr[0], THAPP_AHU_NUM_MAX_PROBES);
 
     /* Set temperature raw value set */
     thgsens_set_value_ptr(THOR_GSEN(_obj->_var_tp_sen), &obj->_msg_buff._ai0_val);
