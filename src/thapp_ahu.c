@@ -204,7 +204,7 @@ static int _thapp_new_helper(thapp_ahu* obj)
 
 	    /* Create dp value pointer array */
 	    obj->_var_dp_val_ptr = (double**) calloc(_num, sizeof(double*));
-	    thvsen_get_dp_values(THOR_VSEN(obj->_var_vsen), obj->_var_dp_val_ptr, _num);
+	    thvsen_get_dp_values(THOR_VSEN(obj->_var_vsen), obj->_var_dp_val_ptr, &_num);
 	}
     else
 	{
@@ -388,7 +388,6 @@ static int _thapp_cmd(thapp* obj, void* self, char cmd)
 #define THAPP_SEN_BUFF_SZ 4
     double _vel = 0.0, _vol = 0.0, _f_sp = 0.0;
     thapp_ahu* _obj;
-    unsigned int _num;
     int _rt_val = 1;
 
     if(self == NULL)
@@ -447,10 +446,10 @@ static int _thapp_cmd(thapp* obj, void* self, char cmd)
 	    "%.2f\t"
     	    "%.2f\t"
 	    "%.2f\t\r",
-	    (_obj->_var_dp_val_ptr? : *_obj->_var_dp_val_ptr[0] : 0.0),
-	    (_obj->_var_dp_val_ptr? : *_obj->_var_dp_val_ptr[1] : 0.0),
-	    (_obj->_var_dp_val_ptr? : *_obj->_var_dp_val_ptr[2] : 0.0),
-	    (_obj->_var_dp_val_ptr? : *_obj->_var_dp_val_ptr[3] : 0.0),
+	    (_obj->_var_dp_val_ptr? : *(_obj->_var_dp_val_ptr[0]) : 0.0),
+	    (_obj->_var_dp_val_ptr? : *(_obj->_var_dp_val_ptr[1]) : 0.0),
+	    (_obj->_var_dp_val_ptr? : *(_obj->_var_dp_val_ptr[2]) : 0.0),
+	    (_obj->_var_dp_val_ptr? : *(_obj->_var_dp_val_ptr[3]) : 0.0),
 	    _vel,
 	    _vol,
 	    thsen_get_value(_obj->_var_st_sen),
