@@ -140,14 +140,6 @@ void thapp_delete(thapp* obj)
     /* Check configuration pointer and delete it */
     config_destroy(&obj->var_config);
 
-    /* /\* */
-    /*  * If destructor function pointer for the child class was */
-    /*  * assigned, call it before uninitialising the variables */
-    /*  * in this class */
-    /*  *\/ */
-    /* if(obj->_var_fptr.var_del_ptr) */
-    /* 	obj->_var_fptr.var_del_ptr(obj, obj->var_child); */
-
     obj->var_child = NULL;
     sem_destroy(&obj->_var_sem);
     pthread_mutex_destroy(&obj->_var_mutex);
@@ -325,6 +317,8 @@ static void* _thapp_start_handler(void* obj)
 		    memset(_obj->var_disp_header, 0, THAPP_DISP_BUFF_SZ);
 		    memset(_obj->var_disp_vals, 0, THAPP_DISP_BUFF_SZ);
 		    memset(_obj->var_disp_opts, 0, THOR_BUFF_SZ);
+		    memset(_obj->var_job_num, 0, THAPP_DISP_BUFF_SZ);
+		    memset(_obj->var_tag_num, 0, THAPP_DISP_BUFF_SZ);
 		    
 		    /*
 		     *  The user has entered start therefore we call the

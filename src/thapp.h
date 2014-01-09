@@ -79,6 +79,10 @@ struct _thapp
     char var_disp_vals[THAPP_DISP_BUFF_SZ];
     char var_cmd_vals[THAPP_DISP_BUFF_SZ];    
     char var_disp_opts[THOR_BUFF_SZ]; 						/* Option buffer */
+
+    /* Buffers to hold job number and tag number if applicable */
+    char var_job_num[THAPP_DISP_BUFF_SZ];
+    char var_tag_num[THAPP_DISP_BUFF_SZ];
     
     /*
      * Queue for buffering the messages recieved from the
