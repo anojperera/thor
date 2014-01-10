@@ -4,9 +4,10 @@
 #include <unistd.h>
 #include <signal.h>
 #include <ncurses.h>
-#include <stdio.h>
+#include <time.h>
 #include "thapp.h"
 
+#define THAPP_DEFAULT_LOG_FILE_NAME "/tmp/%Y-%m-%d-%I-%M-%S.txt"
 
 #define THAPP_START_MSG "Press 'Shift + s' to begin"
 #define THAPP_PAUSED_MSG "<============================== Paused ===================================>"
@@ -37,9 +38,16 @@
 #define THAPP_PAUSE_CODE1 112								/* p */
 #define THAPP_PAUSE_CODE2 32								/* p */
 
+#define THAPP_CLOSE_LOG(obj)			\
+    if((obj)->var_def_log)			\
+	fclose((obj)->var_def_log);		\
+    (obj)->var_def_log = NULL
 
 volatile sig_atomic_t _flg = 1;
 static void _thapp_sig_handler(int signo);
+
+/* Open file with time stamp */
+static void _thapp_open_log_file(thapp* obj);
 
 /*
  * Method for handling the main loop.
@@ -93,6 +101,7 @@ int thapp_init(thapp* obj)
     obj->_msg_cnt = 0;
     obj->var_sleep_time = THAPP_DEFAULT_SLEEP;
     obj->var_child = NULL;
+    obj->var_def_log = NULL;
 
     /* Call initialisation helper method to load configuration settings */
     /*
@@ -140,6 +149,11 @@ void thapp_delete(thapp* obj)
     /* Check configuration pointer and delete it */
     config_destroy(&obj->var_config);
 
+    /* If default file pointer was still open free it */
+    if(obj->var_def_log)
+	fclose(obj->var_def_log);
+    
+    obj->var_def_log = NULL;
     obj->var_child = NULL;
     sem_destroy(&obj->_var_sem);
     pthread_mutex_destroy(&obj->_var_mutex);
@@ -215,7 +229,7 @@ int thapp_stop(thapp* obj)
 static void* _thapp_start_handler(void* obj)
 {
     int cnt = THAPP_DEFAULT_TRY_COUNT;
-    char _cmd;
+    char _cmd, *_msg_ptr;
     char _start_msg[] = THAPP_START_MSG;
     thapp* _obj;
     unsigned int _st_flg = 0;
@@ -256,7 +270,7 @@ static void* _thapp_start_handler(void* obj)
     /* Calculate number of second divisions */
     _sec_cnt = 1000000 / _obj->var_sleep_time;
     _msg_cnt_max = THAPP_DEFAULT_CMD_MSG_TIME / _obj->var_sleep_time;
-    
+
     /* Main loop */
     while(_flg)
 	{
@@ -303,6 +317,9 @@ static void* _thapp_start_handler(void* obj)
 				break;
 			    sleep(THAPP_DEFAULT_WAIT_TIME);
 			}
+
+		    /* Open log file */
+		    _thapp_open_log_file(_obj);
 
 		    /*
 		     * Disable line buffering as interactive session is
@@ -357,6 +374,9 @@ static void* _thapp_start_handler(void* obj)
 		    gqueue_delete(&_obj->_var_msg_queue);
 		    gqueue_new(&_obj->_var_msg_queue, _thapp_queue_del_helper);
 
+		    /* If the log file is open, close and set to NULL */
+		    THAPP_CLOSE_LOG(_obj);
+		    
 		    _st_flg = 0;
 		    break;
 		case THAPP_PAUSE_CODE1:
@@ -411,9 +431,16 @@ static void* _thapp_start_handler(void* obj)
 	     * The pause code is checked. Messages from the system
 	     * is popped from the message queue. However processing on
 	     * the popped messages shall not be performed.
+	     *
+	     * Logging is also done while the system is not in pause mode.
 	     */
 	    if(_obj->_var_fptr.var_cmdhnd_ptr && !_p_flg)
-		_flg = _obj->_var_fptr.var_cmdhnd_ptr(_obj, _obj->var_child, _cmd);
+		{
+		    _flg = _obj->_var_fptr.var_cmdhnd_ptr(_obj, _obj->var_child, _cmd);
+		    
+		    if(_obj->var_def_log)
+			fprintf(_obj->var_def_log, "%s\n", _obj->var_disp_vals);
+		}
 
 	    /*
 	     * If any commands were executed by the derived classes, the
@@ -451,6 +478,9 @@ static void* _thapp_start_handler(void* obj)
 	    usleep(_obj->var_sleep_time);
 	}
 
+    /* Check if the file pointer is open and close it */
+    THAPP_CLOSE_LOG(_obj);
+    
     endwin();
     _obj->var_run_flg = 0;
     return NULL;
@@ -581,4 +611,20 @@ static char _thapp_get_cmd(void)
     int _cmd = 0;
     _cmd = getch();
     return (char) _cmd;
+}
+
+/* Open file based on time */
+static void _thapp_open_log_file(thapp* obj)
+{
+    char _file_name[THAPP_DISP_BUFF_SZ];
+    char _time_sig[THAPP_DISP_BUFF_SZ];
+    time_t _tm;
+    struct tm* _tm_info;
+
+    time(&_tm);
+    _tm_info = localtime(&_tm);
+    strftime(_time_sig, THAPP_DISP_BUFF_SZ, THAPP_DEFAULT_LOG_FILE_NAME, _tm_info);
+
+    obj->var_def_log = fopen(_file_name, "w+");
+    return;
 }

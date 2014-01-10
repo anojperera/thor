@@ -9,6 +9,7 @@
 #define __THAPP_H__
 
 #include <stdlib.h>
+#include <stdio.h>
 #include <pthread.h>
 #include <semaphore.h>
 #include <gqueue.h>
@@ -84,7 +85,9 @@ struct _thapp
     /* Buffers to hold job number and tag number if applicable */
     char var_job_num[THAPP_DISP_BUFF_SZ];
     char var_tag_num[THAPP_DISP_BUFF_SZ];
-    
+
+    /* Log file pointer */
+    FILE* var_def_log;
     /*
      * Queue for buffering the messages recieved from the
      * server.
