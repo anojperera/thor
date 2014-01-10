@@ -18,7 +18,8 @@
 #include "thcon.h"
 
 #define THAPP_DISP_BUFF_SZ 256
-
+#define THAPP_SEC_DIV(obj_ptr)			\
+    1000000 / (obj_ptr)->var_sleep_time
 /*
  * Macro for initialising the function pointer table.
  */
