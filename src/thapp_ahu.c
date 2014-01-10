@@ -478,7 +478,7 @@ static int _thapp_cmd(thapp* obj, void* self, char cmd)
     /*
      * Handle calibration
      */
-    if(_obj->var_calib_flg)
+    if(_obj->var_calib_flg && obj->_msg_cnt%(THAPP_SEC_DIV(obj)))
 	{
 	    _thapp_act_ctrl(_obj, _obj->var_dmp_buff[_obj->var_dmp_cnt], &_act_per, 1);
 	    sprintf(_obj->_var_parent.var_cmd_vals, THAPP_AHU_OPT8, _act_per);
@@ -584,8 +584,11 @@ static int _thapp_act_ctrl(thapp_ahu* obj, int incr, int* per, int flg)
 	{
 	    /* Reset the value to the original and set the external value */
 	    obj->var_act_pct -= incr;
+	    if(per != NULL)
+		*per = obj->var_act_pct;
 	    return 0;
 	}
+    
     if(per != NULL)
 	*per = obj->var_act_pct;
 
