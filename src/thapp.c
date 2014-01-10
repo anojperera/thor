@@ -625,6 +625,6 @@ static void _thapp_open_log_file(thapp* obj)
     _tm_info = localtime(&_tm);
     strftime(_time_sig, THAPP_DISP_BUFF_SZ, THAPP_DEFAULT_LOG_FILE_NAME, _tm_info);
 
-    obj->var_def_log = fopen(_file_name, "w+");
+    obj->var_def_log = fopen(_time_sig, "w+");
     return;
 }
