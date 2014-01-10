@@ -18,7 +18,7 @@
 #define THAPP_AHU_OPT6 "Motor pulley diameter: "
 #define THAPP_AHU_OPT7 "Pulley Ratio: "
 
-#define THAPP_AHU_OPT8 "<==================== Calibration in Progress - ACT %i%% ====================>";
+#define THAPP_AHU_OPT8 "<==================== Calibration in Progress - ACT %i%% ====================>"
 
 /* Settting keys */
 #define THAPP_AHU_KEY "ahu"
