@@ -18,7 +18,7 @@
 #define THAPP_AHU_OPT6 "Motor pulley diameter: "
 #define THAPP_AHU_OPT7 "Pulley Ratio: "
 
-#define THAPP_AHU_OPT8 "<=================== Calibration in Progress - ACT %i%% ===================>"
+#define THAPP_AHU_OPT8 "<============= Calibration in Progress - ACT %i%%, %i =============>"
 
 /* Settting keys */
 #define THAPP_AHU_KEY "ahu"
@@ -440,7 +440,7 @@ static int _thapp_cmd(thapp* obj, void* self, char cmd)
 
 		    /* Message to indicate calibration in progress */
 		    memset(_obj->_var_parent.var_cmd_vals, 0, THAPP_DISP_BUFF_SZ);
-		    sprintf(_obj->_var_parent.var_cmd_vals, THAPP_AHU_OPT8, 0);
+		    sprintf(_obj->_var_parent.var_cmd_vals, THAPP_AHU_OPT8, 0, 0);
 			    
 		}
 	    
@@ -481,7 +481,10 @@ static int _thapp_cmd(thapp* obj, void* self, char cmd)
     if(_obj->var_calib_flg && obj->_msg_cnt%(THAPP_SEC_DIV(obj)))
 	{
 	    _thapp_act_ctrl(_obj, _obj->var_dmp_buff[_obj->var_dmp_cnt], &_act_per, 1);
-	    sprintf(_obj->_var_parent.var_cmd_vals, THAPP_AHU_OPT8, _act_per);
+	    sprintf(_obj->_var_parent.var_cmd_vals,
+		    THAPP_AHU_OPT8,
+		    _obj->var_dmp_buff[_obj->var_dmp_cnt],
+		    _obj->var_dmp_cnt);
 	    if(++_obj->var_dmp_cnt >= THAPP_AHU_DMP_BUFF)
 		{
 		    _obj->var_calib_flg = 0;
