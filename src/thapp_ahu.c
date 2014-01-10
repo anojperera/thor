@@ -48,7 +48,7 @@ static int _thapp_ahu_init(thapp* obj, void* self);
 static int _thapp_ahu_start(thapp* obj, void* self);
 static int _thapp_ahu_stop(thapp* obj, void* self);
 static int _thapp_cmd(thapp* obj, void* self, char cmd);
-static int _thapp_act_ctrl(thapp_ahu* obj, int incr, int* per);
+static int _thapp_act_ctrl(thapp_ahu* obj, int incr, int* per, int flg);
 
 /* Helper method for loading configuration settings */
 static int _thapp_new_helper(thapp_ahu* obj);
@@ -399,10 +399,16 @@ static int _thapp_ahu_stop(thapp* obj, void* self)
 static int _thapp_cmd(thapp* obj, void* self, char cmd)
 {
 #define THAPP_SEN_BUFF_SZ 4
-    double _vel = 0.0, _vol = 0.0, _f_sp = 0.0;
+    double _vel, _vol, _f_sp;
     thapp_ahu* _obj;
-    int _rt_val = 1;
+    int _rt_val;
+    int _cnt = 0;
 
+    _vel = 0.0;
+    _vol = 0.0;
+    _f_sp = 0.0;
+    _rt_val = 1;
+    
     if(self == NULL)
 	return _rt_val;
 
@@ -410,16 +416,16 @@ static int _thapp_cmd(thapp* obj, void* self, char cmd)
     switch(cmd)
 	{
 	case THAPP_AHU_ACT_INCR_CODE:
-	    _thapp_act_ctrl(_obj, THAPP_AHU_INCR_PER, NULL);
+	    _thapp_act_ctrl(_obj, THAPP_AHU_INCR_PER, NULL, 0);
 	    break;
 	case THAPP_AHU_ACT_DECR_CODE:
-	    _thapp_act_ctrl(_obj, -1*THAPP_AHU_INCR_PER, NULL);	    
+	    _thapp_act_ctrl(_obj, -1*THAPP_AHU_INCR_PER, NULL, 0);	    
 	    break;
 	case THAPP_AHU_ACT_INCRF_CODE:
-	    _thapp_act_ctrl(_obj, THAPP_AHU_INCRF_PER, NULL);
+	    _thapp_act_ctrl(_obj, THAPP_AHU_INCRF_PER, NULL, 0);
 	    break;
 	case THAPP_AHU_ACT_DECRF_CODE:
-	    _thapp_act_ctrl(_obj, -1*THAPP_AHU_INCRF_PER, NULL);	    
+	    _thapp_act_ctrl(_obj, -1*THAPP_AHU_INCRF_PER, NULL, 0);	    
 	    break;
 	case THAPP_AHU_YES_CODE:
 	    break;
@@ -427,7 +433,15 @@ static int _thapp_cmd(thapp* obj, void* self, char cmd)
 	    break;
 	case THAPP_AHU_CALIBRATION_CODE:
 	    if(!_obj->var_calib_flg)
-		_obj->var_calib_flg = 1;
+		{
+		    _obj->var_calib_flg = 1;
+		    _cnt = 0;
+
+		    /* Message to indicate calibration in progress */
+		    sprintf(_obj->_var_parent.var_cmd_vals,
+			    "<==================== Calibration in Progress  ====================>");
+		}
+	    
 	    break;
 	case THAPP_AHU_RAW_VALUES:
 	    if(_obj->var_raw_flg > 0)
@@ -449,7 +463,7 @@ static int _thapp_cmd(thapp* obj, void* self, char cmd)
      * If the raw flag was set, continue and return flag 2 to
      * display message continuously.
      */
-    if(_obj->var_raw_flg)
+    if(_obj->var_raw_flg || _obj->var_calib_flg)
 	_rt_val = 2;
     else
 	_rt_val = 1;
@@ -457,6 +471,16 @@ static int _thapp_cmd(thapp* obj, void* self, char cmd)
     /*
      * Handle calibration
      */
+    if(_obj->var_calib_flg)
+	{
+	    _thapp_act_ctrl(_obj, _obj->var_dmp_buff[_cnt], NULL, 1);	    
+	    if(++_cnt >= THAPP_AHU_DMP_BUFF)
+		{
+		    _obj->var_calib_flg = 0;
+		    _cnt = 0;
+		}
+	}
+	
 
     /* Get Values */
     _vel = thsen_get_value(_obj->_var_vsen);
@@ -513,7 +537,7 @@ static int _thapp_ahu_init(thapp* obj, void* self)
 
     /* Generate actuator control values */
     for(i=0; i<THAPP_AHU_DMP_BUFF; i++)
-	_obj->var_dmp_buff[i] = sin(M_PI*(double)i/THAPP_AHU_DMP_BUFF)*10.0;
+	_obj->var_dmp_buff[i] = sin(M_PI*(double)i/THAPP_AHU_DMP_BUFF)*100.0;
 
     /* Set raw value pointers for the sensors */
     /*----------------------------------------*/
@@ -538,7 +562,7 @@ static int _thapp_ahu_init(thapp* obj, void* self)
  * server. This method handles both increment and decremnt methods.
  * Uses percentages to calculate the voltage to be sent.
  */
-static int _thapp_act_ctrl(thapp_ahu* obj, int incr, int* per)
+static int _thapp_act_ctrl(thapp_ahu* obj, int incr, int* per, int flg)
 {
     struct thor_msg _msg;						/* message */
     char _msg_buff[THORNIFIX_MSG_BUFF_SZ];
@@ -560,9 +584,12 @@ static int _thapp_act_ctrl(thapp_ahu* obj, int incr, int* per)
     /* Set the message counter to zero */
     obj->_var_parent._msg_cnt = 0;
     /* Update command message */
-    sprintf(obj->_var_parent.var_cmd_vals,
-	    "<==================== Actuator - %i%% ====================>",
-	    (int) obj->var_act_pct);
+    if(flg == 0)
+	{
+	    sprintf(obj->_var_parent.var_cmd_vals,
+		    "<==================== Actuator - %i%% ====================>",
+		    (int) obj->var_act_pct);
+	}
 
     _val = obj->var_act_pct;
     /* memset buffer */
