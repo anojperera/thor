@@ -18,6 +18,7 @@
 #define THAPP_AHU_OPT6 "Motor pulley diameter: "
 #define THAPP_AHU_OPT7 "Pulley Ratio: "
 
+#define THAPP_AHU_OPT8 "<==================== Calibration in Progress - ACT %i%% ====================>");
 
 /* Settting keys */
 #define THAPP_AHU_KEY "ahu"
@@ -401,7 +402,7 @@ static int _thapp_cmd(thapp* obj, void* self, char cmd)
 #define THAPP_SEN_BUFF_SZ 4
     double _vel, _vol, _f_sp;
     thapp_ahu* _obj;
-    int _rt_val;
+    int _rt_val, _act_per=0;
     int _cnt = 0;
 
     _vel = 0.0;
@@ -439,8 +440,8 @@ static int _thapp_cmd(thapp* obj, void* self, char cmd)
 
 		    /* Message to indicate calibration in progress */
 		    memset(_obj->_var_parent.var_cmd_vals, 0, THAPP_DISP_BUFF_SZ);
-		    sprintf(_obj->_var_parent.var_cmd_vals,
-			    "<==================== Calibration in Progress  ====================>");
+		    sprintf(_obj->_var_parent.var_cmd_vals, THAPP_AHU_OPT8, 0);
+			    
 		}
 	    
 	    break;
@@ -466,7 +467,10 @@ static int _thapp_cmd(thapp* obj, void* self, char cmd)
      * display message continuously.
      */
     if(_obj->var_raw_flg || _obj->var_calib_flg)
-	_rt_val = 2;
+	{
+	    _rt_val = 2;
+	    obj->_msg_cnt++;
+	}
     else
 	_rt_val = 1;
 
@@ -475,7 +479,8 @@ static int _thapp_cmd(thapp* obj, void* self, char cmd)
      */
     if(_obj->var_calib_flg)
 	{
-	    _thapp_act_ctrl(_obj, _obj->var_dmp_buff[_cnt], NULL, 1);	    
+	    _thapp_act_ctrl(_obj, _obj->var_dmp_buff[_cnt], &_act_per, 1);
+	    sprintf(_obj->_var_parent.var_cmd_vals, THAPP_AHU_OPT8, _act_per);
 	    if(++_cnt >= THAPP_AHU_DMP_BUFF)
 		{
 		    _obj->var_calib_flg = 0;
@@ -578,13 +583,11 @@ static int _thapp_act_ctrl(thapp_ahu* obj, int incr, int* per, int flg)
 	{
 	    /* Reset the value to the original and set the external value */
 	    obj->var_act_pct -= incr;
-	    if(per != NULL)
-		*per = obj->var_act_pct;
 	    return 0;
 	}
+    if(per != NULL)
+	*per = obj->var_act_pct;
 
-    /* Set the message counter to zero */
-    obj->_var_parent._msg_cnt = 0;
     /* Update command message */
     if(flg == 0)
 	{
