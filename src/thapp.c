@@ -621,10 +621,17 @@ static void _thapp_open_log_file(thapp* obj)
     time_t _tm;
     struct tm* _tm_info;
 
+    /* Initialise buffers */
+    memset(_file_name, 0, THAPP_DISP_BUFF_SZ);
+    memset(_time_sig, 0, THAPP_DISP_BUFF_SZ);
+    
     time(&_tm);
     _tm_info = localtime(&_tm);
     strftime(_time_sig, THAPP_DISP_BUFF_SZ, THAPP_DEFAULT_LOG_FILE_NAME, _tm_info);
-
+    if(obj->var_job_num[0] != 0 && obj->var_tag_num[0] != 0)
+	sprintf(_file_name, "%s-%s-%s", obj->var_job_num, obj->var_tag_num, _time_sig);
+    else
+	sprintf(_file_name, "%s", _time_sig);
     obj->var_def_log = fopen(_time_sig, "w+");
     return;
 }
