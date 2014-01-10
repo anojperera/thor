@@ -438,6 +438,7 @@ static int _thapp_cmd(thapp* obj, void* self, char cmd)
 		    _cnt = 0;
 
 		    /* Message to indicate calibration in progress */
+		    memset(_obj->_var_parent.var_cmd_vals, 0, THAPP_DISP_BUFF_SZ);
 		    sprintf(_obj->_var_parent.var_cmd_vals,
 			    "<==================== Calibration in Progress  ====================>");
 		}
@@ -451,6 +452,7 @@ static int _thapp_cmd(thapp* obj, void* self, char cmd)
 		    _obj->var_raw_flg = 1;
 
 		    /* Message to indicate raw voltage values instead of physical values */
+    		    memset(_obj->_var_parent.var_cmd_vals, 0, THAPP_DISP_BUFF_SZ);
 		    sprintf(_obj->_var_parent.var_cmd_vals,
 			    "<==================== Raw Voltage Values ====================>");
 		}
