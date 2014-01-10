@@ -18,7 +18,7 @@
 #define THAPP_AHU_OPT6 "Motor pulley diameter: "
 #define THAPP_AHU_OPT7 "Pulley Ratio: "
 
-#define THAPP_AHU_OPT8 "<==================== Calibration in Progress - ACT %i%% ====================>");
+#define THAPP_AHU_OPT8 "<==================== Calibration in Progress - ACT %i%% ====================>";
 
 /* Settting keys */
 #define THAPP_AHU_KEY "ahu"
@@ -464,7 +464,8 @@ static int _thapp_cmd(thapp* obj, void* self, char cmd)
 
     /*
      * If the raw flag was set, continue and return flag 2 to
-     * display message continuously.
+     * display message continuously. We increment the _msg_cnt of
+     * parent class to flash the message instead of continuous display.
      */
     if(_obj->var_raw_flg || _obj->var_calib_flg)
 	{
