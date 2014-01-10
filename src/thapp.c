@@ -229,7 +229,7 @@ int thapp_stop(thapp* obj)
 static void* _thapp_start_handler(void* obj)
 {
     int cnt = THAPP_DEFAULT_TRY_COUNT;
-    char _cmd, *_msg_ptr;
+    char _cmd;
     char _start_msg[] = THAPP_START_MSG;
     thapp* _obj;
     unsigned int _st_flg = 0;
