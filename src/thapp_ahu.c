@@ -34,7 +34,7 @@
 #define THAPP_AHU_ACT_DECRF_CODE 47							/* / */
 #define THAPP_AHU_YES_CODE 121								/* y */
 #define THAPP_AHU_YES2_CODE 89								/* Y */
-#define THAPP_AHU_CALIBRATION_CODE 99							/* c */
+#define THAPP_AHU_CALIBRATION_CODE 67							/* c */
 #define THAPP_AHU_RAW_VALUES 82								/* R */
 
 #define THAPP_AHU_MAX_ACT_PER 99
