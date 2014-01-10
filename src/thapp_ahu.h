@@ -11,7 +11,7 @@
 #include "thsen.h"
 #include "thapp.h"
 
-#define THAPP_AHU_DMP_BUFF 1000
+#define THAPP_AHU_DMP_BUFF 500
 #define THAPP_AHU_NUM_MAX_PROBES 4
 
 typedef struct _thapp_ahu thapp_ahu;
