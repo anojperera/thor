@@ -483,7 +483,7 @@ static int _thapp_cmd(thapp* obj, void* self, char cmd)
 	    _thapp_act_ctrl(_obj, _obj->var_dmp_buff[_obj->var_dmp_cnt], &_act_per, 1);
 	    sprintf(_obj->_var_parent.var_cmd_vals,
 		    THAPP_AHU_OPT8,
-		    _obj->var_dmp_buff[_obj->var_dmp_cnt],
+		    (int) _obj->var_dmp_buff[_obj->var_dmp_cnt],
 		    _obj->var_dmp_cnt);
 	    if(++_obj->var_dmp_cnt >= THAPP_AHU_DMP_BUFF)
 		{
