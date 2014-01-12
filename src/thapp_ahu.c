@@ -41,15 +41,15 @@
 #define THAPP_AHU_MAX_ACT_PER 99
 #define THAPP_AHU_MIN_ACT_PER 0
 
-#define THAPP_AHU_INCR_PER 5
-#define THAPP_AHU_INCRF_PER 1
+#define THAPP_AHU_INCR_PER 5.0
+#define THAPP_AHU_INCRF_PER 1.0
 #define THAPP_MAX_OPT_MESSAGE_LINES 6
 /* Callback methods */
 static int _thapp_ahu_init(thapp* obj, void* self);
 static int _thapp_ahu_start(thapp* obj, void* self);
 static int _thapp_ahu_stop(thapp* obj, void* self);
 static int _thapp_cmd(thapp* obj, void* self, char cmd);
-static int _thapp_act_ctrl(thapp_ahu* obj, int incr, int* per, int flg);
+static int _thapp_act_ctrl(thapp_ahu* obj, double incr, int* per, int flg);
 
 /* Helper method for loading configuration settings */
 static int _thapp_new_helper(thapp_ahu* obj);
@@ -104,7 +104,7 @@ thapp* thapp_ahu_new(void)
     
     /* Set default running mode to manual */
     _obj->var_mode = 0;
-    _obj->var_act_pct = 0;
+    _obj->var_act_pct = 0.0;
 
     /* Initialise actuator buffer */
     for(; i<THAPP_AHU_DMP_BUFF; i++)
@@ -285,6 +285,9 @@ static int _thapp_ahu_start(thapp* obj, void* self)
     thsen_reset_sensor(_obj->_var_sp_sen);
     thsen_reset_sensor(_obj->_var_st_sen);
     thsen_reset_sensor(_obj->_var_stm_sen);
+
+    /* Actuator percentage to zero */
+    _obj->var_act_pct = 0;
 
     /*
      * If the app is not running in headless mode, query for
@@ -573,7 +576,7 @@ static int _thapp_ahu_init(thapp* obj, void* self)
  * server. This method handles both increment and decremnt methods.
  * Uses percentages to calculate the voltage to be sent.
  */
-static int _thapp_act_ctrl(thapp_ahu* obj, int incr, int* per, int flg)
+static int _thapp_act_ctrl(thapp_ahu* obj, double incr, int* per, int flg)
 {
     struct thor_msg _msg;						/* message */
     char _msg_buff[THORNIFIX_MSG_BUFF_SZ];
@@ -593,7 +596,7 @@ static int _thapp_act_ctrl(thapp_ahu* obj, int incr, int* per, int flg)
 	}
     
     if(per != NULL)
-	*per = obj->var_act_pct;
+	*per = (int) obj->var_act_pct;
 
     /* Update command message */
     if(flg == 0)
