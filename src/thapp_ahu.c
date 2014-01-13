@@ -567,7 +567,7 @@ static int _thapp_ahu_init(thapp* obj, void* self)
 
     /* Generate actuator control values */
     for(i=0; i<THAPP_AHU_DMP_BUFF; i++)
-	_obj->var_dmp_buff[i] = sin(M_PI*(double)i/THAPP_AHU_DMP_BUFF)*100.0;
+	_obj->var_dmp_buff[i] = sin(M_PI*(double)i/THAPP_AHU_DMP_BUFF)*96.0;
 
     /* Set raw value pointers for the sensors */
     /*----------------------------------------*/
@@ -600,21 +600,20 @@ static int _thapp_act_ctrl(thapp_ahu* obj, double incr, double* incr_val, int* p
 
     /* Increment the value temporarily. */
     if(incr_val != NULL)
-	obj->var_act_pct = *incr_val;
+	    obj->var_act_pct = *incr_val;
     else
-	{
-	    obj->var_act_pct += incr;
+	obj->var_act_pct += incr;
 
-	    /* Check if its within bounds. */
-	    if(obj->var_act_pct > THAPP_AHU_MAX_ACT_PER || obj->var_act_pct < THAPP_AHU_MIN_ACT_PER)
-		{
-		    /* Reset the value to the original and set the external value */
-		    obj->var_act_pct -= incr;
-		    if(per != NULL)
-			*per = obj->var_act_pct;
-		    return 0;
-		}
+    /* Check if its within bounds. */
+    if(obj->var_act_pct > THAPP_AHU_MAX_ACT_PER || obj->var_act_pct < THAPP_AHU_MIN_ACT_PER)
+	{
+	    /* Reset the value to the original and set the external value */
+	    obj->var_act_pct -= incr;
+	    if(per != NULL)
+		*per = obj->var_act_pct;
+	    return 0;
 	}
+
     
     if(per != NULL)
 	*per = (int) obj->var_act_pct;
