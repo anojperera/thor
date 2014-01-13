@@ -28,7 +28,7 @@
 #define THAPP_SPD_KEY "sp1"
 #define THAPP_STT_KEY "st1"
 #define THAPP_SMT_KEY "lkg"
-
+#define THAPP_WAIT_EXT_KEY "ahu_calib_wait_ext"
 
 /* Control Keys */
 #define THAPP_AHU_ACT_INCR_CODE 43							/* + */
@@ -108,6 +108,7 @@ thapp* thapp_ahu_new(void)
     /* Set default running mode to manual */
     _obj->var_mode = 0;
     _obj->var_act_pct = 0.0;
+    _obj->var_calib_wait_ext = 0;
 
     /* Initialise actuator buffer */
     for(; i<THAPP_AHU_DMP_BUFF; i++)
@@ -264,6 +265,9 @@ static int _thapp_new_helper(thapp_ahu* obj)
     if(_setting)
 	obj->_var_stm_sen = thsmsen_new(NULL, _setting);
 
+    _setting = config_lookup(&obj->_var_parent.var_config, THAPP_WAIT_EXT_KEY);
+    if(_setting)
+	obj->var_calib_wait_ext = config_setting_get_int(_setting);
     return 0;
 }
 
@@ -485,7 +489,7 @@ static int _thapp_cmd(thapp* obj, void* self, char cmd)
     /*
      * Handle calibration
      */
-    if(_obj->var_calib_flg && obj->_msg_cnt%(THAPP_SEC_DIV(obj)))
+    if(_obj->var_calib_flg && obj->_msg_cnt%(THAPP_SEC_DIV(obj)+_obj->obj->var_calib_wait_ext))
 	{
 	    _thapp_act_ctrl(_obj, 0, &_obj->var_dmp_buff[_obj->var_dmp_cnt], &_act_per, 1);
 	    sprintf(_obj->_var_parent.var_cmd_vals,

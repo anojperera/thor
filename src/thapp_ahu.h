@@ -27,6 +27,14 @@ struct _thapp_ahu
      * 1 - auto.
      */
     int var_mode;							/* Running mode. */
+
+    /*
+     * Extta time is added to when calibration in progress.
+     * This is to allow settling time of the actuator.
+     * The setting is brought to the configuration file so that
+     * it can be edited outside the program.
+     */
+    int var_calib_wait_ext;
     
     unsigned int var_calib_flg;						/* Calibration flag is in progress */
     unsigned int var_calib_app_flg;					/* Apply calibration flag */
