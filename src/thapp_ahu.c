@@ -29,6 +29,7 @@
 #define THAPP_STT_KEY "st1"
 #define THAPP_SMT_KEY "lkg"
 #define THAPP_WAIT_EXT_KEY "ahu_calib_wait_ext"
+#define THAPP_CALIB_SETTLE_KEY "ahu_calib_settle_time"
 
 /* Control Keys */
 #define THAPP_AHU_ACT_INCR_CODE 43							/* + */
@@ -103,12 +104,17 @@ thapp* thapp_ahu_new(void)
     _obj->_var_msg_addr[1] = &_obj->_var_parent._msg_buff._ai5_val;
     _obj->_var_msg_addr[2] = &_obj->_var_parent._msg_buff._ai6_val;
     _obj->_var_msg_addr[3] = &_obj->_var_parent._msg_buff._ai7_val;
-
+    _obj->_var_msg_addr[4] = &_obj->_var_parent._msg_buff._ai8_val;
+    _obj->_var_msg_addr[5] = &_obj->_var_parent._msg_buff._ai9_val;
+    _obj->_var_msg_addr[6] = &_obj->_var_parent._msg_buff._ai10_val;
+    _obj->_var_msg_addr[7] = &_obj->_var_parent._msg_buff._ai11_val;
+    
     
     /* Set default running mode to manual */
     _obj->var_mode = 0;
     _obj->var_act_pct = 0.0;
     _obj->var_calib_wait_ext = 0;
+    _obj->var_calib_settle_time = 0;
 
     /* Initialise actuator buffer */
     for(; i<THAPP_AHU_DMP_BUFF; i++)
@@ -265,9 +271,15 @@ static int _thapp_new_helper(thapp_ahu* obj)
     if(_setting)
 	obj->_var_stm_sen = thsmsen_new(NULL, _setting);
 
+    /* Extra wait time during calibration */
     _setting = config_lookup(&obj->_var_parent.var_config, THAPP_WAIT_EXT_KEY);
     if(_setting)
 	obj->var_calib_wait_ext = config_setting_get_int(_setting);
+
+    /* Settling time for calibration */
+    _setting = config_lookup(&obj->_var_parent.var_config, THAPP_CALIB_SETTLE_KEY);
+    if(_setting)
+	obj->var_calib_settle_time = config_setting_get_int(_setting);    
     return 0;
 }
 
@@ -297,6 +309,16 @@ static int _thapp_ahu_start(thapp* obj, void* self)
     /* Actuator percentage to zero */
     _obj->var_act_pct = 0;
 
+    /* Reset other values */
+    _obj->var_def_static = 0.0;
+    _obj->var_duct_dia = 0.0;
+    _obj->var_duct_vel = 0.0;
+    _obj->var_duct_vol = 0.0;
+    _obj->var_duct_loss = 0.0;
+    _obj->var_t_ext_st = 0.0;
+    _obj->var_fm_ratio = 0.0;
+    
+    
     /*
      * If the app is not running in headless mode, query for
      * other options.
@@ -412,12 +434,10 @@ static int _thapp_ahu_stop(thapp* obj, void* self)
 static int _thapp_cmd(thapp* obj, void* self, char cmd)
 {
 #define THAPP_SEN_BUFF_SZ 4
-    double _vel=0.0, _vol=0.0, _f_sp=0.0, _st=0.0;
+    double _f_sp=0.0;
     thapp_ahu* _obj;
     int _rt_val, _act_per=0;
 
-    _vel = 0.0;
-    _vol = 0.0;
     _f_sp = 0.0;
     _rt_val = 1;
     
@@ -489,6 +509,7 @@ static int _thapp_cmd(thapp* obj, void* self, char cmd)
     /*
      * Handle calibration
      */
+    /*======================================================================*/
     if(_obj->var_calib_flg && !(obj->_msg_cnt%(THAPP_SEC_DIV(obj)+_obj->var_calib_wait_ext)))
 	{
 	    _thapp_act_ctrl(_obj, 0, &_obj->var_dmp_buff[_obj->var_dmp_cnt], &_act_per, 1);
@@ -498,6 +519,11 @@ static int _thapp_cmd(thapp* obj, void* self, char cmd)
 		    _obj->var_dmp_cnt);
 	    if(++_obj->var_dmp_cnt >= THAPP_AHU_DMP_BUFF)
 		{
+		    /*
+		     * Calibration flag and buffer counter is set to zero here.
+		     * Immediately following calibration, buffer count is used
+		     * for calculating the settling time.
+		     */
 		    _obj->var_calib_flg = 0;
 		    _obj->var_dmp_cnt = 0;
 
@@ -508,18 +534,36 @@ static int _thapp_cmd(thapp* obj, void* self, char cmd)
 		    _obj->var_calib_app_flg = 1;
 		}
 	}
+
+    if(_obj->var_calib_app_flg > 0 && _obj->var_dmp_cnt < _obj->var_calib_settle_time)
+	{
+	    _obj->var_duct_loss = thsen_get_value(_obj->_var_stm_sen);
+	    if(!((obj->_msg_cnt++)%THAPP_SEC_DIV(obj)))
+		    _obj->var_dmp_cnt++;
+
+	    /*
+	     * If the counter has reached maximum reset both counters and
+	     * set the default system loss.
+	     */
+	    if(_obj->var_dmp_cnt > _obj->var_calib_settle_time)
+		{
+		    _obj->var_calib_app_flg = 0;
+		    _obj->var_dmp_cnt = 0;		   
+		}
+	}
+    /*======================================================================*/
 	
 
     /* Get Values */
-    _vel = thsen_get_value(_obj->_var_vsen);
+    _obj->var_duct_vel = thsen_get_value(_obj->_var_vsen);
     if(_obj->var_duct_dia > 0.0)
 	{
-	    _vol = _vel * M_PI* pow((_obj->var_duct_dia/2), 2);
-	    _vol /= 1000000;
+	    _obj->var_duct_vol = _obj->var_duct_vel * M_PI* pow((_obj->var_duct_dia/2), 2);
+	    _obj->var_duct_vol /= 1000000;
 	}
 
     _f_sp = thsen_get_value(_obj->_var_sp_sen);
-    _st += thsen_get_value(_obj->_var_st_sen);
+    _obj->var_t_ext_st = thsen_get_value(_obj->_var_st_sen) + _obj->var_duct_loss;
     
     /* Temporary message buffer */
     memset(_obj->_var_parent.var_disp_vals, 0, THAPP_DISP_BUFF_SZ);
@@ -538,9 +582,9 @@ static int _thapp_cmd(thapp* obj, void* self, char cmd)
 	    _obj->var_raw_flg? _obj->_var_parent._msg_buff._ai5_val : (_obj->_var_dp_val_ptr? *_obj->_var_dp_val_ptr[1] : 0.0),
 	    _obj->var_raw_flg? _obj->_var_parent._msg_buff._ai6_val : (_obj->_var_dp_val_ptr? *_obj->_var_dp_val_ptr[2] : 0.0),
 	    _obj->var_raw_flg? _obj->_var_parent._msg_buff._ai7_val : (_obj->_var_dp_val_ptr? *_obj->_var_dp_val_ptr[3] : 0.0),
-	    _obj->var_raw_flg? 0.0 :_vel,
-	    _obj->var_raw_flg? 0.0 :_vol,
-	    _obj->var_raw_flg? _obj->_var_parent._msg_buff._ai2_val : _st,
+	    _obj->var_raw_flg? 0.0 :_obj->var_duct_vel,
+	    _obj->var_raw_flg? 0.0 :_obj->var_duct_vol,
+	    _obj->var_raw_flg? _obj->_var_parent._msg_buff._ai2_val : _obj->var_t_ext_st,
 	    _obj->var_raw_flg? _obj->_var_parent._msg_buff._ai1_val : _f_sp,
 	    _obj->var_raw_flg? 0.0 :_obj->var_fm_ratio*_f_sp,
 	    _obj->var_raw_flg? _obj->_var_parent._msg_buff._ai0_val : thsen_get_value(_obj->_var_tp_sen));
@@ -583,6 +627,11 @@ static int _thapp_ahu_init(thapp* obj, void* self)
 
     /* Set static sensor */
     thgsens_set_value_ptr(THOR_GSEN(_obj->_var_st_sen), &obj->_msg_buff._ai2_val);
+
+    /* Set value pointer for sensor array */
+    thsmsen_set_value_array(THOR_SMSEN(_obj->_var_stm_sen),
+			    _obj->_var_msg_addr[THAPP_AHU_NUM_MAX_SMSENS],
+			    THAPP_AHU_NUM_MAX_SMSENS);
 
     return 0;
 }

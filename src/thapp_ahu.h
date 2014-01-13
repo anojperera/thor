@@ -13,7 +13,8 @@
 
 #define THAPP_AHU_DMP_BUFF 500
 #define THAPP_AHU_NUM_MAX_PROBES 4
-
+#define THAPP_AHU_NUM_MAX_SMSENS 4
+#define THAPP_AHU_MAX_SEN_BUFF THAPP_AHU_NUM_MAX_PROBES+THAPP_AHU_NUM_MAX_SMSENS
 
 typedef struct _thapp_ahu thapp_ahu;
 
@@ -35,6 +36,13 @@ struct _thapp_ahu
      * it can be edited outside the program.
      */
     int var_calib_wait_ext;
+
+    /*
+     * Once the calibration cycle is completed, system is
+     * settled for a period of time before further processing.
+     * This setting is controlled by the configuration file.
+     */
+    int var_calib_settle_time;
     
     unsigned int var_calib_flg;						/* Calibration flag is in progress */
     unsigned int var_calib_app_flg;					/* Apply calibration flag */
@@ -59,7 +67,7 @@ struct _thapp_ahu
      * The array elements are set to the memory address of
      * message struct's channels values dealing with v-probes.
      */
-    double* _var_msg_addr[THAPP_AHU_NUM_MAX_PROBES];
+    double* _var_msg_addr[THAPP_AHU_MAX_SEN_BUFF];
 
     double** _var_dp_val_ptr;						/* Array of pointers to dp values */
 
