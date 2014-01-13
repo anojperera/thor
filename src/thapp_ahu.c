@@ -21,6 +21,7 @@
 #define THAPP_AHU_OPT7 "Pulley Ratio: "
 
 #define THAPP_AHU_OPT8 "<============= Calibration in Progress - ACT %i%%, %i =============>"
+#define THAPP_AHU_OPT9 "<============ Adding System Resistance - ACT %.2f ==============>"
 
 /* Settting keys */
 #define THAPP_AHU_KEY "ahu"
@@ -540,6 +541,9 @@ static int _thapp_cmd(thapp* obj, void* self, char cmd)
 	    _obj->var_duct_loss = thsen_get_value(_obj->_var_stm_sen);
 	    if(!((obj->_msg_cnt++)%THAPP_SEC_DIV(obj)))
 		    _obj->var_dmp_cnt++;
+
+
+	    sprintf(obj->var_cmd_vals, THAPP_AHU_OPT9, (float) _obj->var_duct_loss);
 
 	    /*
 	     * If the counter has reached maximum reset both counters and
