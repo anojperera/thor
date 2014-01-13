@@ -26,7 +26,9 @@ struct _thapp_ahu
      * 1 - auto.
      */
     int var_mode;							/* Running mode. */
+    
     unsigned int var_calib_flg;						/* Calibration flag is in progress */
+    unsigned int var_calib_app_flg;					/* Apply calibration flag */
     unsigned int var_raw_flg;						/* Toggle flag to show raw voltage values */
     unsigned int var_dmp_cnt;
     double var_act_pct;							/* Actuator percentage */

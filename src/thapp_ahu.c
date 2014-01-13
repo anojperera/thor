@@ -110,6 +110,7 @@ thapp* thapp_ahu_new(void)
     for(; i<THAPP_AHU_DMP_BUFF; i++)
 	_obj->var_dmp_buff[i] = 0.0;
     _obj->var_raw_flg = 0;
+    _obj->var_calib_app_flg = 0;
     _obj->var_calib_flg = 0;
     _obj->var_def_static = 0.0;
     _obj->var_duct_dia = 0.0;
@@ -404,7 +405,7 @@ static int _thapp_ahu_stop(thapp* obj, void* self)
 static int _thapp_cmd(thapp* obj, void* self, char cmd)
 {
 #define THAPP_SEN_BUFF_SZ 4
-    double _vel, _vol, _f_sp;
+    double _vel=0.0, _vol=0.0, _f_sp=0.0, _st=0.0;
     thapp_ahu* _obj;
     int _rt_val, _act_per=0;
 
@@ -492,6 +493,12 @@ static int _thapp_cmd(thapp* obj, void* self, char cmd)
 		{
 		    _obj->var_calib_flg = 0;
 		    _obj->var_dmp_cnt = 0;
+
+		    /*
+		     * Set the calibration apply flag to true. Once this flag set
+		     * total static pressure shall be adjusted with the duct resistance.
+		     */
+		    _obj->var_calib_app_flg = 1;
 		}
 	}
 	
@@ -505,6 +512,8 @@ static int _thapp_cmd(thapp* obj, void* self, char cmd)
 	}
 
     _f_sp = thsen_get_value(_obj->_var_sp_sen);
+    _st += thsen_get_value(_obj->_var_st_sen);
+    
     /* Temporary message buffer */
     memset(_obj->_var_parent.var_disp_vals, 0, THAPP_DISP_BUFF_SZ);
     sprintf(_obj->_var_parent.var_disp_vals,
@@ -524,7 +533,7 @@ static int _thapp_cmd(thapp* obj, void* self, char cmd)
 	    _obj->var_raw_flg? _obj->_var_parent._msg_buff._ai7_val : (_obj->_var_dp_val_ptr? *_obj->_var_dp_val_ptr[3] : 0.0),
 	    _obj->var_raw_flg? 0.0 :_vel,
 	    _obj->var_raw_flg? 0.0 :_vol,
-	    _obj->var_raw_flg? _obj->_var_parent._msg_buff._ai2_val : thsen_get_value(_obj->_var_st_sen),
+	    _obj->var_raw_flg? _obj->_var_parent._msg_buff._ai2_val : _st,
 	    _obj->var_raw_flg? _obj->_var_parent._msg_buff._ai1_val : _f_sp,
 	    _obj->var_raw_flg? 0.0 :_obj->var_fm_ratio*_f_sp,
 	    _obj->var_raw_flg? _obj->_var_parent._msg_buff._ai0_val : thsen_get_value(_obj->_var_tp_sen));
