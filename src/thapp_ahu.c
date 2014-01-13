@@ -489,7 +489,7 @@ static int _thapp_cmd(thapp* obj, void* self, char cmd)
     /*
      * Handle calibration
      */
-    if(_obj->var_calib_flg && obj->_msg_cnt%(THAPP_SEC_DIV(obj)+_obj->obj->var_calib_wait_ext))
+    if(_obj->var_calib_flg && obj->_msg_cnt%(THAPP_SEC_DIV(obj)+_obj->var_calib_wait_ext))
 	{
 	    _thapp_act_ctrl(_obj, 0, &_obj->var_dmp_buff[_obj->var_dmp_cnt], &_act_per, 1);
 	    sprintf(_obj->_var_parent.var_cmd_vals,
