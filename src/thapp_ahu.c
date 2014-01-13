@@ -37,7 +37,7 @@
 #define THAPP_AHU_ACT_DECRF_CODE 47							/* / */
 #define THAPP_AHU_YES_CODE 121								/* y */
 #define THAPP_AHU_YES2_CODE 89								/* Y */
-#define THAPP_AHU_CALIBRATION_CODE 67							/* c */
+#define THAPP_AHU_CALIBRATION_CODE 67							/* C */
 #define THAPP_AHU_RAW_VALUES 82								/* R */
 
 #define THAPP_AHU_MAX_ACT_PER 99
@@ -489,7 +489,7 @@ static int _thapp_cmd(thapp* obj, void* self, char cmd)
     /*
      * Handle calibration
      */
-    if(_obj->var_calib_flg && !obj->_msg_cnt%(THAPP_SEC_DIV(obj)+_obj->var_calib_wait_ext))
+    if(_obj->var_calib_flg && !(obj->_msg_cnt%(THAPP_SEC_DIV(obj)+_obj->var_calib_wait_ext)))
 	{
 	    _thapp_act_ctrl(_obj, 0, &_obj->var_dmp_buff[_obj->var_dmp_cnt], &_act_per, 1);
 	    sprintf(_obj->_var_parent.var_cmd_vals,
