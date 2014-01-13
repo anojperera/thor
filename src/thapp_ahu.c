@@ -544,7 +544,7 @@ static int _thapp_cmd(thapp* obj, void* self, char cmd)
 
 
 	    sprintf(obj->var_cmd_vals, THAPP_AHU_OPT9, (float) _obj->var_duct_loss);
-
+	    _rt_val = 2;
 	    /*
 	     * If the counter has reached maximum reset both counters and
 	     * set the default system loss.
@@ -552,7 +552,8 @@ static int _thapp_cmd(thapp* obj, void* self, char cmd)
 	    if(_obj->var_dmp_cnt > _obj->var_calib_settle_time)
 		{
 		    _obj->var_calib_app_flg = 0;
-		    _obj->var_dmp_cnt = 0;		   
+		    _obj->var_dmp_cnt = 0;
+		    _rt_val = 1;
 		}
 	}
     /*======================================================================*/
