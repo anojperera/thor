@@ -14,6 +14,7 @@
 #define THAPP_AHU_DMP_BUFF 500
 #define THAPP_AHU_NUM_MAX_PROBES 4
 
+
 typedef struct _thapp_ahu thapp_ahu;
 
 struct _thapp_ahu
@@ -34,7 +35,7 @@ struct _thapp_ahu
     double var_act_pct;							/* Actuator percentage */
     
     double var_dmp_buff[THAPP_AHU_DMP_BUFF];
-
+    
     /*
      * Sensor array for the AHUs.
      * Velocity sensors.

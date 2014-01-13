@@ -3,6 +3,8 @@
 #include <string.h>
 #include <ncurses.h>
 #include "thgsensor.h"
+#include "thtmp.h"
+#include "thspd.h"
 #include "thvsen.h"
 #include "thsmsen.h"
 #include "thapp_ahu.h"
@@ -101,6 +103,7 @@ thapp* thapp_ahu_new(void)
     _obj->_var_msg_addr[1] = &_obj->_var_parent._msg_buff._ai5_val;
     _obj->_var_msg_addr[2] = &_obj->_var_parent._msg_buff._ai6_val;
     _obj->_var_msg_addr[3] = &_obj->_var_parent._msg_buff._ai7_val;
+
     
     /* Set default running mode to manual */
     _obj->var_mode = 0;
@@ -151,8 +154,8 @@ void thapp_ahu_delete(thapp_ahu* obj)
     thvsen_delete(THOR_VSEN(obj->_var_vsen));
 
     /* Remove temperature sensor */
-    thgsensor_delete(THOR_GSEN(obj->_var_tp_sen));
-    thgsensor_delete(THOR_GSEN(obj->_var_sp_sen));
+    thtmp_delete(THOR_GSEN(obj->_var_tp_sen));
+    thspd_delete(THOR_GSEN(obj->_var_sp_sen));
     thgsensor_delete(THOR_GSEN(obj->_var_st_sen));
 
     /* Delete smart sensor */
@@ -224,7 +227,7 @@ static int _thapp_new_helper(thapp_ahu* obj)
 	thsen_set_config(obj->_var_vsen, _setting);
 
     /* Create temperature sensor */
-    obj->_var_tp_sen = thgsensor_new(NULL, obj);
+    obj->_var_tp_sen = thtmp_new(NULL, obj);
     if(obj->_var_tp_sen)
 	{
 	    /* Get temperature sensor settings */
@@ -235,7 +238,7 @@ static int _thapp_new_helper(thapp_ahu* obj)
 	}
 
     /* Create speed sensor */
-    obj->_var_sp_sen = thgsensor_new(NULL, obj);
+    obj->_var_sp_sen = thspd_new(NULL, obj);
     if(obj->_var_sp_sen)
 	{
 	    /* Get speed sensor data */
