@@ -51,7 +51,7 @@ static int _thapp_ahu_init(thapp* obj, void* self);
 static int _thapp_ahu_start(thapp* obj, void* self);
 static int _thapp_ahu_stop(thapp* obj, void* self);
 static int _thapp_cmd(thapp* obj, void* self, char cmd);
-static int _thapp_act_ctrl(thapp_ahu* obj, double incr, int* per, int flg);
+static int _thapp_act_ctrl(thapp_ahu* obj, double incr, double* incr_val, int* per, int flg);
 
 /* Helper method for loading configuration settings */
 static int _thapp_new_helper(thapp_ahu* obj);
@@ -424,16 +424,16 @@ static int _thapp_cmd(thapp* obj, void* self, char cmd)
     switch(cmd)
 	{
 	case THAPP_AHU_ACT_INCR_CODE:
-	    _thapp_act_ctrl(_obj, THAPP_AHU_INCR_PER, NULL, 0);
+	    _thapp_act_ctrl(_obj, THAPP_AHU_INCR_PER, NULL, NULL, 0);
 	    break;
 	case THAPP_AHU_ACT_DECR_CODE:
-	    _thapp_act_ctrl(_obj, -1*THAPP_AHU_INCR_PER, NULL, 0);	    
+	    _thapp_act_ctrl(_obj, -1*THAPP_AHU_INCR_PER, NULL, NULL, 0);	    
 	    break;
 	case THAPP_AHU_ACT_INCRF_CODE:
-	    _thapp_act_ctrl(_obj, THAPP_AHU_INCRF_PER, NULL, 0);
+	    _thapp_act_ctrl(_obj, THAPP_AHU_INCRF_PER, NULL, NULL, 0);
 	    break;
 	case THAPP_AHU_ACT_DECRF_CODE:
-	    _thapp_act_ctrl(_obj, -1*THAPP_AHU_INCRF_PER, NULL, 0);	    
+	    _thapp_act_ctrl(_obj, -1*THAPP_AHU_INCRF_PER, NULL, NULL, 0);	    
 	    break;
 	case THAPP_AHU_YES_CODE:
 	    break;
@@ -487,7 +487,7 @@ static int _thapp_cmd(thapp* obj, void* self, char cmd)
      */
     if(_obj->var_calib_flg && obj->_msg_cnt%(THAPP_SEC_DIV(obj)))
 	{
-	    _thapp_act_ctrl(_obj, _obj->var_dmp_buff[_obj->var_dmp_cnt], &_act_per, 1);
+	    _thapp_act_ctrl(_obj, 0, _obj->var_dmp_buff[_obj->var_dmp_cnt], &_act_per, 1);
 	    sprintf(_obj->_var_parent.var_cmd_vals,
 		    THAPP_AHU_OPT8,
 		    (int) _obj->var_dmp_buff[_obj->var_dmp_cnt],
@@ -588,23 +588,28 @@ static int _thapp_ahu_init(thapp* obj, void* self)
  * server. This method handles both increment and decremnt methods.
  * Uses percentages to calculate the voltage to be sent.
  */
-static int _thapp_act_ctrl(thapp_ahu* obj, double incr, int* per, int flg)
+static int _thapp_act_ctrl(thapp_ahu* obj, double incr, double* incr_val, int* per, int flg)
 {
     struct thor_msg _msg;						/* message */
     char _msg_buff[THORNIFIX_MSG_BUFF_SZ];
     double _val;
 
     /* Increment the value temporarily. */
-    obj->var_act_pct += incr;
-
-    /* Check if its within bounds. */
-    if(obj->var_act_pct > THAPP_AHU_MAX_ACT_PER || obj->var_act_pct < THAPP_AHU_MIN_ACT_PER)
+    if(incr_val != NULL)
+	obj->var_act_pct = *incr_val;
+    else
 	{
-	    /* Reset the value to the original and set the external value */
-	    obj->var_act_pct -= incr;
-	    if(per != NULL)
-		*per = obj->var_act_pct;
-	    return 0;
+	    obj->var_act_pct += incr;
+
+	    /* Check if its within bounds. */
+	    if(obj->var_act_pct > THAPP_AHU_MAX_ACT_PER || obj->var_act_pct < THAPP_AHU_MIN_ACT_PER)
+		{
+		    /* Reset the value to the original and set the external value */
+		    obj->var_act_pct -= incr;
+		    if(per != NULL)
+			*per = obj->var_act_pct;
+		    return 0;
+		}
 	}
     
     if(per != NULL)
