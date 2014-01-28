@@ -12,10 +12,10 @@
 #define THOR_HEADLESS
 #ifdef THOR_HEADLESS
 #define THOR_LOG_ERROR(msg)			\
-  syslog (LOG_INFO, msg)
+    syslog (LOG_INFO, (msg))
 #else
 #define THOR_LOG_ERROR(msg)			\
-  fprintf(stderr, "%s\n", msg)
+    fprintf(stderr, "%s\n", (msg))
 #endif
 
 #define THOR_CONFIG_CALX "calibration_x"
@@ -151,7 +151,7 @@ struct thor_msg
     memset((void*) (t_obj), 0, THORINIFIX_MSG_SZ)
 
 #define thornifix_encode_msg(t_obj, buff, size)	\
-    memset((void*) (buff), 0, size);		\
+    memset((void*) (buff), 0, (size));		\
     sprintf((buff),				\
 	    "%i|"				\
 	    "%.2f|"				\
