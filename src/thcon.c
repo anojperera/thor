@@ -151,6 +151,8 @@ int thcon_init(thcon* obj, thcon_mode mode)
 
     obj->var_con_sock = 0;
     obj->var_acc_sock = 0;
+    obj->_var_act_sock = 0;
+    
     obj->_var_curl_timeout = 0;
     obj->var_flg = 1;
 
@@ -1074,6 +1076,13 @@ static void* _thcon_thread_function_server(void* obj)
 				     */
 				    while(1)
 					{
+					    /*
+					     * Active socket is set. When recv callback is called,
+					     * a user will be able to query the socket which the message
+					     * came through.
+					     */
+					    _obj->_var_act_sock = _events[_i].data.fd;
+					    
 					    _stat = _thcon_write_to_int_buff(_obj, _events[_i].data.fd);
 					    if(_obj->_thcon_recv_callback && _stat > 0)
 						_obj->_thcon_recv_callback(_obj->_ext_obj, _obj->var_membuff_in, THORNIFIX_MSG_BUFF_SZ);
@@ -1203,6 +1212,12 @@ static int _thcon_accept_conn(thcon* obj, int list_sock, int epoll_inst, struct 
 	    pthread_mutex_lock(&obj->_var_mutex);
 	    obj->_var_cons_fds[obj->var_num_conns++] = _fd;
 
+	    /*
+	     * Set the active socket so that a user may be able to
+	     * query the socket which the new connection was made.
+	     */
+	    obj->_var_act_sock = _fd;
+	    
 	    /* Display message in debug mode */
 	    sprintf(_err_msg, "Connection made on socket: %i\n", obj->_var_cons_fds[obj->var_num_conns-1]);
 	    THOR_LOG_ERROR(_err_msg);

@@ -74,6 +74,14 @@ struct _thcon
     int var_con_sock;					/* main connection socket */
     int var_acc_sock;					/* accept socket for server connection */
 
+    /*
+     * Active socket descriptor. This socket is set when
+     * messages are recieved on the sockets managed by the
+     * epoll instance. Descriptor can be obtained by the
+     * macro THCON_GET_ACTIVE_SOCK
+     */
+    int _var_act_sock;
+
     thcon_stat _var_con_stat;				/* connection status */
     thcon_mode _var_con_mode;				/* connection mode to the server */
 
@@ -208,6 +216,10 @@ extern "C" {
     /* Set timeout method */
 #define thcon_set_timeout(obj, time)		\
     (obj)->_var_curl_timeout = time
+
+    /* Get active socket */
+#define THCON_GET_ACTIVE_SOCK(obj)		\
+    (obj)->_var_act_sock
     
 #ifdef __cplusplus
 }
