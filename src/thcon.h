@@ -213,6 +213,10 @@ extern "C" {
 #define thcon_set_closed_callback(obj, fptr)	\
     (obj)->_thcon_conn_closed = fptr
 
+    /* Set callback to indicate connection was made */
+#define thcon_set_conmade_callback(obj, fptr)	\
+    (obj)->_thcon_conn_made = fptr
+    
     /* Set timeout method */
 #define thcon_set_timeout(obj, time)		\
     (obj)->_var_curl_timeout = time
