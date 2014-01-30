@@ -35,7 +35,11 @@ private:
     
     thcon var_con;
     config_t var_config;
-    pthread_mutex_t var_mutex;    
+    pthread_mutex_t var_mutex;
+    void* _var_self;
+
+    /* Private helper method for reading the configuration file */
+    int read_config_file(void);
 public:
 
     pthread_t var_log_thread;
@@ -89,8 +93,12 @@ int main(int argc, char** argv)
 _thasg::_thasg():err_flg(0)
 {
     int stat = 0;
+    
     /* Initialise configuration settings */
     config_init(&this->var_config);
+
+    /* Set this pointer as the self */
+    _var_self = reinterpret_cast<void*>(this);
     
     /* Check the default paths for the configuration file and find the settings */
     while(1)
@@ -127,8 +135,51 @@ _thasg::_thasg():err_flg(0)
      */
     if(stat == 0)
 	{
+	    this->err_flg = 1;
+	    return;
+	}
+
+    /*
+     * Create connection object in the server mode if not
+     * set the error and return.
+     */
+    if(thcon_init(&var_con, thcon_mode_server))
+	{
 	    err_flg = 1;
 	    return;
 	}
+    thcon_set_ext_obj(&var_con, _var_self);
+    thcon_set_recv_callback(&var_con, _thasgard_con_recv_msg);
+    thcon_set_closed_callback(&var_con, _thasgard_con_closed);
+    thcon_set_conmade_callback(&var_con, _thasgard_con_made);
+
+    /* Initialise mutex */
+    pthread_mutex_init(&var_mutex, NULL);
        
+}
+
+
+/* Destructor */
+virtual _thasg::~_thasg()
+{
+    _var_self = NULL;
+    
+    /* Destroy the configuration object */
+    config_destroy(&this->var_config);
+
+    /* Destroy mutex */
+    pthread_mutex_destroy(&this->var_mutex);
+
+    /* Destroy connection */
+    thcon_delete(&this->var_con);
+    
+}
+
+/*
+ * Read configuration file (private method).
+ * Check for error codes.x
+ */
+int _thasg::read_config_file(void);
+{
+
 }
