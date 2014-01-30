@@ -350,3 +350,31 @@ int _thasg::stop(void)
     _thasg::write_file();
     
 }
+
+/*=================================== Callback methods from the server ===================================*/
+/*--------------------------------------------------------------------------------------------------------*/
+static int _thasgard_con_recv_msg(void* self, void* msg, size_t sz)
+{
+    _thasg* _obj;
+
+    if(self == NULL || msg == NULL || sz <= 0)
+	return 0;
+    
+    /* Cast self pointer to the correct type */
+    _obj = reinterpret_cast<_thasg*>(self);
+
+    _obj->add_msg(msg, sz);
+    return 0;
+}
+
+/* Callback is fired when a connection is made */
+static int _thasgard_con_made(void* self, void* con)
+{
+    return 0;
+}
+
+/* Callback fired when a connection is closed */
+static int _thasgard_con_closed(void* self, void* con, int sock)
+{
+    return 0;
+}
