@@ -7,7 +7,7 @@
 #include <unistd.h>
 #include <libconfig.h>
 #include <signal.h>
-
+#include <time.h>
 
 #include <map>
 #include <queue>
@@ -60,7 +60,7 @@ private:
     pthread_mutex_t var_mutex;
     void* _var_self;
 
-int create_file_name(char* f_name, size_t sz);
+    int create_file_name(char* f_name, size_t sz);
 
 public:
     _thasg();
@@ -256,7 +256,7 @@ int _thasg::write_file(void);
     int _sock_des = 0;
     int _file_des = 0;
     char _file_name[THASG_FILE_NAME_BUFF_SZ];
-    size_t _fn_sz;
+
     struct _thasg_msg_wrap* _t_msg = NULL;
     std::map<int, int>::iterator _m_itr;
 
@@ -276,7 +276,7 @@ int _thasg::write_file(void);
 	    if(_fds.empty())
 		{
 		    /* Create file */
-		    _thasg::create_file_name(_file_name, _fn_sz);
+		    _thasg::create_file_name(_file_name, THASG_FILE_NAME_BUFF_SZ);
 
 		    /* Open file and store file and socket descriptors */
 		    _file_des = open(_file_name, O_CREAT | O_APPEND);
@@ -298,7 +298,7 @@ int _thasg::write_file(void);
 		    /* Check the iterator, if the map returned end, we create a file */
 		    if(_m_itr == _thasg::_fds.end())
 			{
-	    		    _thasg::create_file_name(_file_name, _fn_sz);
+	    		    _thasg::create_file_name(_file_name, THASG_FILE_NAME_BUFF_SZ);
 			    _file_des = open(_file_name, O_CREAT | O_APPEND);
 			    if(_file_des == -1)
 				goto exit_loop;
@@ -349,6 +349,18 @@ int _thasg::stop(void)
     _thasg::f_flg = 1;
     _thasg::write_file();
     
+}
+
+/* Create temporary file name */
+int _thasg::create_file_name(char* f_name, size_t sz)
+{
+    time_t _tm;
+    struct tm* _tm_info;
+
+    time(&_tm);
+    _tm_info = localtime(&_tm);
+    strftime(f_name, sz, THASG_DEFAULT_LOG_FILE_NAME, _tm_info);
+    return 0;
 }
 
 /*=================================== Callback methods from the server ===================================*/
