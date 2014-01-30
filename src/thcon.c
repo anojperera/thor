@@ -441,7 +441,7 @@ int thcon_stop(thcon* obj)
 /* send information to the socket */
 int thcon_send_info(thcon* obj, void* data, size_t sz)
 {
-    int i = 0;
+    unsigned int i = 0;
     if(obj == NULL || data == NULL)
 	return -1;
 
@@ -601,7 +601,7 @@ static int _thcon_copy_to_mem(void* contents, size_t size, size_t memb, void* us
     struct _curl_mem* _mem = (struct _curl_mem*) usr_obj;
 
     /* allocate memory */
-    _mem->memory = realloc(_mem->memory, _mem->size+rel+1);
+    _mem->memory = (char*) realloc(_mem->memory, _mem->size+rel+1);
     if(_mem->memory == NULL)
 	return 0;
 
@@ -663,7 +663,7 @@ static int _thcon_get_url_content(const char* ip_addr, struct _curl_mem* mem)
 /* parse html geo location data */
 static int _parse_html_geo(const struct _curl_mem* _mem, struct thcon_host_info* info)
 {
-    int i;
+    unsigned int i;
     const char* _search;
     xmlNodePtr _node, _node_ptr, _child_ptr;
     xmlNodePtr _t_node;
@@ -917,7 +917,7 @@ static int _thcon_send_info(int fd, void* msg, size_t sz)
      */
     do
 	{
-	    _buff_sent += send(fd, msg+_buff_sent, sz, MSG_DONTWAIT | MSG_NOSIGNAL);
+	    _buff_sent += send(fd, ((char*) msg)+_buff_sent, sz, MSG_DONTWAIT | MSG_NOSIGNAL);
 	    if(_buff_sent == EPIPE)
 		return -1;
 	}while(_buff_sent < sz);
@@ -936,7 +936,7 @@ static void* _thcon_thread_function_server(void* obj)
     int _e_sock = 0;
     int _stat = 0, _complete = 0;
     thcon* _obj;
-    struct epoll_event _event, *_events;
+    struct epoll_event _event, *_events = NULL;
     char _err_msg[THOR_BUFF_SZ];
 
     /* check for object pointer */
@@ -1305,7 +1305,7 @@ inline __attribute__ ((always_inline)) static int _thcon_alloc_fds(thcon* obj)
 inline __attribute__ ((always_inline)) static int _thcon_adjust_fds(thcon* obj, int fd)
 {
     int* _t_buff;
-    int i, a;
+    unsigned int i, a;
 
     /* check if connection count is 0, exit method */
     pthread_mutex_lock(&obj->_var_mutex);
@@ -1349,7 +1349,8 @@ inline __attribute__ ((always_inline)) static int _thcon_adjust_fds(thcon* obj, 
  */
 static void* _thcon_thread_function_write_server(void* obj)
 {
-    int i, _old_state;
+    unsigned int i;
+    int _old_state;
     thcon* _obj;
     struct _curl_mem* _msg;
 
@@ -1411,7 +1412,7 @@ static void* _thcon_thread_function_write_server(void* obj)
  */
 static void _thcon_thread_cleanup_server(void* obj)
 {
-    int i;
+    unsigned int i;
     thcon* _obj;
 
     if(obj == NULL)
