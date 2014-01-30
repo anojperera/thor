@@ -9,6 +9,7 @@
 #include <math.h>
 #include <syslog.h>
 
+#define THOR_INC_NI
 #define THOR_HEADLESS
 #ifdef THOR_HEADLESS
 #define THOR_LOG_ERROR(msg)			\
@@ -39,7 +40,9 @@
 #define NIRegisterEveryNSamplesEvent DAQmxRegisterEveryNSamplesEvent
 #define NIRegisterDoneEvent DAQmxRegisterDoneEvent
 #else
+#if defined THOR_INC_NI
 #include <NIDAQmxBase.h>
+#endif
 #define NIGetErrorString DAQmxBaseGetExtendedErrorInfo
 #define NIClearTask DAQmxBaseClearTask
 #define NIStartTask DAQmxBaseStartTask
