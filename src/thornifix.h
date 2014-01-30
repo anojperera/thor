@@ -193,8 +193,14 @@ struct thor_msg
 	    (t_obj)->_di0_val,			\
 	    (t_obj)->_di1_val)
 
-/* decode message */
-int thornifix_decode_msg(const char* buff, size_t size, struct thor_msg* msg);
+#ifdef __cplusplus
+extern "C" {
+#endif
+    /* decode message */
+    int thornifix_decode_msg(const char* buff, size_t size, struct thor_msg* msg);
+#ifdef __cplusplus
+}
+#endif
 
 /*===========================================================================*/
 
@@ -213,57 +219,66 @@ int thornifix_decode_msg(const char* buff, size_t size, struct thor_msg* msg);
 #define THOR_AHU(obj) \
     (thapp_ahu*) obj->var_child
 
-/*===========================================================================*/
-/* error check function */
-inline __attribute__ ((always_inline)) static int ERR_CHECK(int32 err)
-{
-    static char err_msg[THOR_BUFF_SZ] = {'\0'};
-
-    /* get error message */
-    if(err)
-	{
-#if defined (WIN32) || defined (_WIN32)
-	    NIGetErrorString (err, err_msg, THOR_BUFF_SZ);
-#else
-	    NIGetErrorString(err_msg, THOR_BUFF_SZ);
+#ifdef __cplusplus
+extern "C" {
 #endif
-	    THOR_LOG_ERROR(err_msg);
-	    return 1;
-	}
-    else
-	return 0;
 
+#ifdef THOR_INC_NI
+    /*===========================================================================*/
+    /* error check function */
+    inline __attribute__ ((always_inline)) static int ERR_CHECK(int32 err)
+    {
+	static char err_msg[THOR_BUFF_SZ] = {'\0'};
+
+	/* get error message */
+	if(err)
+	    {
+#if defined (WIN32) || defined (_WIN32)
+		NIGetErrorString (err, err_msg, THOR_BUFF_SZ);
+#else
+		NIGetErrorString(err_msg, THOR_BUFF_SZ);
+#endif
+		THOR_LOG_ERROR(err_msg);
+		return 1;
+	    }
+	else
+	    return 0;
+
+    }
+#endif
+    
+    inline __attribute__ ((always_inline)) static double Round(double val, unsigned int places)	/* rounds a number */
+    {
+	double off = pow(10, places);
+
+	double x = val * off;
+	double b = 0;
+	double i_part = 0;
+
+
+	if(modf(x, &i_part) >= 0.5)
+	    b = (x>=i_part? ceil(x) : floor(x));
+	else
+	    b = (x<i_part? ceil(x) : floor(x));
+
+	return b/off;
+
+    }
+
+    inline __attribute__ ((always_inline)) static double Mean(const double* data, unsigned int num)
+    {
+	double val = 0.0;
+	double div = 0.0;
+	unsigned int i;
+	for(i=0; i<num; i++,div+=1.0)
+	    val += data[i];
+	return val / div;
+    }
+
+    /* polynomial interpolating function */
+    int thor_interpol(const double* x, const double* y, int n, double* z, double* fz, int m);
+
+#ifdef __cplusplus
 }
-
-inline __attribute__ ((always_inline)) static double Round(double val, unsigned int places)	/* rounds a number */
-{
-    double off = pow(10, places);
-
-    double x = val * off;
-    double b = 0;
-    double i_part = 0;
-
-
-    if(modf(x, &i_part) >= 0.5)
-	b = (x>=i_part? ceil(x) : floor(x));
-    else
-	b = (x<i_part? ceil(x) : floor(x));
-
-    return b/off;
-
-}
-
-inline __attribute__ ((always_inline)) static double Mean(const double* data, unsigned int num)
-{
-    double val = 0.0;
-    double div = 0.0;
-    unsigned int i;
-    for(i=0; i<num; i++,div+=1.0)
-    	val += data[i];
-     return val / div;
-}
-
-/* polynomial interpolating function */
-int thor_interpol(const double* x, const double* y, int n, double* z, double* fz, int m);
-
+#endif
 #endif /* _THORNIFIX_H_ */
