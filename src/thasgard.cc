@@ -9,12 +9,28 @@
 #include <signal.h>
 
 
-#include <set>
+#include <map>
 #include <queue>
 
 #define THSVR_DEFAULT_CONFIG_PATH1 "thor.cfg"
 #define THSVR_DEFAULT_CONFIG_PATH2 "../config/thor.cfg"
 #define THSVR_DEFAULT_CONFIG_PATH3 "/etc/thor.cfg"
+
+
+/*
+ * Below are tokens for keys required to read configuration
+ * file.
+ */
+#define THASG_GEO_URL "mygeo_location"
+#define THASG_ADMIN1_URL "prime_admin_url"
+#define THASG_ADMIN2_URL "http://www.valyria.co.uk:/8080/dieties/"
+#define THASG_COM_PORT "sec_con_port"
+#define THASG_DEF_COM_PORT "11000"
+#define THASG_DEF_TIMEOUT "def_time_out"
+#define THASG_DEF_WAIT_TIME 200000
+
+#define THASG_FILE_NAME_BUFF_SZ 256
+#define THASG_DEFAULT_LOG_FILE_NAME "/tmp/%Y-%m-%d-%I-%M-%S.txt"
 
 volatile sig_atomic_t _flg = 1;
 
@@ -22,6 +38,7 @@ struct _thasg_msg_wrap
 {
     int _fd;						/* File descriptor */
     char _msg[THORNIFIX_MSG_BUFF_SZ];			/* message buffer */
+size_t _msg_sz;
 };
 
 
@@ -29,27 +46,30 @@ class _thasg
 {
 private:
     int err_flg;
-    
+    int f_flg;						/* Flag to indicate complete all write actions */
     std::queue<struct _thasg_msg_wrap> _msg_queue;	/* Message queue */
-    std::set<int, std::less<int>> _fds;			/* file descriptor array */
-    
+
+    /*
+     * A map is used to store the socket descriptor and its corresponding
+     * file descriptor.
+     */
+    std::map<int, int> _fds;
+
     thcon var_con;
     config_t var_config;
     pthread_mutex_t var_mutex;
     void* _var_self;
 
-    /* Private helper method for reading the configuration file */
-    int read_config_file(void);
-public:
+int create_file_name(char* f_name, size_t sz);
 
-    pthread_t var_log_thread;
-    
+public:
     _thasg();
     virtual ~_thasg();
 
     int add_msg(void* msg_ptr, size_t sz);
     int write_file(void);
     int start(void);
+    int stop(void);
 };
 
 
@@ -64,24 +84,25 @@ static void* _thasgard_thread_function(void* obj);
 int main(int argc, char** argv)
 {
     _thasg asg;
-    void* _obj_ptr;
 
-    /* Cast object pointer of the class */
-    _obj_ptr = reinterpret_cast<void*>(&asg);
-
-    /*
-     * Start the server in another thread and shall continue to
-     * execute until Ctrl+C or SIGINT is recieved.
-     * Messages are checked in the queue and written to the
-     * separate files.
-     */
-    pthread_create(&asg.var_log_thread, NULL, _thasgard_thread_function, _obj_ptr);
-    
+    asg.start();
     /* Initialise pthread object */
     while(_flg)
-	sleep(1);
-    
-    
+	{
+	    usleep(THASG_DEF_WAIT_TIME);
+
+	    /*
+	     * Call write method which shall write messages
+	     * from queue to the respective files
+	     */
+	    asg.write_file();
+	}
+
+    /*
+     * This shall stop the connection object and any unwritten messages
+     * are written to file before closing.
+     */
+    asg.stop();
     return 0;
 }
 
@@ -90,16 +111,19 @@ int main(int argc, char** argv)
 /*----------------------- Implementation of the class ----------------------*/
 
 /* Class constructor */
-_thasg::_thasg():err_flg(0)
+_thasg::_thasg():err_flg(0), f_flg(0)
 {
     int stat = 0;
-    
+    struct config_setting_t* _setting = NULL;
+    const char* _t_buff = NULL;
+
+
     /* Initialise configuration settings */
-    config_init(&this->var_config);
+    config_init(&_thasg::var_config);
 
     /* Set this pointer as the self */
-    _var_self = reinterpret_cast<void*>(this);
-    
+    _thasg::_var_self = reinterpret_cast<void*>(this);
+
     /* Check the default paths for the configuration file and find the settings */
     while(1)
 	{
@@ -107,14 +131,14 @@ _thasg::_thasg():err_flg(0)
 	     * If any of the following attempts were successful, we set the status
 	     * and exit the loop.
 	     */
-	       
-	    if(config_read_file(&this->var_config, THSVR_DEFAULT_CONFIG_PATH) == CONFIG_TRUE)
+
+	    if(config_read_file(&_thasg::var_config, THSVR_DEFAULT_CONFIG_PATH) == CONFIG_TRUE)
 		goto check_path_success;
 
-	    if(config_read_file(&this->var_config, THSVR_DEFAULT_CONFIG_PATH2) == CONFIG_TRUE)
+	    if(config_read_file(&_thasg::var_config, THSVR_DEFAULT_CONFIG_PATH2) == CONFIG_TRUE)
 		goto check_path_success;
 
-	    if(config_read_file(&this->var_config, THSVR_DEFAULT_CONFIG_PATH3) == CONFIG_TRUE)
+	    if(config_read_file(&_thasg::var_config, THSVR_DEFAULT_CONFIG_PATH3) == CONFIG_TRUE)
 		goto check_path_success;
 
 	    /*
@@ -122,7 +146,7 @@ _thasg::_thasg():err_flg(0)
 	     * we exit the loop and inidicate the function as failed
 	     */
 	    break;
-	    
+
 	check_path_success:
 	    stat = 1;
 	    break;
@@ -135,7 +159,7 @@ _thasg::_thasg():err_flg(0)
      */
     if(stat == 0)
 	{
-	    this->err_flg = 1;
+	    _thasg::err_flg = 1;
 	    return;
 	}
 
@@ -143,43 +167,186 @@ _thasg::_thasg():err_flg(0)
      * Create connection object in the server mode if not
      * set the error and return.
      */
-    if(thcon_init(&var_con, thcon_mode_server))
+    if(thcon_init(&_thasg::var_con, thcon_mode_server))
 	{
-	    err_flg = 1;
+	    _thasg::err_flg = 1;
 	    return;
 	}
-    thcon_set_ext_obj(&var_con, _var_self);
-    thcon_set_recv_callback(&var_con, _thasgard_con_recv_msg);
-    thcon_set_closed_callback(&var_con, _thasgard_con_closed);
-    thcon_set_conmade_callback(&var_con, _thasgard_con_made);
+    thcon_set_ext_obj(&_thasg::var_con, _var_self);
+    thcon_set_recv_callback(&_thasg::var_con, _thasgard_con_recv_msg);
+    thcon_set_closed_callback(&_thasg::var_con, _thasgard_con_closed);
+    thcon_set_conmade_callback(&_thasg::var_con, _thasgard_con_made);
 
     /* Initialise mutex */
-    pthread_mutex_init(&var_mutex, NULL);
-       
+    pthread_mutex_init(&_thasg::var_mutex, NULL);
+
+    /* Get default port name */
+    _setting = config_lookup(_thasg::var_config, THASG_COM_PORT);
+    if(_setting)
+	{
+	    _t_buff = config_setting_get_setting(_setting);
+	    if(_t_buff)
+		thcon_set_port_name(&_thasg::var_con, _t_buff);
+	}
+    else
+	thcon_set_port_name(&_thasg::var_con, THASG_DEF_COM_PORT);
+
+    /* Reset connection struct info */
+    thcon_reset_my_info(&_thasg::var_con);
+    return;
 }
 
 
 /* Destructor */
 virtual _thasg::~_thasg()
 {
-    _var_self = NULL;
+    std::map<int,int>::iterator _m_itr;
     
+    _thasg::_var_self = NULL;
+
+    /* Close all open file pointers */
+    for(_m_itr = _thasg::_fds.begin(); _m_itr != _thasg::_fds.end(); ++_m_itr)
+	{
+	    /* Close open files */
+	    if(_m_itr->second > 0)
+		close(_m_itr->second);
+	}
+    /* Empty container */
+    _thasg::_fds.erase(_thasg::_fds.begin(), _thasg::_fds.end());
+
     /* Destroy the configuration object */
-    config_destroy(&this->var_config);
+    config_destroy(&_thasg::var_config);
 
     /* Destroy mutex */
-    pthread_mutex_destroy(&this->var_mutex);
+    pthread_mutex_destroy(&_thasg::var_mutex);
 
     /* Destroy connection */
-    thcon_delete(&this->var_con);
-    
+    thcon_delete(&_thasg::var_con);
+
 }
 
-/*
- * Read configuration file (private method).
- * Check for error codes.x
- */
-int _thasg::read_config_file(void);
+/* Add message to the queue */
+int _thasg::add_msg(void* msg_ptr, size_t sz)
 {
+    struct _thasg_msg_wrap _msg_obj;
+    int _sock_des;
 
+    /* Initialise message object */
+    memset((void*) &_msg_obj, 0, sizeof(struct _thasg_msg_wrap));
+
+    /* Get active socket descriptor */
+    _sock_des = THCON_GET_ACTIVE_SOCK(&var_con);
+
+    /* Copy message to the internal buffer */
+    memcpy((void*) _msg_obj._msg, msg_ptr, sz);
+    _msg_obj._msg[sz] = '\0';
+
+    _msg_obj._msg_sz = sz;
+
+    /* Insert to queue */
+    pthread_mutex_lock(&_thasg::var_mutex);
+    _thasg::_msg_queue.push(_msg_obj);
+    pthread_mutex_unlock(&_thasg::var_mutex);
+    return 0;
+}
+
+/* Method pops the message from the queue and writes to the relevant file */
+int _thasg::write_file(void);
+{
+    int _sock_des = 0;
+    int _file_des = 0;
+    char _file_name[THASG_FILE_NAME_BUFF_SZ];
+    size_t _fn_sz;
+    struct _thasg_msg_wrap* _t_msg = NULL;
+    std::map<int, int>::iterator _m_itr;
+
+    while(!_thasg::_msg_queue.empty())
+	{
+	    
+	    pthread_mutex_lock(&_thasg::var_mutex);
+	    _t_msg = &_thasg::_msg_queue.front();
+	    pthread_mutex_unlock(&_thasg::var_mutex);
+	    if(!_t_msg)
+		break;
+
+	    /* Set socket descriptor */
+	    _sock_des = _t_msg->_fd;
+
+	    /* Check if the FDs collection is empty */
+	    if(_fds.empty())
+		{
+		    /* Create file */
+		    _thasg::create_file_name(_file_name, _fn_sz);
+
+		    /* Open file and store file and socket descriptors */
+		    _file_des = open(_file_name, O_CREAT | O_APPEND);
+		    if(_file_des == -1)
+			goto exit_loop;
+
+
+		    /* Add file and socket descriptor to the collection */
+		    _thasg::_fds.insert(std::pair<int, int>(_sock_des, _file_des));
+		}
+	    else
+		{
+		    /*
+		     * The list is not empty, therefore we search for the file descriptor
+		     * associated with the socket.
+		     */
+		    _m_itr = _thasg::_fds.find(_sock_des);
+
+		    /* Check the iterator, if the map returned end, we create a file */
+		    if(_m_itr == _thasg::_fds.end())
+			{
+	    		    _thasg::create_file_name(_file_name, _fn_sz);
+			    _file_des = open(_file_name, O_CREAT | O_APPEND);
+			    if(_file_des == -1)
+				goto exit_loop;
+			}
+		    else
+			_file_des = _m_itr->second
+
+		}
+
+
+
+	    /* Write to file */
+	    write(_file_des, _t_msg->_msg, _t_msg->sz);
+	exit_loop:
+	    pthread_mutex_lock(&_thasg::var_mutex);
+	    _thasg::_msg_queue.pop();
+	    pthread_mutex_unlock(&_thasg::var_mutex);
+
+	    /*
+	     * If the f_flg is not set that means after an single iteration we exit the loop.
+	     * When this flag is set to true, all messages shall in the queue are written to
+	     * their respective file descriptors.
+	     */
+	    if(!_thasg::f_flg)
+		break;
+	}
+
+    return 0;
+}
+
+/* Start the server */
+int _thasg::start(void)
+{
+    /* Start the server */
+    return thcon_start(&_thasg::var_con);
+}
+
+/* Stop the server and write all messages in the queue */
+int _thasg::stop(void)
+{
+    /* Stop the server */
+    thcon_stop(&_thasg::var_con);
+
+    /*
+     * Set write flag to indicate all remaining messages are to be
+     * written.
+    */
+    _thasg::f_flg = 1;
+    _thasg::write_file();
+    
 }
