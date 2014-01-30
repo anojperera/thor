@@ -83,12 +83,18 @@ public:
 static int _thasgard_con_recv_msg(void* self, void* msg, size_t sz);
 static int _thasgard_con_made(void* self, void* con);
 static int _thasgard_con_closed(void* self, void* con, int sock);
-
+static void _thasgard_sigterm_handler(int signo);
 
 int main(int argc, char** argv)
 {
     _thasg asg;
 
+
+    /* Add signal handlers */
+    /* Attach a signal handler */
+    signal(SIGKILL, _thasgard_sigterm_handler);
+    signal(SIGINT, _thasgard_sigterm_handler);        
+    
     asg.start();
     /* Initialise pthread object */
     while(_flg)
@@ -392,4 +398,13 @@ static int _thasgard_con_made(void* self, void* con)
 static int _thasgard_con_closed(void* self, void* con, int sock)
 {
     return 0;
+}
+
+/* Signal handler */
+static void _thasgard_sigterm_handler(int signo)
+{
+    if(signo == SIGINT || signo == SIGKILL)
+	_flg = 0;
+
+    return;
 }
