@@ -31,7 +31,7 @@
 #define THASG_ADMIN1_URL "prime_admin_url"
 #define THASG_ADMIN2_URL "http://www.valyria.co.uk:/8080/dieties/"
 #define THASG_COM_PORT "sec_con_port"
-#define THASG_DEF_COM_PORT "11000"
+#define THASG_DEF_COM_PORT "11001"
 #define THASG_DEF_TIMEOUT "def_time_out"
 #define THASG_DEF_WAIT_TIME 200000
 
