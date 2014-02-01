@@ -20,6 +20,14 @@
 #define THAPP_DISP_BUFF_SZ 256
 #define THAPP_SEC_DIV(obj_ptr)			\
     1000000 / (obj_ptr)->var_sleep_time
+
+/* Helper macro for displaying messages */
+#define THAPP_DISP_MESG(STR, BUFF)		\
+    memset((BUFF), 0, THAPP_DISP_BUFF_SZ);	\
+    printfw((STR));				\
+    refresh();					\
+    getnstr((BUFF), THAPP_DISP_BUFF_SZ-1);	\
+    clear()
 /*
  * Macro for initialising the function pointer table.
  */
@@ -52,7 +60,7 @@ struct _thapp_fptr_arr
 {
     thapp_gf_ptr var_init_ptr;
     thapp_gf_ptr var_del_ptr;
-    thapp_gf_ptr var_start_ptr;							
+    thapp_gf_ptr var_start_ptr;
     thapp_gf_ptr var_stop_ptr;
     thapp_gf_ptr var_read_ptr;
     thapp_gf_ptr var_write_ptr;
@@ -71,7 +79,7 @@ struct _thapp
 
     thapp_opmode var_op_mode;							/* operation mode */
     config_t var_config;							/* configuration pointer */
-    struct thor_msg _msg_buff;							/* message buffer */    
+    struct thor_msg _msg_buff;							/* message buffer */
     thcon _var_con;								/* connection object */
 
     void* var_child;								/* child object */
@@ -80,7 +88,7 @@ struct _thapp
     char var_disp_header[THAPP_DISP_BUFF_SZ];
     char var_disp_vals[THAPP_DISP_BUFF_SZ];
     char var_cmd_vals[THAPP_DISP_BUFF_SZ];
-		      
+
     char var_disp_opts[THOR_BUFF_SZ]; 						/* Option buffer */
 
     /* Buffers to hold job number and tag number if applicable */
@@ -94,7 +102,7 @@ struct _thapp
      * server.
      */
     gqueue _var_msg_queue;
-       
+
     /*
      * Function pointer array.
      * These function pointers are called at various
@@ -123,7 +131,7 @@ extern "C" {
      * If the respective function pointers are assigned
      * they shall be called.
      *
-     * The start method shall only call function pointers when the 
+     * The start method shall only call function pointers when the
      * connection object has been successfull.
      */
     int thapp_start(thapp* obj);
