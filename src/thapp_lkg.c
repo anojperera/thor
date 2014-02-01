@@ -24,6 +24,13 @@
     "(4 - 80mm dia)\n"					\
     "(5 - 100mm dia)\n"					\
     "Size: "
+#define THAPP_LKG_OPT7 "Enter product type: \n" \
+    "(0 - Dampers)\n"				\
+    "(1 - AHU)\n"				\
+    "Product type: "
+#define THAPP_LKG_OPT8 "Enter Width: "
+#define THAPP_LKG_OPT9 "Enter Height: "
+#define THAPP_LKG_OPT10 "Enter Depth: "
 
 /* Control Keys */
 #define THAPP_LKG_ACT_INCR_CODE 43							/* + */
@@ -48,6 +55,9 @@ static int _thapp_lkg_cmd(thapp* obj, void* self, char cmd);
 /* Helper method for loading configuration settings */
 static int _thapp_new_helper(thapp_lkg* obj);
 
+/* Fan control method */
+static int _thapp_fan_ctrl(thapp_lkg* obj, double incr, double* incr_val, int* per, int flg)
+
 
 thapp* thapp_lkg_new(void)
 {
@@ -56,7 +66,7 @@ thapp* thapp_lkg_new(void)
 
     _obj = (thapp_lkg*) malloc(sizeof(thapp_lkg));
     _obj->var_init_flg = 0;
-    
+
     if(_obj == NULL)
 	return NULL;
 
@@ -89,6 +99,8 @@ thapp* thapp_lkg_new(void)
 
     /* Initialise class variables */
     _obj->var_test_type = thapp_lkg_tst_man;
+    _obj->var_prod_type = thapp_lkg_dmp;
+    
     _obj->var_calib_wait_ext = 0;
 
     _obj->var_or_ix = 0;
@@ -104,6 +116,9 @@ thapp* thapp_lkg_new(void)
     _obj->_var_msg_addr[2] = &_obj->_var_parent._msg_buff._ai10_val;
     _obj->_var_msg_addr[3] = &_obj->_var_parent._msg_buff._ai11_val;
 
+    /* Maximum values for auto modes */
+    _obj->var_max_static = 0.0;
+    _obj->var_max_leakage = 0.0;
     
     _obj->var_width = 0.0;
     _obj->var_height = 0.0;
@@ -126,7 +141,7 @@ void thapp_lkg_delete(thapp_lkg* obj)
 
     THAPP_INIT_FPTR(obj);
     obj->var_child = NULL;
-    
+
     if(obj->var_init_flg)
 	free(obj);
     return;
@@ -174,11 +189,173 @@ static int _thapp_new_helper(thapp_lkg* obj)
 		thsen_set_config(obj->_var_st_sen, _setting);
 	}
 
-    
+
     /* Get extra wait time during calibration */
     _setting = config_lookup(&obj->_var_parent.var_config, THAPP_LKG_WAIT_EXT_KEY);
     if(_setting)
 	obj->var_calib_wait_ext = config_setting_set_int(_setting);
 
+    return 0;
+}
+
+/*
+ * Initialise method is called by the parent class before the main loop starts.
+ * Here we set the raw value pointers to respective sensors and smart sensor.
+ * Fan control voltages are generated as well.
+ */
+static int _thapp_lkg_init(thapp* obj, void* self)
+{
+    int i;
+
+    thapp_lkg* _obj;
+
+    if(self == NULL)
+	return -1;
+
+    /* Cast self pointer */
+    _obj = (thapp_lkg*) self;
+
+    /* Generate fan control voltages */
+    for(i=0; i<THAPP_LKG_BUFF; i++)
+	_obj->var_fan_buff[i] = sin(M_PI*(double)i/THAPP_LKG_BUFF)*96.0;
+
+    /* Set temperature sensor raw value */
+    thgsens_set_value_ptr(THOR_GSEN(_obj->_var_tmp_sen), &obj->_msg_buff._ai0_val);
+
+    /* Set statuc sensor raw value */
+    thgsens_set_value_ptr(THOR_GSEN(_obj->_var_st_sen), &obj->_msg_buff._ai3_val);
+
+    /* Set value pointer for sensor array */
+    thsmsen_set_value_array(THOR_SMSEN(_obj->_var_sm_sen),
+			    _obj->_var_msg_addr[0],
+			    THAPP_LKG_MAX_SM_SEN);
+
+    return 0;
+
+}
+
+/* Start callback method */
+static int _thapp_lkg_start(thapp* obj, void* self)
+{
+    thapp_lkg* _obj;
+    char _scr_input_buff[THAPP_DISP_BUFF_SZ];
+
+    /* Cast object pointer */
+    if(self == NULL)
+	return -1;
+    _obj = (thapp_lkg*) self;
+
+
+    /* Reset all sensors before start */
+    thsen_reset_sensor(_obj->_var_sm_sen);
+    thsen_reset_sensor(_obj->_var_st_sen);
+    thsen_reset_sensor(_obj->_var_tmp_sen);
+
+    _obj->var_max_static = 0.0;
+    _obj->var_max_leakage = 0.0;
+
+    _obj->var_width = 0.0;
+    _obj->var_height = 0.0;
+    _obj->var_depth = 0.0;
+
+    /*
+     * If the app is not running in headless mode, query for
+     * other options.
+     */
+    if(obj->var_op_mode != thapp_headless)
+	{
+	    /* Get job number and tag number */
+	    printw(THAPP_LKG_OPT1);
+	    refresh();
+	    getnstr(obj->var_job_num, THAPP_DISP_BUFF_SZ-1);
+
+	    printw(THAPP_LKG_OPT2);
+	    refresh();
+	    getnstr(obj->var_tag_num, THAPP_DISP_BUFF_SZ-1);
+	    clear();
+
+	    /* Display option to select mode */
+	    THAPP_DISP_MESG(THAPP_LKG_OPT3, _scr_input_buff);
+	    
+	    _obj->var_test_type = atoi(_scr_input_buff);
+
+	    
+	    /* Provide extra options depending on the selected mode */
+	    switch(_obj->var_test_type)
+		{
+		case thapp_lkg_tst_static:
+		    /* Display message to obtain the maximum static pressure */
+		    THAPP_DISP_MESG(THAPP_LKG_OPT4, _scr_input_buff);
+		    _obj->var_max_static = atof(_scr_input_buff);
+		    break;
+		    
+		case thapp_lkg_tst_leak:
+		    THAPP_DISP_MESG(THAPP_LKG_OPT5, _scr_input_buff);
+		    _obj->var_max_leakage = atof(_scr_input_buff);
+		    break;
+		    
+		default:
+		    /*
+		     * If all the options were exhausted force manual
+		     * control.
+		     */
+		    _obj->var_test_type = thapp_lkg_tst_man;
+		}
+
+	    /*
+	     * Select orifice plate type.
+	     * This may be replaced by venturi meter.
+	     */
+	    THAPP_DISP_MESG(THAPP_LKG_OPT6, _scr_input_buff);
+	    _obj->var_or_ix = atoi(_scr_input_buff);
+	    
+	    
+
+	    /* Get product type */
+	    THAPP_DISP_MESG(THAPP_LKG_OPT7, _scr_input_buff);
+	    _obj->var_prod_type = atoi(_scr_input_buff);
+	    if(_obj->var_prod_type != thapp_lkg_dmp && _obj->var_prod_type !=  thapp_lkg_ahu)
+		_obj->var_prod_type = thapp_lkg_dmp;
+
+	    /*
+	     * Get product dimensions.
+	     */
+	    /* Get width */
+	    THAPP_DISP_MESG(THAPP_LKG_OPT8, _scr_input_buff);
+	    _obj->var_width = atof(_scr_input_buff);
+
+	    /* Get height */
+	    THAPP_DISP_MESG(THAPP_LKG_OPT9, _scr_input_buff);
+	    _obj->var_height = atof(_scr_input_buff);
+
+	    /* Get depth */
+	    THAPP_DISP_MESG(THAPP_LKG_OPT10, _scr_input_buff);
+	    _obj->var_depth = atof(_scr_input_buff);
+	    
+	}
+
+    obj->var_max_opt_rows = THAPP_MAX_OPT_MESSAGE_LINES;
+    if(_obj->var_prod_type == thapp_lkg_ahu)
+	{
+	    sprintf(_obj->_var_parent.var_disp_header,
+		    "\n\t"
+		    "DP\t"
+		    "ST\t"
+		    "LKG\t"
+		    "F700\t"
+		    "TMP\r");
+	}
+    else
+	{
+	    sprintf(_obj->_var_parent.var_disp_header,
+		    "\n\t"
+		    "DP\t"
+		    "ST\t"
+		    "LKG\t"
+		    "LKG_m2\t"
+		    "TMP\r");
+	}
+
+    
     return 0;
 }
