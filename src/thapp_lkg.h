@@ -9,7 +9,7 @@
 #include "thsen.h"
 
 #define THAPP_LKG_BUFF 500
-#define THAPP_LKG_MAX_SEN_BUFF 4
+#define THAPP_LKG_MAX_SM_SEN 4
 
 
 /* Enummerated types of leak testing default shall be the manual method */
@@ -18,6 +18,12 @@ typedef enum {
     thapp_lkg_tst_static,
     thapp_lkg_tst_leak
 } thapp_lkg_test_type;
+
+/* Product type enumeration */
+typedef enum {
+    thapp_lkg_dmp,
+    thapp_lkg_ahu
+} thapp_lkg_prod_type;
 
 typedef struct _thapp_lkg thapp_lkg;
 
@@ -31,6 +37,11 @@ struct _thapp_lkg
      */
     thapp_lkg_test_type var_test_type;
 
+    /*
+     * Product type being tested.
+     */
+    thapp_lkg_prod_type var_prod_type;
+    
     /*
      * Extra time is added to when calibration is in progress.
      */
@@ -59,6 +70,9 @@ struct _thapp_lkg
      */
     double* _var_msg_addr[THAPP_LKG_MAX_SEN_BUFF];
 
+    double var_max_static;
+    double var_max_leakage;
+    
     double var_width;
     double var_height;
     double var_depth;
