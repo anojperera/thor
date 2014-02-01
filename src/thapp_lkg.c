@@ -31,6 +31,14 @@
 #define THAPP_LKG_ACT_INCRF_CODE 42							/* * */
 #define THAPP_LKG_ACT_DECRF_CODE 47							/* / */
 
+/* Configuration keys */
+#define THAPP_LKG_SM_KEY "lkg"
+#define THAPP_LKG_ST_KEY "st1"
+#define THAPP_LKG_TMP_KEY "tp1"
+#define THAPP_LKG_WAIT_EXT_KEY "ahu_calib_wait_ext"
+#define THAPP_LKG_SETTLE_KEY "ahu_calib_settle_time"
+
+
 /* Callback methods */
 static int _thapp_lkg_init(thapp* obj, void* self);
 static int _thapp_lkg_start(thapp* obj, void* self);
@@ -102,4 +110,75 @@ thapp* thapp_lkg_new(void)
     _obj->var_depth = 0.0;
 
     return &_obj->_var_parent;
+}
+
+/* Destructor */
+void thapp_lkg_delete(thapp_lkg* obj)
+{
+    if(obj == NULL)
+	return;
+
+    /* Delete sensors */
+    thsmsen_delete(THOR_SMSEN(obj->_var_sm_sen));
+    thgsensor_delete(THOR_GSEN(obj->_var_st_sen));
+
+    thtmp_delete(THOR_GSEN(obj->_var_tp_sen));
+
+    THAPP_INIT_FPTR(obj);
+    obj->var_child = NULL;
+    
+    if(obj->var_init_flg)
+	free(obj);
+    return;
+}
+
+/*===========================================================================*/
+/****************************** Private methods ******************************/
+
+/*
+ * Initialisation helper methods.
+ * This method also creates sensros.
+ */
+static int _thapp_new_helper(thapp_lkg* obj)
+{
+    const config_setting_t* _setting;
+
+    /* Initialise sensor variables */
+    obj->_var_sm_sen = NULL;
+    obj->_var_st_sen = NULL;
+    obj->_var_tmp_sen = NULL;
+
+    /* Get configuration sensor array for the smart sensor */
+    _setting = config_lookup(&obj->_var_parent.var_config, THAPP_LKG_KEY);
+    if(_setting)
+	obj->_var_sm_sen = thsmsen_new(NULL, _setting);
+
+    /* Create static sensor */
+    obj->_var_st_sen = thgsensor_new(NULL, obj);
+    if(obj->_var_st_sen)
+	{
+	    /* Get static sensor data */
+	    _setting = config_lookup(&obj->_var_parent.var_config, THAPP_LKG_ST_KEY);
+
+	    if(_setting)
+		thsen_set_config(obj->_var_st_sen, _setting);
+	}
+
+    /* Create temperature sensor */
+    obj->_var_tmp_sen = thgsensor_new(NULL, obj);
+    if(obj->_var_tmp_sen)
+	{
+	    _setting = config_lookup(&obj->_var_parent.var_config, THAPP_LKG_TMP_KEY);
+
+	    if(_setting)
+		thsen_set_config(obj->_var_st_sen, _setting);
+	}
+
+    
+    /* Get extra wait time during calibration */
+    _setting = config_lookup(&obj->_var_parent.var_config, THAPP_LKG_WAIT_EXT_KEY);
+    if(_setting)
+	obj->var_calib_wait_ext = config_setting_set_int(_setting);
+
+    return 0;
 }
