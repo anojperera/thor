@@ -32,7 +32,8 @@ struct _thsmsen
 
     unsigned int var_next_ix;				/* Next index to select */
     unsigned int var_raw_val_sz;			/* Size of array */
-    
+
+    const double* var_raw_act_val;			/* Active raw value pointer */
     const double* var_raw_vals;				/* Array of raw values */
     double var_val;					/* Pressure value */
     
@@ -60,6 +61,10 @@ extern "C" {
      * Call to update all sensors shall retrieve the values.
      */
     int thsmsen_set_value_array(thsmsen* obj, const double* vals, size_t sz);
+
+    /* Macro can be used to get the active raw value pointed to by the smart sensor. */
+#define thsmsen_get_raw_value_ptr(obj_ptr, val_ptr)	\
+    (val_ptr) = (obj_ptr)->var_raw_act_val
 
 #ifdef __cplusplus
 }

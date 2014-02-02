@@ -41,6 +41,7 @@ thsen* thsmsen_new(thsmsen* obj, const config_setting_t* settings)
     obj->var_err_flg = 0;
     obj->var_next_ix = 0;
     obj->var_raw_val_sz = 0;
+    obj->var_raw_act_val = NULL;
     obj->var_raw_vals = NULL;
     obj->var_val = 0.0;
     obj->var_sen_cnt = 0;
@@ -192,6 +193,8 @@ static double _thsmsen_get_val(void* obj)
 	{
 	    if(_obj->var_raw_vals[i] > 0.1 && _obj->var_raw_vals[i] < 9.5)
 		{
+		    /* Set pointer address of the active sensor */
+		    _obj->var_raw_act_val = &_obj->var_raw_vals[i];
 		    _obj->var_val = thsen_get_value(_obj->var_sen[i]);
 		    break;
 		}
