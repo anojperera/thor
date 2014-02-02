@@ -33,10 +33,11 @@
 #define THAPP_LKG_OPT10 "Enter Depth: "
 
 /* Control Keys */
-#define THAPP_LKG_ACT_INCR_CODE 43							/* + */
-#define THAPP_LKG_ACT_DECR_CODE 45							/* - */
-#define THAPP_LKG_ACT_INCRF_CODE 42							/* * */
-#define THAPP_LKG_ACT_DECRF_CODE 47							/* / */
+#define THAPP_LKG_FAN_INCR_CODE 43							/* + */
+#define THAPP_LKG_FAN_DECR_CODE 45							/* - */
+#define THAPP_LKG_FAN_INCRF_CODE 42							/* * */
+#define THAPP_LKG_FAN_DECRF_CODE 47							/* / */
+#define THAPP_LKG_RAW_VALUES 82								/* R */
 
 /* Configuration keys */
 #define THAPP_LKG_SM_KEY "lkg"
@@ -45,6 +46,12 @@
 #define THAPP_LKG_WAIT_EXT_KEY "ahu_calib_wait_ext"
 #define THAPP_LKG_SETTLE_KEY "ahu_calib_settle_time"
 
+#define THAPP_LKG_MAX_FAN_PER 99
+#define THAPP_LKG_MIN_FAN_PER 0
+
+#define THAPP_LKG_INCR_PER 5.0
+#define THAPP_LKG_INCRF_PER 1.0
+#define THAPP_LKG_MAX_OPT_MESSAGE_LINES 6
 
 /* Callback methods */
 static int _thapp_lkg_init(thapp* obj, void* self);
@@ -108,6 +115,7 @@ thapp* thapp_lkg_new(void)
 
     _obj->var_raw_flg = 0;
     _obj->var_fan_pct = 0;
+    _obj->var_raw_act_ptr = NULL;
     for(i=0; i<THAPP_LKG_BUFF; i++)
 	_obj->var_fan_buff[i] = 0.0;
 
@@ -116,13 +124,20 @@ thapp* thapp_lkg_new(void)
     _obj->_var_msg_addr[2] = &_obj->_var_parent._msg_buff._ai10_val;
     _obj->_var_msg_addr[3] = &_obj->_var_parent._msg_buff._ai11_val;
 
+    _obj->_var_dp = 0.0;
+    _obj->_var_ext_static = 0.0;
+    _obj->_var_lkg = 0.0;
+    _obj->_var_lkg_m2 = 0.0;
+    _obj->_var_lkg_f700 = 0.0;
+
     /* Maximum values for auto modes */
     _obj->var_max_static = 0.0;
     _obj->var_max_leakage = 0.0;
-    
+
     _obj->var_width = 0.0;
     _obj->var_height = 0.0;
     _obj->var_depth = 0.0;
+    _obj->var_s_area = 0.0;
 
     return &_obj->_var_parent;
 }
@@ -141,6 +156,7 @@ void thapp_lkg_delete(thapp_lkg* obj)
 
     THAPP_INIT_FPTR(obj);
     obj->var_child = NULL;
+    obj->var_raw_act_ptr = NULL;
 
     if(obj->var_init_flg)
 	free(obj);
@@ -167,6 +183,9 @@ static int _thapp_new_helper(thapp_lkg* obj)
     _setting = config_lookup(&obj->_var_parent.var_config, THAPP_LKG_KEY);
     if(_setting)
 	obj->_var_sm_sen = thsmsen_new(NULL, _setting);
+
+    /* Set the raw value */
+    thsmsen_get_raw_value_ptr(THOR_SMSEN(obj->_var_sm_sen), obj->var_raw_act_val);
 
     /* Create static sensor */
     obj->_var_st_sen = thgsensor_new(NULL, obj);
@@ -251,13 +270,19 @@ static int _thapp_lkg_start(thapp* obj, void* self)
     thsen_reset_sensor(_obj->_var_st_sen);
     thsen_reset_sensor(_obj->_var_tmp_sen);
 
+    _obj->_var_dp = 0.0;
+    _obj->_var_ext_static = 0.0;
+    _obj->_var_lkg = 0.0;
+    _obj->_var_lkg_m2 = 0.0;
+    _obj->_var_lkg_f700 = 0.0;    
+
     _obj->var_max_static = 0.0;
     _obj->var_max_leakage = 0.0;
 
     _obj->var_width = 0.0;
     _obj->var_height = 0.0;
     _obj->var_depth = 0.0;
-
+    _obj->var_s_area = 0.0;
     /*
      * If the app is not running in headless mode, query for
      * other options.
@@ -334,7 +359,7 @@ static int _thapp_lkg_start(thapp* obj, void* self)
 	    
 	}
 
-    obj->var_max_opt_rows = THAPP_MAX_OPT_MESSAGE_LINES;
+    obj->var_max_opt_rows = THAPP_LKG_MAX_OPT_MESSAGE_LINES;
     if(_obj->var_prod_type == thapp_lkg_ahu)
 	{
 	    sprintf(_obj->_var_parent.var_disp_header,
@@ -344,6 +369,11 @@ static int _thapp_lkg_start(thapp* obj, void* self)
 		    "LKG\t"
 		    "F700\t"
 		    "TMP\r");
+
+	    /* Calculate surface area */
+	    _obj->var_s_area = _obj->var_height * _obj->var_depth * 2 +
+		_obj->var_width * _obj->var_height * 2 +
+		_obj->var_depth * _obj->var_width * 2;
 	}
     else
 	{
@@ -354,8 +384,160 @@ static int _thapp_lkg_start(thapp* obj, void* self)
 		    "LKG\t"
 		    "LKG_m2\t"
 		    "TMP\r");
+
+	    _obj->var_s_area = _obj->var_width * _obj->var_height;
+	}
+
+    /* Convert to m^2 */
+    _obj->var_s_area /= pow(10, -6);
+    
+    return 0;
+}
+
+
+static int _thapp_lkg_stop(thapp* obj, void* self)
+{
+    return 0;
+}
+
+/*
+ * Command handler.
+ * This is where we handle all data processing from sensors.
+ * Always return true if the program were to continue.
+ */
+static int _thapp_lkg_cmd(thapp* obj, void* self, char cmd)
+{
+    int _rt_val;
+    thapp_lkg* _obj;
+
+    _rt_val = 1;
+
+
+    if(self == NULL)
+	return _rt_val;
+
+    /* Cast object to the correct pointer */
+    _obj = (thapp_lkg*) self;
+    switch(cmd)
+	{
+	case THAPP_LKG_FAN_INCR_CODE:
+	    _thapp_fan_ctrl(_obj, THAPP_LKG_INCR_PER, NULL, NULL, 0);
+	    break;
+	case THAPP_LKG_FAN_DECR_CODE:
+	    _thapp_fan_ctrl(_obj, -1*THAPP_LKG_INCR_PER, NULL, NULL, 0);
+	    break;
+	case THAPP_LKG_FAN_INCRF_CODE:
+	    _thapp_fan_ctrl(_obj, THAPP_LKG_INCRF_PER, NULL, NULL, 0);
+	    break;
+	case THAPP_LKG_FAN_DECRF_CODE:
+	    _thapp_fan_ctrl(_obj, -1*THAPP_LKG_INCRF_PER, NULL, NULL, 0);
+	    break;
+	    
+	default:
+	    break;
+	}
+
+
+    /* Get values */
+   _obj->_var_dp = thsen_get_value(_obj->_var_sm_sen);
+   _obj->_var_st_sen = thsen_get_value(_obj->_var_st_sen);
+   
+    /* Calculate leakage */
+    switch(_obj->var_or_ix)
+	{
+	case thapp_lkg_20:
+	    _obj->_var_lkg = 0.0;
+	    break;
+	case thapp_lkg_30:
+	    _obj->_var_lkg = 0.0;
+	    break;
+	case thapp_lkg_40:
+	    _obj->_var_lkg = 0.0;
+	    break;
+	case thapp_lkg_60:
+	    _obj->_var_lkg = 0.0;
+	    break;
+	case thapp_lkg_80:
+	    _obj->_var_lkg = 0.0;
+	    break;
+	case thapp_lkg_100:
+	    _obj->_var_lkg = 0.0;
+	    break;
+	default:
+	    _obj->_var_lkg = 0.0;
+	    break;
+	}
+
+    /* Calculate leakge per unit area */
+    _obj->_var_lkg_m2 = _obj->_var_lkg / _obj->var_s_area;
+
+    /* Temporary message buffer */
+    memset(_obj->_var_parent.var_disp_vals, 0, THAPP_DISP_BUFF_SZ);
+    sprintf(_obj->_var_parent.var_disp_vals,
+	    "\t"
+	    "%.2f\t"
+	    "%.2f\t"
+	    "%.2f\t"
+	    "%.2f\t"
+	    "%.2f\t\r",
+	    _obj->var_raw_flg? *_obj->var_raw_act_ptr : _obj->_var_dp,
+	    _obj->var_raw_flg? _obj->_var_parent._msg_buff._ai3_val : _obj->_var_ext_static,
+	    _obj->var_raw_flg? 0.0 : _obj->_var_lkg,
+	    _obj->var_raw_flg? 0.0 : _obj->_var_lkg_m2,
+	    _obj->var_raw_flg? _obj->_var_parent._msg_buff._ai0_val : thsen_get_value(_obj->_var_tmp_sen));
+    
+    return _rt_val;
+}
+
+/*
+ * Controls the actuator position and sends the control signal to the
+ * server. This method handles both increment and decremnt methods.
+ * Uses percentages to calculate the voltage to be sent.
+ */
+static int _thapp_fan_ctrl(thapp_ahu* obj, double incr, double* incr_val, int* per, int flg)
+{
+    struct thor_msg _msg;						/* message */
+    char _msg_buff[THORNIFIX_MSG_BUFF_SZ];
+    double _val;
+
+    /* Increment the value temporarily. */
+    if(incr_val != NULL)
+	    obj->var_fan_pct = *incr_val;
+    else
+	obj->var_fan_pct += incr;
+
+    /* Check if its within bounds. */
+    if(obj->var_fan_pct > THAPP_AHU_MAX_ACT_PER || obj->var_fan_pct < THAPP_AHU_MIN_ACT_PER)
+	{
+	    /* Reset the value to the original and set the external value */
+	    obj->var_fan_pct -= incr;
+	    if(per != NULL)
+		*per = obj->var_fan_pct;
+	    return 0;
 	}
 
     
+    if(per != NULL)
+	*per = (int) obj->var_fan_pct;
+
+    /* Update command message */
+    if(flg == 0)
+	{
+	    sprintf(obj->_var_parent.var_cmd_vals,
+		    "<==================== Actuator - %i%% ====================>",
+		    (int) obj->var_fan_pct);
+	}
+
+    _val = obj->var_fan_pct;
+    /* memset buffer */
+    thorinifix_init_msg(&_msg);
+    thorinifix_init_msg(&_msg_buff);
+
+    _msg._ao0_val = 0.0;
+    _msg._ao1_val = 9.95 * _val / 100;
+
+    /* Encode the message and send to the server */
+    thornifix_encode_msg(&_msg, _msg_buff, THORNIFIX_MSG_BUFF_SZ);
+    thcon_send_info(thapp_get_con_obj_ptr(&obj->_var_parent), (void*) &_msg_buff, THORNIFIX_MSG_BUFF_SZ);    
     return 0;
 }

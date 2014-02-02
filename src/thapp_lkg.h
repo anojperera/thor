@@ -25,6 +25,16 @@ typedef enum {
     thapp_lkg_ahu
 } thapp_lkg_prod_type;
 
+/* Enumeration of orifice plate diameters */
+typedef enum {
+    thapp_lkg_20,
+    thapp_lkg_30,
+    thapp_lkg_40,
+    thapp_lkg_60,
+    thapp_lkg_80,
+    thapp_lkg_100
+} thapp_lkg_orifix_sz;
+
 typedef struct _thapp_lkg thapp_lkg;
 
 struct _thapp_lkg
@@ -51,6 +61,16 @@ struct _thapp_lkg
     unsigned int var_calib_flg;
 
     unsigned int var_raw_flg;
+
+    /*
+     * This is pointer to the raw voltage value
+     * of the active sensor.
+     * This allows values to be obtained without passing
+     * copies around. Pointer address shall be set by the
+     * the smart sensor.
+     */
+    double* var_raw_act_ptr;
+    
     double var_fan_pct;
 
     double var_fan_buff[THAPP_LKG_BUFF];
@@ -72,12 +92,18 @@ struct _thapp_lkg
 
     double var_max_static;
     double var_max_leakage;
+
+    double _var_dp;
+    double _var_ext_static;
+    double _var_lkg;
+    double _var_lkg_m2;
+    double _var_lkg_f700;
     
     double var_width;
     double var_height;
     double var_depth;
 
-
+    double var_s_area;							/* Surface area */
     struct _thapp_fptr_arr _var_fptr;
     void* var_child;
 };
