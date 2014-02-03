@@ -253,17 +253,13 @@ static void* _thapp_start_handler(void* obj)
     if(_obj->_var_fptr.var_init_ptr)
 	_obj->_var_fptr.var_init_ptr(_obj, _obj->var_child);
 
-    /*
-     * Initialise ncurses system.
-     */
-    initscr();
+    /* Initialisation of the curses system shall be by external */
 
     keypad(stdscr, TRUE);
 
     /* Disable line buffering and keyboard echo */
     raw();
     noecho();
-
     /* set time out to zero */
     timeout(0);
 
@@ -481,7 +477,6 @@ static void* _thapp_start_handler(void* obj)
     /* Check if the file pointer is open and close it */
     THAPP_CLOSE_LOG(_obj);
     
-    endwin();
     _obj->var_run_flg = 0;
     return NULL;
 }
