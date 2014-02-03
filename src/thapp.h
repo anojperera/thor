@@ -24,7 +24,7 @@
 /* Helper macro for displaying messages */
 #define THAPP_DISP_MESG(STR, BUFF)		\
     memset((BUFF), 0, THAPP_DISP_BUFF_SZ);	\
-    printfw((STR));				\
+    printw((STR));				\
     refresh();					\
     getnstr((BUFF), THAPP_DISP_BUFF_SZ-1);	\
     clear()
