@@ -1,5 +1,6 @@
 /* Implementation of the damper leakage class */
 #include <math.h>
+#include <string.h>
 #include <ncurses.h>
 #include "thgsensor.h"
 #include "thtmp.h"
@@ -63,7 +64,7 @@ static int _thapp_lkg_cmd(thapp* obj, void* self, char cmd);
 static int _thapp_new_helper(thapp_lkg* obj);
 
 /* Fan control method */
-static int _thapp_fan_ctrl(thapp_lkg* obj, double incr, double* incr_val, int* per, int flg)
+static int _thapp_fan_ctrl(thapp_lkg* obj, double incr, double* incr_val, int* per, int flg);
 
 
 thapp* thapp_lkg_new(void)
@@ -152,7 +153,7 @@ void thapp_lkg_delete(thapp_lkg* obj)
     thsmsen_delete(THOR_SMSEN(obj->_var_sm_sen));
     thgsensor_delete(THOR_GSEN(obj->_var_st_sen));
 
-    thtmp_delete(THOR_GSEN(obj->_var_tp_sen));
+    thtmp_delete(THOR_GSEN(obj->_var_tmp_sen));
 
     THAPP_INIT_FPTR(obj);
     obj->var_child = NULL;
@@ -180,12 +181,12 @@ static int _thapp_new_helper(thapp_lkg* obj)
     obj->_var_tmp_sen = NULL;
 
     /* Get configuration sensor array for the smart sensor */
-    _setting = config_lookup(&obj->_var_parent.var_config, THAPP_LKG_KEY);
+    _setting = config_lookup(&obj->_var_parent.var_config, THAPP_LKG_SM_KEY);
     if(_setting)
 	obj->_var_sm_sen = thsmsen_new(NULL, _setting);
 
     /* Set the raw value */
-    thsmsen_get_raw_value_ptr(THOR_SMSEN(obj->_var_sm_sen), obj->var_raw_act_val);
+    thsmsen_get_raw_value_ptr(THOR_SMSEN(obj->_var_sm_sen), obj->var_raw_act_ptr);
 
     /* Create static sensor */
     obj->_var_st_sen = thgsensor_new(NULL, obj);
@@ -212,7 +213,7 @@ static int _thapp_new_helper(thapp_lkg* obj)
     /* Get extra wait time during calibration */
     _setting = config_lookup(&obj->_var_parent.var_config, THAPP_LKG_WAIT_EXT_KEY);
     if(_setting)
-	obj->var_calib_wait_ext = config_setting_set_int(_setting);
+	obj->var_calib_wait_ext = config_setting_get_int(_setting);
 
     return 0;
 }
@@ -440,7 +441,7 @@ static int _thapp_lkg_cmd(thapp* obj, void* self, char cmd)
 
     /* Get values */
    _obj->_var_dp = thsen_get_value(_obj->_var_sm_sen);
-   _obj->_var_st_sen = thsen_get_value(_obj->_var_st_sen);
+   _obj->_var_ext_static = thsen_get_value(_obj->_var_st_sen);
    
     /* Calculate leakage */
     switch(_obj->var_or_ix)
@@ -494,7 +495,7 @@ static int _thapp_lkg_cmd(thapp* obj, void* self, char cmd)
  * server. This method handles both increment and decremnt methods.
  * Uses percentages to calculate the voltage to be sent.
  */
-static int _thapp_fan_ctrl(thapp_ahu* obj, double incr, double* incr_val, int* per, int flg)
+static int _thapp_fan_ctrl(thapp_lkg* obj, double incr, double* incr_val, int* per, int flg)
 {
     struct thor_msg _msg;						/* message */
     char _msg_buff[THORNIFIX_MSG_BUFF_SZ];
@@ -507,7 +508,7 @@ static int _thapp_fan_ctrl(thapp_ahu* obj, double incr, double* incr_val, int* p
 	obj->var_fan_pct += incr;
 
     /* Check if its within bounds. */
-    if(obj->var_fan_pct > THAPP_AHU_MAX_ACT_PER || obj->var_fan_pct < THAPP_AHU_MIN_ACT_PER)
+    if(obj->var_fan_pct > THAPP_LKG_MAX_FAN_PER || obj->var_fan_pct < THAPP_LKG_MIN_FAN_PER)
 	{
 	    /* Reset the value to the original and set the external value */
 	    obj->var_fan_pct -= incr;

@@ -69,7 +69,7 @@ struct _thapp_lkg
      * copies around. Pointer address shall be set by the
      * the smart sensor.
      */
-    double* var_raw_act_ptr;
+    const double* var_raw_act_ptr;
     
     double var_fan_pct;
 
@@ -88,7 +88,7 @@ struct _thapp_lkg
      * Array of pointers corresponding to the positions of the
      * data array which is recieved from the server.
      */
-    double* _var_msg_addr[THAPP_LKG_MAX_SEN_BUFF];
+    double* _var_msg_addr[THAPP_LKG_MAX_SM_SEN];
 
     double var_max_static;
     double var_max_leakage;
