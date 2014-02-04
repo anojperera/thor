@@ -9,7 +9,7 @@
 #include <math.h>
 #include <syslog.h>
 
-#define THOR_INC_NI
+/* #define THOR_INC_NI */
 #define THOR_HEADLESS
 #ifdef THOR_HEADLESS
 #define THOR_LOG_ERROR(msg)			\
@@ -216,8 +216,10 @@ extern "C" {
     (thsmsen*) (obj)->var_child
 
 
-#define THOR_AHU(obj) \
-    (thapp_ahu*) obj->var_child
+#define THOR_AHU(obj_ptr)			\
+    (obj_ptr) == NULL? NULL : (thapp_ahu*) (obj_ptr)->var_child
+#define THOR_LKG(obj_ptr)			\
+    (obj_ptr) == NULL? NULL : (thapp_lkg*) (obj_ptr)->var_child
 
 #ifdef __cplusplus
 extern "C" {
