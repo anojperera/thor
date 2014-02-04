@@ -206,14 +206,14 @@ extern "C" {
 
 /* Object conversion macros */
 /* Sensor object */
-#define THOR_GSEN(obj)				\
-    (thgsensor*) obj->var_child
-#define THOR_VPRB(obj)				\
-    (thvprb*) (THOR_GSEN(obj))->var_child
-#define THOR_VSEN(obj)				\
-    (thvsen*) obj->var_child
-#define THOR_SMSEN(obj)				\
-    (thsmsen*) (obj)->var_child
+#define THOR_GSEN(obj_ptr)					\
+    (obj_ptr) == NULL? NULL : (thgsensor*) (obj_ptr)->var_child
+#define THOR_VPRB(obj_ptr)						\
+    (obj_ptr) == NULL? NULL : (thvprb*) (THOR_GSEN(obj_ptr))->var_child
+#define THOR_VSEN(obj_ptr)					\
+    (obj_ptr) == NULL? NULL : (thvsen*) (obj_ptr)->var_child
+#define THOR_SMSEN(obj_ptr)					\
+    (obj_ptr) == NULL? NULL : (thsmsen*) (obj_ptr)->var_child
 
 
 #define THOR_AHU(obj_ptr)			\
