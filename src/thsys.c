@@ -16,12 +16,16 @@ static void _thsys_queue_del_helper(void* data);
 
 
 #define THSYS_CREATE_TASKS(sys_obj)					\
-    ERR_CHECK(NICreateTask(THSYS_EMPTY_STR, &(sys_obj)->var_a_outask));	\
-    ERR_CHECK(NICreateTask(THSYS_EMPTY_STR, &(sys_obj)->var_a_intask))
+    if(ERR_CHECK(NICreateTask(THSYS_EMPTY_STR, &(sys_obj)->var_a_outask))) \
+	(sys_obj)->var_g_panic_flg = 1;					\
+    if(ERR_CHECK(NICreateTask(THSYS_EMPTY_STR, &(sys_obj)->var_a_intask))) \
+	(sys_obj)->var_g_panic_flg = 1
 
 #define THSYS_CONFIG_CHANNELS(sys_obj)					\
-    ERR_CHECK(NICreateAOVoltageChan((sys_obj)->var_a_outask, THSYS_A0_CHANNELS, THSYS_EMPTY_STR, THSYS_MIN_VAL, THSYS_MAX_VAL, DAQmx_Val_Volts , NULL)); \
-    ERR_CHECK(NICreateAIVoltageChan((sys_obj)->var_a_intask, THSYS_AI_CHANNELS, THSYS_EMPTY_STR,  DAQmx_Val_NRSE, THSYS_MIN_VAL, THSYS_MAX_VAL, DAQmx_Val_Volts, NULL))
+    if(ERR_CHECK(NICreateAOVoltageChan((sys_obj)->var_a_outask, THSYS_A0_CHANNELS, THSYS_EMPTY_STR, THSYS_MIN_VAL, THSYS_MAX_VAL, DAQmx_Val_Volts , NULL))) \
+	(sys_obj)->var_g_panic_flg = 1;					\
+    if(ERR_CHECK(NICreateAIVoltageChan((sys_obj)->var_a_intask, THSYS_AI_CHANNELS, THSYS_EMPTY_STR,  DAQmx_Val_NRSE, THSYS_MIN_VAL, THSYS_MAX_VAL, DAQmx_Val_Volts, NULL))) \
+	(sys_obj)->var_g_panic_flg = 1
 
 /* Initialise method */
 int thsys_init(thsys* obj, int (*callback) (thsys*, void*))
@@ -34,6 +38,7 @@ int thsys_init(thsys* obj, int (*callback) (thsys*, void*))
     obj->var_flg = 0;
     obj->var_client_count = 0;
     obj->var_run_flg = 0;
+    obj->var_g_panic_flg = 0;
 
     /* create tasks */
     THSYS_CREATE_TASKS(obj);
