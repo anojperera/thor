@@ -51,45 +51,53 @@ int main(int argc, char** argv)
     /* Create new menu */
     _menu = new_menu((ITEM**) _menu_items);
 
-    mvprintw(LINES - 2, 0, "Select test from above, press 'q' to Exit");
-    post_menu(_menu);
-    refresh();
-
-    while((c = getch()) != THAPP_QUIT_CODE2)
+    while(1)
 	{
-	    switch(c)
+	    mvprintw(LINES - 2, 0, "Select test from above, press 'q' to Exit");
+	    post_menu(_menu);
+	    refresh();
+
+	    while((c = getch()) != THAPP_QUIT_CODE2)
 		{
-		case KEY_DOWN:
-		    menu_driver(_menu, REQ_DOWN_ITEM);
-		    break;
-		case KEY_UP:
-		    menu_driver(_menu, REQ_UP_ITEM);
-		    break;
-		case THAPP_NEW_LINE_CODE:
-		case THAPP_RETURN_CODE:
-		    /* Get current item */
-		    _cur_item = current_item(_menu);
-		    _exit_flg = 1;
-		    break;
+		    switch(c)
+			{
+			case KEY_DOWN:
+			    menu_driver(_menu, REQ_DOWN_ITEM);
+			    break;
+			case KEY_UP:
+			    menu_driver(_menu, REQ_UP_ITEM);
+			    break;
+			case THAPP_NEW_LINE_CODE:
+			case THAPP_RETURN_CODE:
+			    /* Get current item */
+			    _cur_item = current_item(_menu);
+			    _exit_flg = 1;
+			    break;
+			}
+
+		    /* If Pressed return exit loop */
+		    if(_exit_flg)
+			break;
+	    
+		    usleep(100000);
 		}
 
-	    /* If Pressed return exit loop */
-	    if(_exit_flg)
+	    /* If application was quit in the main screen it will exit it */
+	    if(c == THAPP_QUIT_CODE2)
 		break;
-	    
-	    usleep(100000);
-	}
 
-    /* Get user pointer */
-    _item_fptr = (int(*)(void)) item_userptr(_cur_item);
+	    /* Get user pointer */
+	    _item_fptr = (int(*)(void)) item_userptr(_cur_item);
         
-    /* Unpost menu and clear the screen */
-    c = item_count(_menu);
-    unpost_menu(_menu);
-    clear();
+	    /* Unpost menu and clear the screen */
+	    c = item_count(_menu);
+	    unpost_menu(_menu);
+	    clear();
 
-    /* Call the function */
-    _item_fptr();    
+	    /* Call the function */
+	    _item_fptr();
+	    clear();
+	}
     
     free_menu(_menu);
     for(i=0; i<c; i++)
