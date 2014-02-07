@@ -19,7 +19,7 @@ int main(int argc, char** argv)
     if(thcon_init(&_con, thcon_mode_client))
 	exit(1);
 
-    thcon_set_server_name(&_con, "192.168.8.100");
+    thcon_set_server_name(&_con, argv[1]);
     thcon_set_port_name(&_con, "11000");
 
     thcon_set_recv_callback(&_con, _recv_callback);
