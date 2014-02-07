@@ -28,6 +28,7 @@ struct _thsys
     int var_flg;
     int var_client_count;
     int var_run_flg;					/* flag to indicate system is running */
+    unsigned int var_g_panic_flg;			/* Flag to indicate major errors occured */
     
     /* Analog tasks */
     TaskHandle var_a_outask;				/* analog output task */
