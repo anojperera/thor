@@ -99,6 +99,7 @@ int main(int argc, char** argv)
 	    clear();
 	}
     
+    clear();
     free_menu(_menu);
     for(i=0; i<c; i++)
 	{
