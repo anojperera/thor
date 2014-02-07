@@ -42,16 +42,30 @@ int thsys_init(thsys* obj, int (*callback) (thsys*, void*))
 
     /* create tasks */
     THSYS_CREATE_TASKS(obj);
+    if(obj->var_g_panic_flg)
+	{
+	    THOR_LOG_ERROR("thor unable to create tasks");
+	    return -1;
+	}
 
-    /* create channels in order */
+    /*
+     * Create channels in order. If it failed at this point
+     * clear the task and exit.
+     */
     THSYS_CONFIG_CHANNELS(obj);
+    if(obj->var_g_panic_flg)
+	{
+	    THSYS_CLEAR_TASKS(obj);
+	    THOR_LOG_ERROR("thor system failed to initialised");
+	    return -1;
+	}
 
     /* initialise buffers */
     for(i=0; i<THSYS_NUM_AI_CHANNELS; i++)
 	obj->var_inbuff[i] = 0.0;
     for(i=0; i<THSYS_NUM_AO_CHANNELS; i++)
 	obj->var_outbuff[i] = 0.0;
-    
+
     obj->var_sample_rate = THSYS_DEFAULT_SAMPLE_RATE;
     obj->var_callback_intrupt = callback;
     obj->var_callback_update = NULL;
@@ -97,7 +111,7 @@ void thsys_delete(thsys* obj)
 
     /* Delete queue */
     gqueue_delete(&obj->_var_out_queue);
-    
+
     sem_destroy(&obj->var_sem);
     pthread_mutex_destroy(&obj->_var_mutex);
     THOR_LOG_ERROR("thor system cleaned up");
@@ -121,7 +135,7 @@ int thsys_start(thsys* obj)
     ERR_CHECK(NICfgSampClkTiming(obj->var_a_intask, THSYS_CLOCK_SOURCE, obj->var_sample_rate, DAQmx_Val_Rising, DAQmx_Val_ContSamps, 1));
 
     THOR_LOG_ERROR("thor timer configure complete");
-    
+
     /* creat thread */
     pthread_create(&obj->var_thread, NULL, _thsys_start_async, (void*) obj);
 
@@ -144,7 +158,7 @@ int thsys_stop(thsys* obj)
      */
     if((--obj->var_client_count) > 0)
 	return 0;
-    
+
     /* cancel thread */
     pthread_cancel(obj->var_thread);
     pthread_join(obj->var_thread, NULL);
@@ -196,7 +210,7 @@ int thsys_set_write_buff(thsys* obj, float64* buff, size_t sz)
     pthread_mutex_lock(&obj->_var_mutex);
     gqueue_in(&obj->_var_out_queue, (void*) _buff);
     pthread_mutex_unlock(&obj->_var_mutex);
-    
+
     return 0;
 }
 
@@ -207,7 +221,7 @@ static void _thsys_thread_cleanup(void* para)
     float64 _buff[THSYS_NUM_AO_CHANNELS];
     thsys* _obj;
     char _err_msg[THOR_BUFF_SZ];
-    
+
     if(para == NULL)
 	return;
     _obj = (thsys*) para;
@@ -223,7 +237,7 @@ static void _thsys_thread_cleanup(void* para)
 	    sprintf(_err_msg, "Output channels reset %d", (int) _samples);
 	    THOR_LOG_ERROR(_err_msg);
 	}
-    
+
     /* stop tasks */
     NIStopTask(_obj->var_a_outask);
     NIStopTask(_obj->var_a_intask);
@@ -237,7 +251,7 @@ static void _thsys_thread_cleanup(void* para)
 /* Thread function */
 static void* _thsys_start_async(void* para)
 {
-    int32 _samples;    
+    int32 _samples;
     int _old_state;
     thsys* _obj;
     int32 _samples_read = 0;
@@ -250,18 +264,18 @@ static void* _thsys_start_async(void* para)
 
     pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
     pthread_setcanceltype(PTHREAD_CANCEL_DEFERRED, NULL);
-    
-    _obj = (thsys*) para;    
+
+    _obj = (thsys*) para;
     THOR_LOG_ERROR("thor system started");
-    
+
     ERR_CHECK(NIStartTask(_obj->var_a_intask));
-    ERR_CHECK(NIStartTask(_obj->var_a_outask));    
+    ERR_CHECK(NIStartTask(_obj->var_a_outask));
 
     while(1)
     	{
     	    /* test for cancel state */
     	    pthread_testcancel();
-	    
+
     	    /* if callback was set exec */
     	    if(_obj->var_callback_intrupt)
 	        _obj->var_callback_intrupt(_obj, (_obj->var_ext_obj? _obj->var_ext_obj : NULL));
@@ -282,7 +296,7 @@ static void* _thsys_start_async(void* para)
 	    	    pthread_mutex_lock(&_obj->_var_mutex);
 		    gqueue_out(&_obj->_var_out_queue, (void**) &_buff);
 		    pthread_mutex_unlock(&_obj->_var_mutex);
-		    
+
 		    /* Write buffer to the device */
 		    if(_buff)
 			{
@@ -308,6 +322,6 @@ static void _thsys_queue_del_helper(void* data)
     /* Check for argument */
     if(data)
 	free(data);
-    
+
     return;
 }
