@@ -9,7 +9,7 @@
 #include <math.h>
 #include <syslog.h>
 
-#define THOR_INC_NI
+/* #define THOR_INC_NI */
 #define THOR_HEADLESS
 #ifdef THOR_HEADLESS
 #define THOR_LOG_ERROR(msg)			\
@@ -104,7 +104,7 @@ typedef unsigned int (*gthor_disb_fptr)(void*, int);
 #define THORNIFIX_MSG_CMD_WRITE_A0 1
 
 /* Message handling methods and macros */
-#define THORNIFIX_MSG_ELM_NUM 18
+#define THORNIFIX_MSG_ELM_NUM 19
 #define THORNIFIX_MSG_BUFF_ELM_SZ 8
 #define THORNIFIX_MSG_BUFF_SZ THORNIFIX_MSG_ELM_NUM*THORNIFIX_MSG_BUFF_ELM_SZ
 
@@ -135,6 +135,7 @@ struct thor_msg
     double _ai10_val __attribute__ ((aligned (THORNIFIX_MSG_BUFF_ELM_SZ)));
     double _ai11_val __attribute__ ((aligned (THORNIFIX_MSG_BUFF_ELM_SZ)));
     double _ai12_val __attribute__ ((aligned (THORNIFIX_MSG_BUFF_ELM_SZ)));
+    double _ai13_val __attribute__ ((aligned (THORNIFIX_MSG_BUFF_ELM_SZ)));    
     /*--------------------------------------------*/
 
     /* digital input channels */
@@ -173,6 +174,7 @@ struct thor_msg
 	    "%.2f|"				\
 	    "%.2f|"				\
 	    "%.2f|"				\
+	    "%.2f|"				\
 	    "%.2f|",				\
 	    (t_obj)->_cmd,			\
 	    (t_obj)->_ao0_val,			\
@@ -190,6 +192,7 @@ struct thor_msg
 	    (t_obj)->_ai10_val,			\
 	    (t_obj)->_ai11_val,			\
 	    (t_obj)->_ai12_val,			\
+	    (t_obj)->_ai13_val,			\
 	    (t_obj)->_di0_val,			\
 	    (t_obj)->_di1_val)
 

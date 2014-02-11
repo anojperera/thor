@@ -108,9 +108,10 @@ int thornifix_decode_msg(const char* buff, size_t size, struct thor_msg* msg)
     msg->_ai9_val = _msg_buff[12][0] != '\0'? atof(_msg_buff[12]) : 0;
     msg->_ai10_val = _msg_buff[13][0] != '\0'? atof(_msg_buff[13]) : 0;
     msg->_ai11_val = _msg_buff[14][0] != '\0'? atof(_msg_buff[14]) : 0;
-    msg->_ai12_val = _msg_buff[15][0] != '\0'? atof(_msg_buff[15]) : 0;    
-    msg->_di0_val = _msg_buff[16][0] != '\0'? atof(_msg_buff[16]) : 0;
-    msg->_di1_val = _msg_buff[17][0] != '\0'? atof(_msg_buff[17]) : 0;
+    msg->_ai12_val = _msg_buff[15][0] != '\0'? atof(_msg_buff[15]) : 0;
+    msg->_ai13_val = _msg_buff[16][0] != '\0'? atof(_msg_buff[16]) : 0;
+    msg->_di0_val = _msg_buff[17][0] != '\0'? atof(_msg_buff[17]) : 0;
+    msg->_di1_val = _msg_buff[18][0] != '\0'? atof(_msg_buff[18]) : 0;
 
     return 0;
 }
