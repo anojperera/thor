@@ -9,11 +9,11 @@
 #include <gqueue.h>
 #include "thornifix.h"
 
-#define THSYS_AI_CHANNELS "Dev1/ai0:12"
+#define THSYS_AI_CHANNELS "Dev1/ai0:13"
 #define THSYS_A0_CHANNELS "Dev1/ao0:1"
 #define THSYS_EMPTY_STR ""
 #define THSYS_CLOCK_SOURCE "OnboardClock"
-#define THSYS_NUM_AI_CHANNELS 13
+#define THSYS_NUM_AI_CHANNELS 14
 #define THSYS_NUM_AO_CHANNELS 2
 #define THSYS_MIN_VAL 0.0
 #define THSYS_MAX_VAL 10.0

@@ -309,7 +309,7 @@ static void* _thsys_start_async(void* para)
 	    pthread_setcancelstate(_old_state, NULL);
 
     	    pthread_testcancel();
-    	    usleep(1000 /(_obj->var_sample_rate*THSYS_READ_WRITE_FACTOR));
+    	    usleep((int) (1000000 /(_obj->var_sample_rate*THSYS_READ_WRITE_FACTOR)));
     	}
 
     pthread_cleanup_pop(1);
