@@ -333,7 +333,7 @@ static void* _thapp_start_handler(void* obj)
 		    memset(_obj->var_disp_opts, 0, THOR_BUFF_SZ);
 		    memset(_obj->var_job_num, 0, THAPP_DISP_BUFF_SZ);
 		    memset(_obj->var_tag_num, 0, THAPP_DISP_BUFF_SZ);
-		    
+		    thorinifix_init_msg(&_obj->_msg_buff);
 		    /*
 		     *  The user has entered start therefore we call the
 		     *  derived classes start callback method to start the

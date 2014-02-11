@@ -96,6 +96,7 @@ int main(int argc, char** argv)
 
 	    /* Call the function */
 	    _item_fptr();
+	    c = 0;
 	    clear();
 	}
     
