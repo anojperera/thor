@@ -12,6 +12,7 @@
 #define THAPP_START_MSG "Press 'Shift + s' to begin"
 #define THAPP_PAUSED_MSG "<============================== Paused ===================================>"
 #define THAPP_MSG_BLANK "                                                                           "
+#define THAPP_GEO_LOC_DISPLAY "My IP Address: %s\n"
 
 #define THAPP_GEOLOC_KEY "mygeo_location"
 #define THAPP_SLEEP_KEY "main_sleep"
@@ -238,6 +239,9 @@ static void* _thapp_start_handler(void* obj)
     int _max_row, _max_col, _t_msg_pos;
     int _sec_cnt = 0, _msg_cnt_max = 0;
     unsigned int _p_flg = 0;						/* pause flag */
+    size_t _sz;
+
+    
     struct thor_msg* _msg = NULL;
 
     /* Check object pointer and cast to the correct type */
@@ -352,7 +356,9 @@ static void* _thapp_start_handler(void* obj)
 		    if(!thcon_get_my_geo(&_obj->_var_con))
 			{
 			    _geo_loc = thcon_get_my_addr(&_obj->_var_con);
-			    printw("%s\n", _geo_loc);
+			    /* Add to the display options list */
+			    _sz = strlen(_obj->var_disp_opts);
+			    sprintf(_obj->var_disp_opts+_sz, THAPP_GEO_LOC_DISPLAY, _geo_loc);
 			}
 
 		    /* Disable line buffering and keyboard echo */
