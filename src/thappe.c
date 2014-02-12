@@ -91,7 +91,7 @@ int main(int argc, char** argv)
         
 	    /* Unpost menu and clear the screen */
 	    c = item_count(_menu);
-	    /* unpost_menu(_menu); */
+	    unpost_menu(_menu);
 	    clear();
 
 	    /* Call the function */
