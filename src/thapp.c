@@ -352,7 +352,7 @@ static void* _thapp_start_handler(void* obj)
 		    if(!thcon_get_my_geo(&_obj->_var_con))
 			{
 			    _geo_loc = thcon_get_my_addr(&_obj->_var_con);
-			    printw(stdscr, "%s\n", _geo_loc);
+			    printw("%s\n", _geo_loc);
 			}
 
 		    /* Disable line buffering and keyboard echo */
@@ -558,6 +558,15 @@ static int _thapp_init_helper(thapp* obj)
 	    _t_buff = config_setting_get_string(_setting);
 	    if(_t_buff)
 		thcon_set_server_name(&obj->_var_con, _t_buff);
+	}
+
+    /* Get geolocation ip address */
+    _setting = config_lookup(&obj->var_config, THAPP_GEOLOC_KEY);
+    if(_setting != NULL)
+	{
+	    _t_buff = config_setting_get_string(_setting);
+	    if(_t_buff)
+		thcon_set_geo_ip(&obj->_var_con, _t_buff);
 	}
 
     return 0;
