@@ -13,6 +13,7 @@
 #define THAPP_PAUSED_MSG "<============================== Paused ===================================>"
 #define THAPP_MSG_BLANK "                                                                           "
 
+#define THAPP_GEOLOC_KEY "mygeo_location"
 #define THAPP_SLEEP_KEY "main_sleep"
 #define THAPP_PORT_KEY "main_con_port"
 #define THAPP_SERVER_NAME_KEY "self_url"
