@@ -15,6 +15,8 @@
 #define THSVR_DEF_COM_PORT "11000"
 #define THSVR_DEF_TIMEOUT "def_time_out"
 
+#define THSVR_SYS_SAMPLE_RATE 1.0
+
 /*
  * Macro for copying admin url to the internal buffers.
  */
@@ -64,7 +66,7 @@ int thsvr_init(thsvr* obj, const config_t* config)
     thsys_set_external_obj(&obj->_var_sys, (void*) obj);
     thcon_set_ext_obj(&obj->_var_con, (void*) obj);
     
-    thsys_set_sample_rate(&obj->_var_sys, 4);
+    thsys_set_sample_rate(&obj->_var_sys, THSVR_SYS_SAMPLE_RATE);
 
     /* Set callback methods */
     obj->_var_sys.var_callback_update = _thsvy_sys_update_callback;
