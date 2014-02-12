@@ -315,6 +315,12 @@ static void* _thapp_start_handler(void* obj)
 			    sleep(THAPP_DEFAULT_WAIT_TIME);
 			}
 
+		    /* /\* Call to get the geo location *\/ */
+		    /* if(!thcon_get_my_geo(&_obj->_var_con)) */
+		    /* 	{ */
+			    
+		    /* 	} */
+		    
 		    /* Open log file */
 		    _thapp_open_log_file(_obj);
 
