@@ -224,6 +224,9 @@ const char* thcon_get_my_addr(thcon* obj)
 	return NULL;
 
     /* check for ip address url */
+    if(obj->var_ip_flg > 0)
+	return obj->var_my_info._my_address;
+    
     if(obj->var_ip_addr_url[0] == '\0' || obj->var_ip_addr_url[0] == 0)
 	return NULL;
 
