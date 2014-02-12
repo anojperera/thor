@@ -244,6 +244,7 @@ static int _thsvy_sys_update_callback(thsys* obj, void* self, const float64* buf
     _msg._ai10_val = (double) buff[10];
     _msg._ai11_val = (double) buff[11];
     _msg._ai12_val = (double) buff[12];
+    _msg._ai13_val = (double) buff[13];
 
     /* Digital read set to zero */
     _msg._di0_val = 0.0;
