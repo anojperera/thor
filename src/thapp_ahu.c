@@ -41,6 +41,7 @@
 #define THAPP_AHU_YES2_CODE 89								/* Y */
 #define THAPP_AHU_CALIBRATION_CODE 67							/* C */
 #define THAPP_AHU_RAW_VALUES 82								/* R */
+#define THAPP_AHU_EXLUDE_CALIB_CODE 69							/* E */
 
 #define THAPP_AHU_MAX_ACT_PER 99
 #define THAPP_AHU_MIN_ACT_PER 0
@@ -95,8 +96,8 @@ thapp* thapp_ahu_new(void)
     _obj->var_mode = 0;
     _obj->var_act_pct = 0.0;
     _obj->var_calib_wait_ext = 0;
-    _obj->var_calib_settle_time = 0;    
-    
+    _obj->var_calib_settle_time = 0;
+
     /* Load configurations and initialise sensors */
     if(_thapp_new_helper(_obj))
 	{
@@ -115,7 +116,7 @@ thapp* thapp_ahu_new(void)
     _obj->_var_msg_addr[5] = &_obj->_var_parent._msg_buff._ai9_val;
     _obj->_var_msg_addr[6] = &_obj->_var_parent._msg_buff._ai10_val;
     _obj->_var_msg_addr[7] = &_obj->_var_parent._msg_buff._ai11_val;
-    
+
     /* Initialise actuator buffer */
     for(; i<THAPP_AHU_DMP_BUFF; i++)
 	_obj->var_dmp_buff[i] = 0.0;
@@ -153,7 +154,7 @@ void thapp_ahu_delete(thapp_ahu* obj)
 		obj->_var_dp_val_ptr[i] = NULL;
 	    free(obj->_var_dp_val_ptr);
 	}
-    
+
     /* Delete parent object */
     thapp_delete(&obj->_var_parent);
 
@@ -214,7 +215,7 @@ static int _thapp_new_helper(thapp_ahu* obj)
 	    /* Count the number of sensors available */
 	    _num = config_setting_length(_setting);
 	    obj->_var_vsen = thvsen_new(NULL, _setting, _num);
-	   
+
 	    /* Check if sensor object was created */
 	    if(obj->_var_vsen == NULL)
 		return -1;
@@ -279,7 +280,7 @@ static int _thapp_new_helper(thapp_ahu* obj)
     /* Settling time for calibration */
     _setting = config_lookup(&obj->_var_parent.var_config, THAPP_CALIB_SETTLE_KEY);
     if(_setting)
-	obj->var_calib_settle_time = config_setting_get_int(_setting);    
+	obj->var_calib_settle_time = config_setting_get_int(_setting);
     return 0;
 }
 
@@ -291,14 +292,14 @@ static int _thapp_ahu_start(thapp* obj, void* self)
     char _def_flg=0;
     float _f_dia=0.0, _m_dia=0.0;
     double _ratio=0.0;
-    char _scr_input_buff[THAPP_DISP_BUFF_SZ];    
+    char _scr_input_buff[THAPP_DISP_BUFF_SZ];
     thapp_ahu* _obj;
     int _pos = 0;
 
     if(self == NULL)
 	return -1;
     _obj = (thapp_ahu*) self;
-    
+
     /* Reset all sensors before start */
     thsen_reset_sensor(_obj->_var_vsen);
     thsen_reset_sensor(_obj->_var_tp_sen);
@@ -317,8 +318,8 @@ static int _thapp_ahu_start(thapp* obj, void* self)
     _obj->var_duct_loss = 0.0;
     _obj->var_t_ext_st = 0.0;
     _obj->var_fm_ratio = 0.0;
-    
-    
+
+
     /*
      * If the app is not running in headless mode, query for
      * other options.
@@ -333,7 +334,7 @@ static int _thapp_ahu_start(thapp* obj, void* self)
 	    printw(THAPP_AHU_OPT_2);
 	    refresh();
 	    getnstr(obj->var_tag_num, THAPP_DISP_BUFF_SZ-1);
-	    
+
 	    memset(_scr_input_buff, 0, THAPP_DISP_BUFF_SZ);
 	    printw(THAPP_AHU_OPT1);
 	    refresh();
@@ -355,7 +356,7 @@ static int _thapp_ahu_start(thapp* obj, void* self)
 		_num_sensors = 4;
 	    else
 		_num_sensors = 2;
-	    
+
 	    clear();
 
 	    memset(_scr_input_buff, 0, THAPP_DISP_BUFF_SZ);
@@ -366,24 +367,24 @@ static int _thapp_ahu_start(thapp* obj, void* self)
 	    _obj->var_def_static = atof(_scr_input_buff);
 	    clear();
 	    _pos += sprintf(&obj->var_disp_opts[_pos], "%s%i\n", THAPP_AHU_OPT3, (int) _obj->var_def_static);
-	    
+
 	    printw(THAPP_AHU_OPT4);
 	    refresh();
-	    getnstr(_scr_input_buff, THAPP_DISP_BUFF_SZ-1);	    
+	    getnstr(_scr_input_buff, THAPP_DISP_BUFF_SZ-1);
 	    _def_flg = _scr_input_buff[0];
 	    clear();
-	    
+
 	    if(_def_flg == THAPP_AHU_YES_CODE || _def_flg == THAPP_AHU_YES2_CODE)
 		{
 		    memset(_scr_input_buff, 0, THAPP_DISP_BUFF_SZ);
 		    printw(THAPP_AHU_OPT5);
 		    refresh();
 		    getnstr(_scr_input_buff, THAPP_DISP_BUFF_SZ-1);
-		    
+
 		    _f_dia = atof(_scr_input_buff);
 		    clear();
 		    _pos += sprintf(&obj->var_disp_opts[_pos], "%s%i\n", THAPP_AHU_OPT5, (int) _f_dia);
-		    
+
     		    memset(_scr_input_buff, 0, THAPP_DISP_BUFF_SZ);
 		    printw(THAPP_AHU_OPT6);
 		    refresh();
@@ -401,7 +402,7 @@ static int _thapp_ahu_start(thapp* obj, void* self)
 		}
 	}
     obj->var_max_opt_rows = THAPP_MAX_OPT_MESSAGE_LINES;
-    thvsen_configure_sensors(THOR_VSEN(_obj->_var_vsen), _num_sensors);    
+    thvsen_configure_sensors(THOR_VSEN(_obj->_var_vsen), _num_sensors);
 
     /* Add header information */
     memset(_obj->_var_parent.var_disp_header, 0, THAPP_DISP_BUFF_SZ);
@@ -440,7 +441,7 @@ static int _thapp_cmd(thapp* obj, void* self, char cmd)
 
     _f_sp = 0.0;
     _rt_val = 1;
-    
+
     if(self == NULL)
 	return _rt_val;
 
@@ -451,13 +452,13 @@ static int _thapp_cmd(thapp* obj, void* self, char cmd)
 	    _thapp_act_ctrl(_obj, THAPP_AHU_INCR_PER, NULL, NULL, 0);
 	    break;
 	case THAPP_AHU_ACT_DECR_CODE:
-	    _thapp_act_ctrl(_obj, -1*THAPP_AHU_INCR_PER, NULL, NULL, 0);	    
+	    _thapp_act_ctrl(_obj, -1*THAPP_AHU_INCR_PER, NULL, NULL, 0);
 	    break;
 	case THAPP_AHU_ACT_INCRF_CODE:
 	    _thapp_act_ctrl(_obj, THAPP_AHU_INCRF_PER, NULL, NULL, 0);
 	    break;
 	case THAPP_AHU_ACT_DECRF_CODE:
-	    _thapp_act_ctrl(_obj, -1*THAPP_AHU_INCRF_PER, NULL, NULL, 0);	    
+	    _thapp_act_ctrl(_obj, -1*THAPP_AHU_INCRF_PER, NULL, NULL, 0);
 	    break;
 	case THAPP_AHU_YES_CODE:
 	    break;
@@ -469,13 +470,13 @@ static int _thapp_cmd(thapp* obj, void* self, char cmd)
 		    _obj->var_calib_flg = 1;
 		    _obj->var_dmp_cnt = 0;
 		    _obj->var_calib_app_flg = 0;
-		    
+
 		    /* Message to indicate calibration in progress */
 		    memset(_obj->_var_parent.var_cmd_vals, 0, THAPP_DISP_BUFF_SZ);
 		    sprintf(_obj->_var_parent.var_cmd_vals, THAPP_AHU_OPT8, 0, 0);
-			    
+
 		}
-	    
+
 	    break;
 	case THAPP_AHU_RAW_VALUES:
 	    if(_obj->var_raw_flg > 0)
@@ -488,6 +489,19 @@ static int _thapp_cmd(thapp* obj, void* self, char cmd)
     		    memset(_obj->_var_parent.var_cmd_vals, 0, THAPP_DISP_BUFF_SZ);
 		    sprintf(_obj->_var_parent.var_cmd_vals,
 			    "<==================== Raw Voltage Values ====================>");
+		}
+	    break;
+	case THAPP_AHU_EXLUDE_CALIB_CODE:
+	    /*
+	     * Exclude any calibration set. This is disable during
+	     * the calibration process.
+	     */
+	    if(!_obj->var_calib_flg && !_obj->var_calib_app_flg)
+		{
+		    _obj->var_duct_loss = 0;
+    		    memset(_obj->_var_parent.var_cmd_vals, 0, THAPP_DISP_BUFF_SZ);
+		    sprintf(_obj->_var_parent.var_cmd_vals,
+			    "<================= Exclude Calibration Value ================>");
 		}
 	    break;
 	default:
@@ -553,10 +567,11 @@ static int _thapp_cmd(thapp* obj, void* self, char cmd)
 		{
 		    _obj->var_dmp_cnt = 0;
 		    _rt_val = 1;
+		    _obj->var_calib_app_flg = 0;		    
 		}
 	}
     /*======================================================================*/
-	
+
 
     /* Get Values */
     _obj->var_duct_vel = thsen_get_value(_obj->_var_vsen);
@@ -568,7 +583,7 @@ static int _thapp_cmd(thapp* obj, void* self, char cmd)
 
     _f_sp = thsen_get_value(_obj->_var_sp_sen);
     _obj->var_t_ext_st = thsen_get_value(_obj->_var_st_sen) + _obj->var_duct_loss;
-    
+
     /* Temporary message buffer */
     memset(_obj->_var_parent.var_disp_vals, 0, THAPP_DISP_BUFF_SZ);
     sprintf(_obj->_var_parent.var_disp_vals,
@@ -667,7 +682,7 @@ static int _thapp_act_ctrl(thapp_ahu* obj, double incr, double* incr_val, int* p
 	    return 0;
 	}
 
-    
+
     if(per != NULL)
 	*per = (int) obj->var_act_pct;
 
@@ -689,6 +704,6 @@ static int _thapp_act_ctrl(thapp_ahu* obj, double incr, double* incr_val, int* p
 
     /* Encode the message and send to the server */
     thornifix_encode_msg(&_msg, _msg_buff, THORNIFIX_MSG_BUFF_SZ);
-    thcon_send_info(thapp_get_con_obj_ptr(&obj->_var_parent), (void*) &_msg_buff, THORNIFIX_MSG_BUFF_SZ);    
+    thcon_send_info(thapp_get_con_obj_ptr(&obj->_var_parent), (void*) &_msg_buff, THORNIFIX_MSG_BUFF_SZ);
     return 0;
 }
