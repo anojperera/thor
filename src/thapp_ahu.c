@@ -90,6 +90,12 @@ thapp* thapp_ahu_new(void)
 
     /* Initialise dp value pointer */
     _obj->_var_dp_val_ptr = NULL;
+
+    /* Set default running mode to manual */
+    _obj->var_mode = 0;
+    _obj->var_act_pct = 0.0;
+    _obj->var_calib_wait_ext = 0;
+    _obj->var_calib_settle_time = 0;    
     
     /* Load configurations and initialise sensors */
     if(_thapp_new_helper(_obj))
@@ -110,13 +116,6 @@ thapp* thapp_ahu_new(void)
     _obj->_var_msg_addr[6] = &_obj->_var_parent._msg_buff._ai10_val;
     _obj->_var_msg_addr[7] = &_obj->_var_parent._msg_buff._ai11_val;
     
-    
-    /* Set default running mode to manual */
-    _obj->var_mode = 0;
-    _obj->var_act_pct = 0.0;
-    _obj->var_calib_wait_ext = 0;
-    _obj->var_calib_settle_time = 0;
-
     /* Initialise actuator buffer */
     for(; i<THAPP_AHU_DMP_BUFF; i++)
 	_obj->var_dmp_buff[i] = 0.0;
@@ -469,7 +468,8 @@ static int _thapp_cmd(thapp* obj, void* self, char cmd)
 		{
 		    _obj->var_calib_flg = 1;
 		    _obj->var_dmp_cnt = 0;
-
+		    _obj->var_calib_app_flg = 0;
+		    
 		    /* Message to indicate calibration in progress */
 		    memset(_obj->_var_parent.var_cmd_vals, 0, THAPP_DISP_BUFF_SZ);
 		    sprintf(_obj->_var_parent.var_cmd_vals, THAPP_AHU_OPT8, 0, 0);
@@ -551,7 +551,6 @@ static int _thapp_cmd(thapp* obj, void* self, char cmd)
 	     */
 	    if(_obj->var_dmp_cnt > _obj->var_calib_settle_time)
 		{
-		    _obj->var_calib_app_flg = 0;
 		    _obj->var_dmp_cnt = 0;
 		    _rt_val = 1;
 		}
