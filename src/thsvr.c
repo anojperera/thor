@@ -231,8 +231,8 @@ static int _thsvy_sys_update_callback(thsys* obj, void* self, const float64* buf
      * before multi casting.
      */
     _msg._cmd = 0;
-    _msg._ao0_val = 0.0;
-    _msg._ao1_val = 0.0;
+    _msg._ao0_val = thsys_get_out_buff_val(obj, 0);
+    _msg._ao1_val = thsys_get_out_buff_val(obj, 1);
     _msg._ai0_val = (double) buff[0];
     _msg._ai1_val = (double) buff[1];
     _msg._ai2_val = (double) buff[2];
