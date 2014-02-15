@@ -724,7 +724,7 @@ static int _thapp_act_ctrl(thapp_ahu* obj, double incr, double* incr_val, int* p
     thorinifix_init_msg(&_msg);
     thorinifix_init_msg(&_msg_buff);
 
-    _msg._ao0_val = 0.0;
+    _msg._ao0_val = obj->_var_parent._msg_buff._ao0_val;
     _msg._ao1_val = 9.95 * _val / 100;
 
     /* Encode the message and send to the server */

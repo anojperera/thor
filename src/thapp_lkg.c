@@ -24,6 +24,7 @@
     "(3 - 60mm dia)\n"					\
     "(4 - 80mm dia)\n"					\
     "(5 - 100mm dia)\n"					\
+    "(6 - Venturi meter)\n"				\
     "Size: "
 #define THAPP_LKG_OPT7 "Enter product type: \n" \
     "(0 - Dampers)\n"				\
@@ -42,7 +43,7 @@
 
 /* Configuration keys */
 #define THAPP_LKG_SM_KEY "lkg"
-#define THAPP_LKG_ST_KEY "st1"
+#define THAPP_LKG_ST_KEY "st2"
 #define THAPP_LKG_TMP_KEY "tp1"
 #define THAPP_LKG_WAIT_EXT_KEY "ahu_calib_wait_ext"
 #define THAPP_LKG_SETTLE_KEY "ahu_calib_settle_time"
@@ -154,7 +155,8 @@ void thapp_lkg_delete(thapp_lkg* obj)
     thgsensor_delete(THOR_GSEN(obj->_var_st_sen));
 
     thtmp_delete(THOR_GSEN(obj->_var_tmp_sen));
-
+    obj->_var_vent_sen = NULL;
+    
     THAPP_INIT_FPTR(obj);
     obj->var_child = NULL;
     obj->var_raw_act_ptr = NULL;
@@ -179,6 +181,7 @@ static int _thapp_new_helper(thapp_lkg* obj)
     obj->_var_sm_sen = NULL;
     obj->_var_st_sen = NULL;
     obj->_var_tmp_sen = NULL;
+    obj->_var_vent_sen = NULL;
 
     /* Get configuration sensor array for the smart sensor */
     _setting = config_lookup(&obj->_var_parent.var_config, THAPP_LKG_SM_KEY);
@@ -284,6 +287,7 @@ static int _thapp_lkg_start(thapp* obj, void* self)
     _obj->var_height = 0.0;
     _obj->var_depth = 0.0;
     _obj->var_s_area = 0.0;
+    
     /*
      * If the app is not running in headless mode, query for
      * other options.
@@ -453,16 +457,16 @@ static int _thapp_lkg_cmd(thapp* obj, void* self, char cmd)
 	    _obj->_var_lkg = 0.0;
 	    break;
 	case thapp_lkg_40:
-	    _obj->_var_lkg = 0.0;
+	    _obj->_var_lkg = pow(_obj->_var_dp, 0.49668) * 0.99558;
 	    break;
 	case thapp_lkg_60:
-	    _obj->_var_lkg = 0.0;
+	    _obj->_var_lkg = pow(_obj->_var_dp, 0.49539) * 2.29643;
 	    break;
 	case thapp_lkg_80:
-	    _obj->_var_lkg = 0.0;
+	    _obj->_var_lkg = pow(_obj->_var_dp, 0.49446) * 4.26362;
 	    break;
 	case thapp_lkg_100:
-	    _obj->_var_lkg = 0.0;
+	    _obj->_var_lkg = pow(_obj->_var_dp, 0.49325) * 7.22534;
 	    break;
 	default:
 	    _obj->_var_lkg = 0.0;
@@ -534,7 +538,7 @@ static int _thapp_fan_ctrl(thapp_lkg* obj, double incr, double* incr_val, int* p
     thorinifix_init_msg(&_msg);
     thorinifix_init_msg(&_msg_buff);
 
-    _msg._ao0_val = 0.0;
+    _msg._ao0_val = obj->_var_parent._msg_buff._ao0_val;
     _msg._ao1_val = 9.95 * _val / 100;
 
     /* Encode the message and send to the server */
