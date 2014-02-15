@@ -32,7 +32,8 @@ typedef enum {
     thapp_lkg_40,
     thapp_lkg_60,
     thapp_lkg_80,
-    thapp_lkg_100
+    thapp_lkg_100,
+    thapp_lkg_vent
 } thapp_lkg_orifix_sz;
 
 typedef struct _thapp_lkg thapp_lkg;
@@ -83,6 +84,11 @@ struct _thapp_lkg
     thsen* _var_sm_sen;
     thsen* _var_st_sen;
     thsen* _var_tmp_sen;
+    
+    /*
+     * Venturi meter sensor.
+     */
+    thsen* _var_vent_sen;
 
     /*
      * Array of pointers corresponding to the positions of the
