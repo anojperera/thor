@@ -82,6 +82,12 @@ extern "C" {
     (obj)->var_sample_rate = (val>0.0? val : THSYS_DEFAULT_SAMPLE_RATE)
 #define thsys_set_external_obj(obj, val)	\
     (obj)->var_ext_obj = (val)
+
+    /* Get output buffer value */
+#define thsys_get_out_buff_val(obj_ptr, ix)	\
+    (ix >= THSYS_NUM_AO_CHANNELS?		\
+     0.0 :					\
+     (double) (obj_ptr)->var_outbuff[ix])
 #ifdef __cplusplus
 }
 #endif
