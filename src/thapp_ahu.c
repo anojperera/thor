@@ -22,6 +22,7 @@
 
 #define THAPP_AHU_OPT8 "<============= Calibration in Progress - ACT %i%%, %i =============>"
 #define THAPP_AHU_OPT9 "<============ Adding System Resistance - ACT %.2f ==============>"
+#define THAPP_AHU_OPT10 "<======== Fan Curve Generation In Progress - ACT %i%%, %i ========>"
 
 /* Settting keys */
 #define THAPP_AHU_KEY "ahu"
@@ -98,6 +99,19 @@ thapp* thapp_ahu_new(void)
     _obj->var_calib_wait_ext = 0;
     _obj->var_calib_settle_time = 0;
 
+    _obj->var_raw_flg = 0;
+    _obj->var_calib_app_flg = 0;
+    _obj->var_calib_flg = 0;
+    _obj->var_def_static = 0.0;
+    _obj->var_duct_dia = 0.0;
+    _obj->var_duct_vel = 0.0;
+    _obj->var_duct_vol = 0.0;
+    _obj->var_duct_loss = 0.0;
+    _obj->var_t_ext_st = 0.0;
+    _obj->var_fm_ratio = 1.0;
+    _obj->var_dmp_cnt = 0;
+    _obj->var_auto_mode_flg = 0;    
+
     /* Load configurations and initialise sensors */
     if(_thapp_new_helper(_obj))
 	{
@@ -120,18 +134,6 @@ thapp* thapp_ahu_new(void)
     /* Initialise actuator buffer */
     for(; i<THAPP_AHU_DMP_BUFF; i++)
 	_obj->var_dmp_buff[i] = 0.0;
-    _obj->var_raw_flg = 0;
-    _obj->var_calib_app_flg = 0;
-    _obj->var_calib_flg = 0;
-    _obj->var_def_static = 0.0;
-    _obj->var_duct_dia = 0.0;
-    _obj->var_duct_vel = 0.0;
-    _obj->var_duct_vol = 0.0;
-    _obj->var_duct_loss = 0.0;
-    _obj->var_t_ext_st = 0.0;
-    _obj->var_fm_ratio = 1.0;
-    _obj->var_dmp_cnt = 0;
-
 
     _obj->var_child = NULL;
 
@@ -319,6 +321,8 @@ static int _thapp_ahu_start(thapp* obj, void* self)
     _obj->var_t_ext_st = 0.0;
     _obj->var_fm_ratio = 0.0;
 
+    /* Reset auto mode flag */
+    _obj->var_auto_mode_flg = 0;    
 
     /*
      * If the app is not running in headless mode, query for
@@ -509,6 +513,14 @@ static int _thapp_cmd(thapp* obj, void* self, char cmd)
 	}
 
     /*
+     * Check if the auto mode has not been run and default static pressure was set and the calibration
+     * flag is not set, we set the calibration flag so that actuator control can begin.
+     */
+    if(_obj->var_auto_mode_flg == 0 && _obj->var_def_static > 0.0 &&  _obj->var_calib_flg == 0)
+	_obj->var_calib_flg = 1;
+
+    
+    /*
      * If the raw flag was set, continue and return flag 2 to
      * display message continuously. We increment the _msg_cnt of
      * parent class to flash the message instead of continuous display.
@@ -529,7 +541,7 @@ static int _thapp_cmd(thapp* obj, void* self, char cmd)
 	{
 	    _thapp_act_ctrl(_obj, 0, &_obj->var_dmp_buff[_obj->var_dmp_cnt], &_act_per, 1);
 	    sprintf(_obj->_var_parent.var_cmd_vals,
-		    THAPP_AHU_OPT8,
+		    (_obj->var_def_static > 0.0? THAPP_AHU_OPT10 : THAPP_AHU_OPT8),
 		    (int) _obj->var_dmp_buff[_obj->var_dmp_cnt],
 		    _obj->var_dmp_cnt);
 	    if(++_obj->var_dmp_cnt >= THAPP_AHU_DMP_BUFF)
@@ -545,6 +557,8 @@ static int _thapp_cmd(thapp* obj, void* self, char cmd)
 		    /*
 		     * Set the calibration apply flag to true. Once this flag set
 		     * total static pressure shall be adjusted with the duct resistance.
+		     * If the default static pressure is set, not need to set calib_app flag.
+		     * This shall then stop the actuator.
 		     */
 		    _obj->var_calib_app_flg = 1;
 		}
@@ -583,6 +597,17 @@ static int _thapp_cmd(thapp* obj, void* self, char cmd)
 
     _f_sp = thsen_get_value(_obj->_var_sp_sen);
     _obj->var_t_ext_st = thsen_get_value(_obj->_var_st_sen) + _obj->var_duct_loss;
+    
+    /*
+     * Check if we are operating in auto mode, we reset the flag to
+     * stop incrementing the actuator.
+     */
+    if(_obj->var_def_static > 0 && _obj->var_t_ext_st > _obj->var_def_static)
+	{
+	    _obj->var_calib_flg = 0;
+	    _obj->var_auto_mode_flg = 1;
+	}
+    
 
     /* Temporary message buffer */
     memset(_obj->_var_parent.var_disp_vals, 0, THAPP_DISP_BUFF_SZ);

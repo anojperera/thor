@@ -43,7 +43,8 @@ struct _thapp_ahu
      * This setting is controlled by the configuration file.
      */
     int var_calib_settle_time;
-    
+
+    unsigned int var_auto_mode_flg;					/* Flag to indicate auto mode was complete. */
     unsigned int var_calib_flg;						/* Calibration flag is in progress */
     unsigned int var_calib_app_flg;					/* Apply calibration flag */
     unsigned int var_raw_flg;						/* Toggle flag to show raw voltage values */
