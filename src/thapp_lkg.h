@@ -70,7 +70,7 @@ struct _thapp_lkg
      * copies around. Pointer address shall be set by the
      * the smart sensor.
      */
-    const double* var_raw_act_ptr;
+    const double** var_raw_act_ptr;
     
     double var_fan_pct;
 

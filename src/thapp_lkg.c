@@ -267,7 +267,6 @@ static int _thapp_lkg_init(thapp* obj, void* self)
 			    _obj->_var_msg_addr[0],
 			    THAPP_LKG_MAX_SM_SEN);
     
-    thsmsen_get_raw_value_ptr(THOR_SMSEN(_obj->_var_sm_sen), _obj->var_raw_act_ptr);
     return 0;
 
 }
@@ -524,7 +523,7 @@ static int _thapp_lkg_cmd(thapp* obj, void* self, char cmd)
 	    "%.2f\t"
 	    "%.2f\t"
 	    "%.2f\t\r",
-	    _obj->var_raw_flg? (_obj->var_raw_act_ptr? *_obj->var_raw_act_ptr : 0.0)  : _obj->_var_dp,
+	    _obj->var_raw_flg? (_obj->var_raw_act_ptr && *_obj->var_raw_act_ptr? *(*_obj->var_raw_act_ptr) : 0.0)  : _obj->_var_dp,
 	    _obj->var_raw_flg? _obj->_var_parent._msg_buff._ai3_val : _obj->_var_ext_static,
 	    _obj->var_raw_flg? 0.0 : _obj->_var_lkg,
 	    _obj->var_raw_flg? 0.0 : _obj->_var_lkg_m2,
