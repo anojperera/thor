@@ -266,7 +266,8 @@ static int _thapp_lkg_init(thapp* obj, void* self)
     thsmsen_set_value_array(THOR_SMSEN(_obj->_var_sm_sen),
 			    _obj->_var_msg_addr[0],
 			    THAPP_LKG_MAX_SM_SEN);
-
+    
+    thsmsen_get_raw_value_ptr(THOR_SMSEN(_obj->_var_sm_sen), _obj->var_raw_act_ptr);
     return 0;
 
 }
@@ -439,7 +440,7 @@ static int _thapp_lkg_cmd(thapp* obj, void* self, char cmd)
     int _rt_val;
     thapp_lkg* _obj;
 
-    _rt_val = 1;
+    _rt_val = THAPP_RT_CHILD;
 
     if(self == NULL)
 	return _rt_val;
@@ -477,6 +478,9 @@ static int _thapp_lkg_cmd(thapp* obj, void* self, char cmd)
 	    break;
 	}
 
+    if(_obj->var_raw_flg)
+	_rt_val = THAPP_RT_CONT;
+
 
     /* Get values */
    _obj->_var_dp = thsen_get_value(_obj->_var_sm_sen);
@@ -509,7 +513,7 @@ static int _thapp_lkg_cmd(thapp* obj, void* self, char cmd)
 	}
 
     /* Calculate leakge per unit area */
-    _obj->_var_lkg_m2 = _obj->_var_lkg / _obj->var_s_area;
+    _obj->_var_lkg_m2 = _obj->_var_lkg / (_obj->var_s_area <=0.0? 1 : _obj->var_s_area);
 
     /* Temporary message buffer */
     memset(_obj->_var_parent.var_disp_vals, 0, THAPP_DISP_BUFF_SZ);
