@@ -47,7 +47,6 @@
 
 #define THAPP_AHU_MAX_ACT_PER 99
 #define THAPP_AHU_MIN_ACT_PER 0
-#define THAPP_AHU_FREQ_CONV 60.0
 
 #define THAPP_AHU_INCR_PER 5.0
 #define THAPP_AHU_INCRF_PER 1.0
@@ -167,7 +166,7 @@ void thapp_ahu_delete(thapp_ahu* obj)
 
     /* Remove temperature sensor */
     thtmp_delete(THOR_GSEN(obj->_var_tp_sen));
-    thspd_delete(THOR_GSEN(obj->_var_sp_sen));
+    thspd_delete(THOR_SPSEN(obj->_var_sp_sen));
     thgsensor_delete(THOR_GSEN(obj->_var_st_sen));
 
     /* Delete smart sensor */
@@ -250,7 +249,7 @@ static int _thapp_new_helper(thapp_ahu* obj)
 	}
 
     /* Create speed sensor */
-    obj->_var_sp_sen = thspd_new(NULL, obj);
+    obj->_var_sp_sen = thspd_new(NULL);
     if(obj->_var_sp_sen)
 	{
 	    /* Get speed sensor data */
@@ -604,7 +603,7 @@ static int _thapp_cmd(thapp* obj, void* self, char cmd)
 	    _obj->var_duct_vol /= 1000000;
 	}
 
-    _f_sp = thsen_get_value(_obj->_var_sp_sen) * THAPP_AHU_FREQ_CONV;
+    _f_sp = thsen_get_value(_obj->_var_sp_sen);
     _obj->var_t_ext_st = thsen_get_value(_obj->_var_st_sen) + _obj->var_duct_loss;
     
     /*
