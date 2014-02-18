@@ -207,7 +207,10 @@ static double _thsmsen_get_val(void* obj)
      * from the largest sensor in the range.
      */
     if(_obj->var_val <= 0.0)
-	_obj->var_val = thsen_get_value(_obj->var_sen[i-1]);
+	{
+	    _obj->var_val = thsen_get_value(_obj->var_sen[i-1]);
+	    _obj->var_raw_act_val = &_obj->var_raw_vals[i-1];
+	}
     
     return _obj->var_val;
 }
