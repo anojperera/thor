@@ -16,6 +16,7 @@
 #define THCON_MAX_CLIENTS 10 					/* maximum connections */
 #define THCON_MAX_EVENTS 64					/* maximum events */
 #define HTML_STACK_SZ 16
+#define THCON_DEF_TIMEOUT 5					/* Default time out for geolocation */
 
 /* #define HTML_STACK_DEBUG_MODE */
 
@@ -650,6 +651,9 @@ static int _thcon_get_url_content(const char* ip_addr, struct _curl_mem* mem)
     /* some servers don't like requests that are made without a user-agent
        field, so we provide one */
     curl_easy_setopt(_url_handle, CURLOPT_USERAGENT, "libcurl-agent/1.0");
+
+    /* Set timeout so that it wont stall here for long time */
+    curl_easy_setopt(_url_handle, CURLOPT_TIMEOUT, THCON_DEF_TIMEOUT);
 
     _res = curl_easy_perform(_url_handle);
     if(_res != CURLE_OK)
