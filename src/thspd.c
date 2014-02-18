@@ -18,7 +18,7 @@ thsen* thspd_new(thspd* obj)
 {
     if(obj == NULL)
 	{
-	    obj = (thspd*) malloc(sizeof(thspd*));
+	    obj = (thspd*) malloc(sizeof(thspd));
 	    obj->var_int_flg = 1;
 	}
     else
