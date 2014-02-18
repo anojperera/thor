@@ -64,7 +64,7 @@ extern "C" {
 
     /* Macro can be used to get the active raw value pointed to by the smart sensor. */
 #define thsmsen_get_raw_value_ptr(obj_ptr, val_ptr)	\
-    (val_ptr) = (obj_ptr)->var_raw_act_val
+    (val_ptr) = &(obj_ptr)->var_raw_act_val
 
 #ifdef __cplusplus
 }
