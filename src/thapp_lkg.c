@@ -60,6 +60,9 @@
 #define THAPP_LKG_INCRF_PER 1.0
 #define THAPP_LKG_MAX_OPT_MESSAGE_LINES 6
 
+/* Voltage for turning on the first relay */
+#define THAPP_LKG_RELAY1_ON 4.0
+
 /* Callback methods */
 static int _thapp_lkg_init(thapp* obj, void* self);
 static int _thapp_lkg_start(thapp* obj, void* self);
@@ -277,13 +280,16 @@ static int _thapp_lkg_start(thapp* obj, void* self)
     int _pos;
     thapp_lkg* _obj;
     char _scr_input_buff[THAPP_DISP_BUFF_SZ];
+    double _f_stop_v;    
 
     /* Cast object pointer */
     if(self == NULL)
 	return -1;
     _obj = (thapp_lkg*) self;
-
+    
+    _f_stop_v = 0.0;						/* Set starting voltage for the fan */
     _pos = 0;
+    
     /* Reset all sensors before start */
     thsen_reset_sensor(_obj->_var_sm_sen);
     thsen_reset_sensor(_obj->_var_st_sen);
@@ -420,12 +426,27 @@ static int _thapp_lkg_start(thapp* obj, void* self)
     /* Convert to m^2 */
     _obj->var_s_area /= pow(10, -6);
 
+    /* Start the fan */
+    _obj->_var_parent._msg_buff._ao0_val = THAPP_LKG_RELAY1_ON;    
+    _thapp_fan_ctrl(_obj, THAPP_LKG_INCRF_PER, &_f_stop_v, NULL, 0);    
     return 0;
 }
 
 
 static int _thapp_lkg_stop(thapp* obj, void* self)
 {
+    double _f_stop_v;
+    thapp_lkg* _obj;
+
+    if(self != NULL)
+	_obj = (thapp_lkg*) self;
+    else
+	return -1;
+
+    _f_stop_v = 0.0;
+    
+    _obj->_var_parent._msg_buff._ao0_val = 0.0;
+    _thapp_fan_ctrl(_obj, THAPP_LKG_INCRF_PER, &_f_stop_v, NULL, 0);    
     return 0;
 }
 
