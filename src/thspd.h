@@ -30,7 +30,7 @@ extern "C" {
     void thspd_delete(thspd* obj);
 
 
-#endif __cplusplus
+#ifdef __cplusplus
 }
 #endif    
 
