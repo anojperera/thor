@@ -34,6 +34,11 @@
 #define THAPP_LKG_OPT9 "Enter Height: "
 #define THAPP_LKG_OPT10 "Enter Depth: "
 
+#define THAPP_LKG_DISP_OPT3 "Operation Mode: "
+#define THAPP_LKG_DISP_OPT6 "Orifice Plate Size: "
+#define THAPP_LKG_DISP_OPT7 "Enter product type: "
+
+
 /* Control Keys */
 #define THAPP_LKG_FAN_INCR_CODE 43							/* + */
 #define THAPP_LKG_FAN_DECR_CODE 45							/* - */
@@ -60,6 +65,14 @@ static int _thapp_lkg_init(thapp* obj, void* self);
 static int _thapp_lkg_start(thapp* obj, void* self);
 static int _thapp_lkg_stop(thapp* obj, void* self);
 static int _thapp_lkg_cmd(thapp* obj, void* self, char cmd);
+
+/*
+ * This is a helper method for retrieving the description of an option based on the index.
+ * The method tokenise the string and iterate over the list until the specified index
+ * is found.
+ */
+static inline __attribute__ ((always_inline)) const char* _thapp_lkg_get_desc_from_ix(const char* opts, unsigned int ix);
+
 
 /* Helper method for loading configuration settings */
 static int _thapp_new_helper(thapp_lkg* obj);
@@ -92,14 +105,6 @@ thapp* thapp_lkg_new(void)
     /* Initialise function pointer array */
     THAPP_INIT_FPTR(_obj);
 
-    /* Help new helper */
-    if(_thapp_new_helper(_obj))
-	{
-	    thapp_delete(&_obj->_var_parent);
-	    free(_obj);
-	    return NULL;
-	}
-
     /* Set function pointers of the parent object */
     thapp_set_init_ptr(_obj, _thapp_lkg_init);
     thapp_set_start_ptr(_obj, _thapp_lkg_start);
@@ -109,7 +114,7 @@ thapp* thapp_lkg_new(void)
     /* Initialise class variables */
     _obj->var_test_type = thapp_lkg_tst_man;
     _obj->var_prod_type = thapp_lkg_dmp;
-    
+
     _obj->var_calib_wait_ext = 0;
 
     _obj->var_or_ix = 0;
@@ -141,6 +146,15 @@ thapp* thapp_lkg_new(void)
     _obj->var_depth = 0.0;
     _obj->var_s_area = 0.0;
 
+    /* Help new helper */
+    if(_thapp_new_helper(_obj))
+	{
+	    thapp_delete(&_obj->_var_parent);
+	    free(_obj);
+	    return NULL;
+	}
+
+
     return &_obj->_var_parent;
 }
 
@@ -156,7 +170,7 @@ void thapp_lkg_delete(thapp_lkg* obj)
 
     thtmp_delete(THOR_GSEN(obj->_var_tmp_sen));
     obj->_var_vent_sen = NULL;
-    
+
     THAPP_INIT_FPTR(obj);
     obj->var_child = NULL;
     obj->var_raw_act_ptr = NULL;
@@ -260,6 +274,7 @@ static int _thapp_lkg_init(thapp* obj, void* self)
 /* Start callback method */
 static int _thapp_lkg_start(thapp* obj, void* self)
 {
+    int _pos;
     thapp_lkg* _obj;
     char _scr_input_buff[THAPP_DISP_BUFF_SZ];
 
@@ -268,7 +283,7 @@ static int _thapp_lkg_start(thapp* obj, void* self)
 	return -1;
     _obj = (thapp_lkg*) self;
 
-
+    _pos = 0;
     /* Reset all sensors before start */
     thsen_reset_sensor(_obj->_var_sm_sen);
     thsen_reset_sensor(_obj->_var_st_sen);
@@ -278,7 +293,7 @@ static int _thapp_lkg_start(thapp* obj, void* self)
     _obj->_var_ext_static = 0.0;
     _obj->_var_lkg = 0.0;
     _obj->_var_lkg_m2 = 0.0;
-    _obj->_var_lkg_f700 = 0.0;    
+    _obj->_var_lkg_f700 = 0.0;
 
     _obj->var_max_static = 0.0;
     _obj->var_max_leakage = 0.0;
@@ -287,7 +302,7 @@ static int _thapp_lkg_start(thapp* obj, void* self)
     _obj->var_height = 0.0;
     _obj->var_depth = 0.0;
     _obj->var_s_area = 0.0;
-    
+
     /*
      * If the app is not running in headless mode, query for
      * other options.
@@ -299,17 +314,21 @@ static int _thapp_lkg_start(thapp* obj, void* self)
 	    refresh();
 	    getnstr(obj->var_job_num, THAPP_DISP_BUFF_SZ-1);
 
+	    _pos += sprintf(obj->var_disp_opts+_pos, "%s%s\n", THAPP_LKG_OPT1, obj->var_job_num);
+
 	    printw(THAPP_LKG_OPT2);
 	    refresh();
 	    getnstr(obj->var_tag_num, THAPP_DISP_BUFF_SZ-1);
 	    clear();
 
+	    _pos += sprintf(obj->var_disp_opts+_pos, "%s%s\n", THAPP_LKG_OPT2, obj->var_tag_num);
+
 	    /* Display option to select mode */
 	    THAPP_DISP_MESG(THAPP_LKG_OPT3, _scr_input_buff);
-	    
-	    _obj->var_test_type = atoi(_scr_input_buff);
 
-	    
+	    _obj->var_test_type = atoi(_scr_input_buff);
+	    _pos += sprintf(obj->var_disp_opts+_pos, "%s%s\n", THAPP_LKG_DISP_OPT3, _thapp_lkg_get_desc_from_ix(THAPP_LKG_OPT3, _obj->var_test_type));
+
 	    /* Provide extra options depending on the selected mode */
 	    switch(_obj->var_test_type)
 		{
@@ -317,13 +336,15 @@ static int _thapp_lkg_start(thapp* obj, void* self)
 		    /* Display message to obtain the maximum static pressure */
 		    THAPP_DISP_MESG(THAPP_LKG_OPT4, _scr_input_buff);
 		    _obj->var_max_static = atof(_scr_input_buff);
+		    _pos += sprintf(obj->var_disp_opts+_pos, "%s%.2f\n", THAPP_LKG_OPT4, _obj->var_max_static);
 		    break;
-		    
+
 		case thapp_lkg_tst_leak:
 		    THAPP_DISP_MESG(THAPP_LKG_OPT5, _scr_input_buff);
 		    _obj->var_max_leakage = atof(_scr_input_buff);
+		    _pos += sprintf(obj->var_disp_opts+_pos, "%s%.2f\n", THAPP_LKG_OPT5, _obj->var_max_leakage);		    
 		    break;
-		    
+
 		default:
 		    /*
 		     * If all the options were exhausted force manual
@@ -338,15 +359,17 @@ static int _thapp_lkg_start(thapp* obj, void* self)
 	     */
 	    THAPP_DISP_MESG(THAPP_LKG_OPT6, _scr_input_buff);
 	    _obj->var_or_ix = atoi(_scr_input_buff);
-	    
-	    
+	    _pos += sprintf(obj->var_disp_opts+_pos, "%s%s\n", THAPP_LKG_DISP_OPT6, _thapp_lkg_get_desc_from_ix(THAPP_LKG_OPT6, _obj->var_or_ix));
+
 
 	    /* Get product type */
 	    THAPP_DISP_MESG(THAPP_LKG_OPT7, _scr_input_buff);
 	    _obj->var_prod_type = atoi(_scr_input_buff);
 	    if(_obj->var_prod_type != thapp_lkg_dmp && _obj->var_prod_type !=  thapp_lkg_ahu)
 		_obj->var_prod_type = thapp_lkg_dmp;
-
+	    
+	    _pos += sprintf(obj->var_disp_opts+_pos, "%s%s\n", THAPP_LKG_DISP_OPT7, _thapp_lkg_get_desc_from_ix(THAPP_LKG_OPT7, _obj->var_prod_type));
+	    
 	    /*
 	     * Get product dimensions.
 	     */
@@ -361,7 +384,8 @@ static int _thapp_lkg_start(thapp* obj, void* self)
 	    /* Get depth */
 	    THAPP_DISP_MESG(THAPP_LKG_OPT10, _scr_input_buff);
 	    _obj->var_depth = atof(_scr_input_buff);
-	    
+
+	    _pos += sprintf(obj->var_disp_opts+_pos, "Product Dimensions (w x h x d): %.2f x %.2f x %.2f\n", _obj->var_width, _obj->var_height, _obj->var_depth);	    
 	}
 
     obj->var_max_opt_rows = THAPP_LKG_MAX_OPT_MESSAGE_LINES;
@@ -395,7 +419,7 @@ static int _thapp_lkg_start(thapp* obj, void* self)
 
     /* Convert to m^2 */
     _obj->var_s_area /= pow(10, -6);
-    
+
     return 0;
 }
 
@@ -416,7 +440,6 @@ static int _thapp_lkg_cmd(thapp* obj, void* self, char cmd)
     thapp_lkg* _obj;
 
     _rt_val = 1;
-
 
     if(self == NULL)
 	return _rt_val;
@@ -449,7 +472,7 @@ static int _thapp_lkg_cmd(thapp* obj, void* self, char cmd)
 		    sprintf(_obj->_var_parent.var_cmd_vals,
 			    "<==================== Raw Voltage Values ====================>");
 		}
-	  break;
+	    break;
 	default:
 	    break;
 	}
@@ -458,7 +481,7 @@ static int _thapp_lkg_cmd(thapp* obj, void* self, char cmd)
     /* Get values */
    _obj->_var_dp = thsen_get_value(_obj->_var_sm_sen);
    _obj->_var_ext_static = thsen_get_value(_obj->_var_st_sen);
-   
+
     /* Calculate leakage */
     switch(_obj->var_or_ix)
 	{
@@ -497,12 +520,12 @@ static int _thapp_lkg_cmd(thapp* obj, void* self, char cmd)
 	    "%.2f\t"
 	    "%.2f\t"
 	    "%.2f\t\r",
-	    _obj->var_raw_flg? *_obj->var_raw_act_ptr : _obj->_var_dp,
+	    _obj->var_raw_flg? (_obj->var_raw_act_ptr? *_obj->var_raw_act_ptr : 0.0)  : _obj->_var_dp,
 	    _obj->var_raw_flg? _obj->_var_parent._msg_buff._ai3_val : _obj->_var_ext_static,
 	    _obj->var_raw_flg? 0.0 : _obj->_var_lkg,
 	    _obj->var_raw_flg? 0.0 : _obj->_var_lkg_m2,
 	    _obj->var_raw_flg? _obj->_var_parent._msg_buff._ai0_val : thsen_get_value(_obj->_var_tmp_sen));
-    
+
     return _rt_val;
 }
 
@@ -533,7 +556,7 @@ static int _thapp_fan_ctrl(thapp_lkg* obj, double incr, double* incr_val, int* p
 	    return 0;
 	}
 
-    
+
     if(per != NULL)
 	*per = (int) obj->var_fan_pct;
 
@@ -555,6 +578,31 @@ static int _thapp_fan_ctrl(thapp_lkg* obj, double incr, double* incr_val, int* p
 
     /* Encode the message and send to the server */
     thornifix_encode_msg(&_msg, _msg_buff, THORNIFIX_MSG_BUFF_SZ);
-    thcon_send_info(thapp_get_con_obj_ptr(&obj->_var_parent), (void*) &_msg_buff, THORNIFIX_MSG_BUFF_SZ);    
+    thcon_send_info(thapp_get_con_obj_ptr(&obj->_var_parent), (void*) &_msg_buff, THORNIFIX_MSG_BUFF_SZ);
     return 0;
+}
+
+/* Helper method for retriving the description based on index. */
+static inline __attribute__ ((always_inline)) const char* _thapp_lkg_get_desc_from_ix(const char* opts, unsigned int ix)
+{
+    unsigned int _str_cnt;
+    char* _str;
+    char _buff[THAPP_DISP_BUFF_SZ];
+
+    /* Copy to internal buffer */
+    memset(_buff, 0, THAPP_DISP_BUFF_SZ);
+    strncpy(_buff, opts, THAPP_DISP_BUFF_SZ-1);
+    _buff[THAPP_DISP_BUFF_SZ-1] = '\0';
+    
+    _str_cnt = 0;
+    /* tokenise the string using strtok based on new line character */
+    _str = strtok(_buff, "\n");
+    while(_str)
+	{
+	    if(_str_cnt++ > ix)
+		break;
+	    _str = strtok(NULL, "\n");
+	}
+
+    return _str;
 }
