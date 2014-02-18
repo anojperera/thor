@@ -17,6 +17,12 @@
 #include "thornifix.h"
 #include "thcon.h"
 
+
+/* Application return codes */
+#define THAPP_RT_NORMAL 0
+#define THAPP_RT_CHILD 1
+#define THAPP_RT_CONT 2
+
 #define THAPP_DISP_BUFF_SZ 256
 #define THAPP_SEC_DIV(obj_ptr)			\
     1000000 / (obj_ptr)->var_sleep_time
