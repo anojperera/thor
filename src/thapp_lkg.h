@@ -10,7 +10,7 @@
 
 #define THAPP_LKG_BUFF 500
 #define THAPP_LKG_MAX_SM_SEN 4
-
+#define THAPP_LKG_CLASS_BUFF 8
 
 /* Enummerated types of leak testing default shall be the manual method */
 typedef enum {
@@ -81,7 +81,9 @@ struct _thapp_lkg
     unsigned int var_num_lkg_arr;
     double* var_lkg_nl_arr;
     double* var_lkg_pl_arr;
-
+    const double* var_d_lkg_arr;
+    char* var_lkg_cls_arr[THAPP_LKG_CLASS_BUFF];
+    
     double var_tst_positive_pre;
     double var_tst_negative_pre;
     
@@ -127,6 +129,7 @@ struct _thapp_lkg
     double _var_lkg;
     double _var_lkg_m2;
     double _var_lkg_f700;
+    double _var_lkg_f770_base_pressure;					/* This shall depend on positive or negative pressure */
     
     double var_width;
     double var_height;
