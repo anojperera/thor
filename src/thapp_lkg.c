@@ -673,7 +673,7 @@ static int _thapp_lkg_cmd(thapp* obj, void* self, char cmd)
     _obj->_var_lkg_m2 = _obj->_var_lkg / (_obj->var_s_area <=0.0? 1 : _obj->var_s_area);
     if(_obj->_var_lkg_f770_base_pressure > 0.0 && _obj->_var_ext_static > 0.0)
 	{
-	    _obj->_var_lkg_f700 = (_obj->_var_lkg * pow((_obj->_var_lkg_f770_base_pressure / _obj->_var_ext_static), 0.65)) / _obj->var_s_area;
+	    _obj->_var_lkg_f700 = _obj->_var_lkg * pow((_obj->_var_lkg_f770_base_pressure / _obj->_var_ext_static), 0.65);
 
 	    /* Get class */
 	    i = 0;
@@ -688,7 +688,7 @@ static int _thapp_lkg_cmd(thapp* obj, void* self, char cmd)
 		    /* Set class name */
 
 		    /* Check if f700 values are within the class */
-		    if(_obj->_var_lkg_f700 < _obj->var_d_lkg_arr[i])
+		    if((_obj->_var_lkg_f700 / (_obj->var_s_area <=0.0? 1 : _obj->var_s_area)) < _obj->var_d_lkg_arr[i]);
 			break;
 		    i++;
 		}while(_obj->var_lkg_cls_arr[i]);
