@@ -33,10 +33,14 @@
 #define THAPP_LKG_OPT8 "Enter Width: "
 #define THAPP_LKG_OPT9 "Enter Height: "
 #define THAPP_LKG_OPT10 "Enter Depth: "
+#define THAPP_LKG_OPT11 "Positive or Negative Pressure: "	\
+    "(0 - Negative)"						\
+    "(1 - Positive)"
 
 #define THAPP_LKG_DISP_OPT3 "Operation Mode: "
 #define THAPP_LKG_DISP_OPT6 "Orifice Plate Size: "
 #define THAPP_LKG_DISP_OPT7 "Enter product type: "
+#define THAPP_LKG_DISP_OPT11 "Positive or Negative Pressure: "
 
 
 /* Control Keys */
@@ -125,6 +129,7 @@ thapp* thapp_lkg_new(void)
 
     _obj->var_raw_flg = 0;
     _obj->var_fan_pct = 0;
+    _obj->var_positive_flg = 0;
     _obj->var_raw_act_ptr = NULL;
     for(i=0; i<THAPP_LKG_BUFF; i++)
 	_obj->var_fan_buff[i] = 0.0;
@@ -149,6 +154,13 @@ thapp* thapp_lkg_new(void)
     _obj->var_depth = 0.0;
     _obj->var_s_area = 0.0;
 
+    _obj->var_ahu_lkg_tst_time = 0;
+    _obj->var_ahu_lkg_tst_incr = 0;
+
+    _obj->var_num_lkg_arr = 0;
+    _obj->var_lkg_nl_arr = NULL;
+    _obj->var_lkg_pl_arr = NULL;    
+
     /* Help new helper */
     if(_thapp_new_helper(_obj))
 	{
@@ -167,6 +179,13 @@ void thapp_lkg_delete(thapp_lkg* obj)
     if(obj == NULL)
 	return;
 
+    if(obj->var_lkg_nl_arr)
+	free(obj->var_lkg_nl_arr);
+    if(obj->var_lkg_pl_arr)
+	free(obj->var_lkg_pl_arr);
+    obj->var_lkg_pl_arr = NULL;
+    obj->var_lkg_nl_arr = NULL;    
+    
     /* Delete sensors */
     thsmsen_delete(THOR_SMSEN(obj->_var_sm_sen));
     thgsensor_delete(THOR_GSEN(obj->_var_st_sen));
@@ -309,6 +328,8 @@ static int _thapp_lkg_start(thapp* obj, void* self)
     _obj->var_depth = 0.0;
     _obj->var_s_area = 0.0;
 
+    _obj->var_positive_flg = 0;
+
     /*
      * If the app is not running in headless mode, query for
      * other options.
@@ -375,6 +396,16 @@ static int _thapp_lkg_start(thapp* obj, void* self)
 		_obj->var_prod_type = thapp_lkg_dmp;
 	    
 	    _pos += sprintf(obj->var_disp_opts+_pos, "%s%s\n", THAPP_LKG_DISP_OPT7, _thapp_lkg_get_desc_from_ix(THAPP_LKG_OPT7, _obj->var_prod_type));
+
+	    /*
+	     * Prompt for positve of negative pressure if the product type is AHU.
+	     */
+	    if(_obj->var_prod_type == thapp_lkg_ahu)
+		{
+		    THAPP_DISP_MESG(THAPP_LKG_OPT11, _scr_input_buff);
+		    _obj->var_positive_flg = atoi(_scr_input_buff);
+		    _pos += sprintf(obj->var_disp_opts+_pos, "%s%s\n", THAPP_LKG_DISP_OPT11, _thapp_lkg_get_desc_from_ix(THAPP_LKG_OPT11, _obj->var_positive_flg));
+		}
 	    
 	    /*
 	     * Get product dimensions.
