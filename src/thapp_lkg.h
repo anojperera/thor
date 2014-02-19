@@ -43,6 +43,9 @@ struct _thapp_lkg
     thapp _var_parent;
     int var_init_flg;
 
+    int var_ahu_lkg_tst_time;					/* Total test time */
+    int var_ahu_lkg_tst_incr;					/* Increment the readings should be taken */
+
     /*
      * Leak test type which controls the fan.
      */
@@ -62,6 +65,26 @@ struct _thapp_lkg
     unsigned int var_calib_flg;
 
     unsigned int var_raw_flg;
+
+    unsigned int var_positive_flg;				/*
+								 * Flag to indicate test is running under
+								 * positive pressure. This option is only
+								 *applicable for the AHU test.
+								 */
+
+    
+    /*
+     * AHU case leak figures are expressed in L1,L2...
+     * these figures are stored in the configuration file.
+     * following are the buffer and number of elements.
+     */ 
+    unsigned int var_num_lkg_arr;
+    double* var_lkg_nl_arr;
+    double* var_lkg_pl_arr;
+
+    double var_tst_positive_pre;
+    double var_tst_negative_pre;
+    
 
     /*
      * This is pointer to the raw voltage value
