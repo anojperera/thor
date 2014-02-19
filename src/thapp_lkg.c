@@ -226,7 +226,7 @@ static int _thapp_new_helper(thapp_lkg* obj)
 	    _setting = config_lookup(&obj->_var_parent.var_config, THAPP_LKG_TMP_KEY);
 
 	    if(_setting)
-		thsen_set_config(obj->_var_st_sen, _setting);
+		thsen_set_config(obj->_var_tmp_sen, _setting);
 	}
 
 
@@ -503,8 +503,8 @@ static int _thapp_lkg_cmd(thapp* obj, void* self, char cmd)
 
 
     /* Get values */
+   _obj->_var_ext_static = thsen_get_value(_obj->_var_st_sen);    
    _obj->_var_dp = thsen_get_value(_obj->_var_sm_sen);
-   _obj->_var_ext_static = thsen_get_value(_obj->_var_st_sen);
 
     /* Calculate leakage */
     switch(_obj->var_or_ix)
