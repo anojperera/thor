@@ -33,9 +33,10 @@
 #define THAPP_LKG_OPT8 "Enter Width: "
 #define THAPP_LKG_OPT9 "Enter Height: "
 #define THAPP_LKG_OPT10 "Enter Depth: "
-#define THAPP_LKG_OPT11 "Positive or Negative Pressure: "	\
-    "(0 - Negative)"						\
-    "(1 - Positive)"
+#define THAPP_LKG_OPT11 "Positive or Negative Pressure: \n"	\
+    "(0 - Negative)\n"						\
+    "(1 - Positive)\n"						\
+    "Pressure: "
 
 #define THAPP_LKG_DISP_OPT3 "Operation Mode: "
 #define THAPP_LKG_DISP_OPT6 "Orifice Plate Size: "
