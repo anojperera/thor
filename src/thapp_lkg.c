@@ -65,6 +65,24 @@
 #define THAPP_LKG_N_ARR_KEY "clkg.leakage_negative"
 #define THAPP_LKG_CLS_ARR_KEY "clkg.leakage_class"
 
+#define THAPP_LKG_TST_HEADER1 "\n\t"		\
+    "DP\t"					\
+    "ST\t"					\
+    "LKG\t"					\
+    "LKG_m2\t"					\
+    "F700\t"					\
+    "Class\t\t"					\
+    "TMP\r"
+
+#define THAPP_LKG_TST_HEADER2 "\n\t"		\
+    "DP\t"					\
+    "ST\t"					\
+    "LKG\t"					\
+    "LKG_m2\t"					\
+    "F400\t"					\
+    "Class\t\t"					\
+    "TMP\r"
+
 #define THAPP_LKG_MAX_FAN_PER 99
 #define THAPP_LKG_MIN_FAN_PER 0
 
@@ -280,7 +298,7 @@ static int _thapp_new_helper(thapp_lkg* obj)
     _setting = config_lookup(&obj->_var_parent.var_config, THAPP_LKG_AHU_TST_TIME_KEY);
     if(_setting)
 	obj->var_ahu_lkg_tst_time = config_setting_get_int(_setting);
-    
+
     _setting = config_lookup(&obj->_var_parent.var_config, THAPP_LKG_AHU_TST_INCR_KEY);
     if(_setting)
 	obj->var_ahu_lkg_tst_incr = config_setting_get_int(_setting);
@@ -300,12 +318,12 @@ static int _thapp_new_helper(thapp_lkg* obj)
     if(_setting && _setting2)
 	{
 	    obj->var_num_lkg_arr = config_setting_length(_setting);
-	    if(obj->var_num_lkg_arr != config_setting_length(_setting2));
+	    if(obj->var_num_lkg_arr != config_setting_length(_setting2))
 	    {
 		obj->var_num_lkg_arr = 0;
 		return 0;
 	    }
-		
+
 	    if(obj->var_num_lkg_arr <= 0)
 		return 0;
 
@@ -316,7 +334,7 @@ static int _thapp_new_helper(thapp_lkg* obj)
 		{
 		    obj->var_lkg_nl_arr[i] = config_setting_get_float_elem(_setting2, i);
 		    obj->var_lkg_pl_arr[i] = config_setting_get_float_elem(_setting, i);
-		}	   		
+		}
 	}
 
     /* Get a cont of leakage class variables and prepare array */
@@ -371,7 +389,7 @@ static int _thapp_lkg_init(thapp* obj, void* self)
     thsmsen_set_value_array(THOR_SMSEN(_obj->_var_sm_sen),
 			    _obj->_var_msg_addr[0],
 			    THAPP_LKG_MAX_SM_SEN);
-    
+
     return 0;
 
 }
@@ -382,16 +400,16 @@ static int _thapp_lkg_start(thapp* obj, void* self)
     int _pos;
     thapp_lkg* _obj;
     char _scr_input_buff[THAPP_DISP_BUFF_SZ];
-    double _f_stop_v;    
+    double _f_stop_v;
 
     /* Cast object pointer */
     if(self == NULL)
 	return -1;
     _obj = (thapp_lkg*) self;
-    
+
     _f_stop_v = 0.0;						/* Set starting voltage for the fan */
     _pos = 0;
-    
+
     /* Reset all sensors before start */
     thsen_reset_sensor(_obj->_var_sm_sen);
     thsen_reset_sensor(_obj->_var_st_sen);
@@ -453,7 +471,7 @@ static int _thapp_lkg_start(thapp* obj, void* self)
 		case thapp_lkg_tst_leak:
 		    THAPP_DISP_MESG(THAPP_LKG_OPT5, _scr_input_buff);
 		    _obj->var_max_leakage = atof(_scr_input_buff);
-		    _pos += sprintf(obj->var_disp_opts+_pos, "%s%.2f\n", THAPP_LKG_OPT5, _obj->var_max_leakage);		    
+		    _pos += sprintf(obj->var_disp_opts+_pos, "%s%.2f\n", THAPP_LKG_OPT5, _obj->var_max_leakage);
 		    break;
 
 		default:
@@ -478,7 +496,7 @@ static int _thapp_lkg_start(thapp* obj, void* self)
 	    _obj->var_prod_type = atoi(_scr_input_buff);
 	    if(_obj->var_prod_type != thapp_lkg_dmp && _obj->var_prod_type !=  thapp_lkg_ahu)
 		_obj->var_prod_type = thapp_lkg_dmp;
-	    
+
 	    _pos += sprintf(obj->var_disp_opts+_pos, "%s%s\n", THAPP_LKG_DISP_OPT7, _thapp_lkg_get_desc_from_ix(THAPP_LKG_OPT7, _obj->var_prod_type));
 
 	    /*
@@ -501,7 +519,7 @@ static int _thapp_lkg_start(thapp* obj, void* self)
 			    _obj->var_d_lkg_arr = _obj->var_lkg_nl_arr;
 			}
 		}
-	    
+
 	    /*
 	     * Get product dimensions.
 	     */
@@ -517,7 +535,7 @@ static int _thapp_lkg_start(thapp* obj, void* self)
 	    THAPP_DISP_MESG(THAPP_LKG_OPT10, _scr_input_buff);
 	    _obj->var_depth = atof(_scr_input_buff);
 
-	    _pos += sprintf(obj->var_disp_opts+_pos, "Product Dimensions (w x h x d): %.2f x %.2f x %.2f\n", _obj->var_width, _obj->var_height, _obj->var_depth);	    
+	    _pos += sprintf(obj->var_disp_opts+_pos, "Product Dimensions (w x h x d): %.2f x %.2f x %.2f\n", _obj->var_width, _obj->var_height, _obj->var_depth);
 	}
 
     obj->var_max_opt_rows = THAPP_LKG_MAX_OPT_MESSAGE_LINES;
@@ -532,23 +550,16 @@ static int _thapp_lkg_start(thapp* obj, void* self)
 	_obj->var_s_area = _obj->var_width * _obj->var_height;
 
     /* Display header */
-    sprintf(_obj->_var_parent.var_disp_header,
-	    "\n\t"
-	    "DP\t"
-	    "ST\t"
-	    "LKG\t"
-	    "LKG_m2\t"
-	    "F700\t"
-	    "Class\t\t"
-	    "TMP\r");
+    sprintf(_obj->_var_parent.var_disp_header,(_obj->var_positive_flg? THAPP_LKG_TST_HEADER1 : THAPP_LKG_TST_HEADER2));
 
 
     /* Convert to m^2 */
-    _obj->var_s_area /= pow(10, -6);
+    _obj->var_s_area *= pow(10, -6);
+    _pos += sprintf(obj->var_disp_opts+_pos, "Surface Area: %.3f\n", _obj->var_s_area);
 
     /* Start the fan */
-    _obj->_var_parent._msg_buff._ao0_val = THAPP_LKG_RELAY1_ON;    
-    _thapp_fan_ctrl(_obj, THAPP_LKG_INCRF_PER, &_f_stop_v, NULL, 0);    
+    _obj->_var_parent._msg_buff._ao0_val = THAPP_LKG_RELAY1_ON;
+    _thapp_fan_ctrl(_obj, THAPP_LKG_INCRF_PER, &_f_stop_v, NULL, 0);
     return 0;
 }
 
@@ -564,9 +575,9 @@ static int _thapp_lkg_stop(thapp* obj, void* self)
 	return -1;
 
     _f_stop_v = 0.0;
-    
+
     _obj->_var_parent._msg_buff._ao0_val = 0.0;
-    _thapp_fan_ctrl(_obj, THAPP_LKG_INCRF_PER, &_f_stop_v, NULL, 0);    
+    _thapp_fan_ctrl(_obj, THAPP_LKG_INCRF_PER, &_f_stop_v, NULL, 0);
     return 0;
 }
 
@@ -584,7 +595,7 @@ static int _thapp_lkg_cmd(thapp* obj, void* self, char cmd)
 
     _rt_val = THAPP_RT_CHILD;
     _cls = NULL;
-    
+
     if(self == NULL)
 	return _rt_val;
 
@@ -626,7 +637,7 @@ static int _thapp_lkg_cmd(thapp* obj, void* self, char cmd)
 
 
     /* Get values */
-   _obj->_var_ext_static = thsen_get_value(_obj->_var_st_sen);    
+   _obj->_var_ext_static = thsen_get_value(_obj->_var_st_sen);
    _obj->_var_dp = thsen_get_value(_obj->_var_sm_sen);
 
     /* Calculate leakage */
@@ -662,7 +673,7 @@ static int _thapp_lkg_cmd(thapp* obj, void* self, char cmd)
     _obj->_var_lkg_m2 = _obj->_var_lkg / (_obj->var_s_area <=0.0? 1 : _obj->var_s_area);
     if(_obj->_var_lkg_f770_base_pressure > 0.0 && _obj->_var_ext_static > 0.0)
 	{
-	    _obj->_var_lkg_f700 = _obj->_var_lkg * pow((_obj->_var_lkg_f770_base_pressure / _obj->_var_ext_static), 0.65);
+	    _obj->_var_lkg_f700 = (_obj->_var_lkg * pow((_obj->_var_lkg_f770_base_pressure / _obj->_var_ext_static), 0.65)) / _obj->var_s_area;
 
 	    /* Get class */
 	    i = 0;
@@ -771,7 +782,7 @@ static inline __attribute__ ((always_inline)) const char* _thapp_lkg_get_desc_fr
     memset(_buff, 0, THAPP_DISP_BUFF_SZ);
     strncpy(_buff, opts, THAPP_DISP_BUFF_SZ-1);
     _buff[THAPP_DISP_BUFF_SZ-1] = '\0';
-    
+
     _str_cnt = 0;
     /* tokenise the string using strtok based on new line character */
     _str = strtok(_buff, "\n");
