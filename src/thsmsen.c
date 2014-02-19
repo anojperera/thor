@@ -3,6 +3,9 @@
  */
 #include "thsmsen.h"
 
+#define THSMSEN_MIN_VOLT 0.01
+#define THSMSEN_MAX_VOLT 9.5
+
 /* Callback methods */
 static double _thsmsen_get_val(void* obj);
 static int _thsmsen_set_config(void* obj);
@@ -192,7 +195,7 @@ static double _thsmsen_get_val(void* obj)
     _obj->var_val = 0.0;
     for(i=0; i<_obj->var_raw_val_sz; i++)
 	{
-	    if(_obj->var_raw_vals[i] > 0.1 && _obj->var_raw_vals[i] < 9.5)
+	    if(_obj->var_raw_vals[i] > THSMSEN_MIN_VOLT && _obj->var_raw_vals[i] < THSMSEN_MAX_VOLT)
 		{
 		    /* Set pointer address of the active sensor */
 		    _obj->var_raw_act_val = &_obj->var_raw_vals[i];
