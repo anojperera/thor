@@ -56,6 +56,13 @@
 #define THAPP_LKG_TMP_KEY "tp1"
 #define THAPP_LKG_WAIT_EXT_KEY "ahu_calib_wait_ext"
 #define THAPP_LKG_SETTLE_KEY "ahu_calib_settle_time"
+#define THAPP_LKG_AHU_TST_TIME_KEY "ahu_leak_test_time"
+#define THAPP_LKG_AHU_TST_INCR_KEY "ahu_leak_test_incr"
+#define THAPP_LKG_P_PRE_KEY "clkg.positive_pressure"
+#define THAPP_LKG_N_PRE_KEY "clkg.negative_pressure"
+#define THAPP_LKG_P_ARR_KEY "clkg.leakage_positive"
+#define THAPP_LKG_N_ARR_KEY "clkg.leakage_negative"
+#define THAPP_LKG_CLS_ARR_KEY "clkg.leakage_class"
 
 #define THAPP_LKG_MAX_FAN_PER 99
 #define THAPP_LKG_MIN_FAN_PER 0
@@ -159,7 +166,14 @@ thapp* thapp_lkg_new(void)
 
     _obj->var_num_lkg_arr = 0;
     _obj->var_lkg_nl_arr = NULL;
-    _obj->var_lkg_pl_arr = NULL;    
+    _obj->var_lkg_pl_arr = NULL;
+    _obj->var_lkg_cls_arr = NULL;
+    _obj->var_d_lkg_arr = NULL;
+
+    _obj->var_tst_positive_pre = 0.0;
+    _obj->var_tst_negative_pre = 0.0;
+
+    _obj->_var_lkg_f770_base_pressure = 0.0;
 
     /* Help new helper */
     if(_thapp_new_helper(_obj))
@@ -183,9 +197,13 @@ void thapp_lkg_delete(thapp_lkg* obj)
 	free(obj->var_lkg_nl_arr);
     if(obj->var_lkg_pl_arr)
 	free(obj->var_lkg_pl_arr);
+    if(obj->var_lkg_cls_arr)
+	free(obj->var_lkg_cls_arr);
     obj->var_lkg_pl_arr = NULL;
-    obj->var_lkg_nl_arr = NULL;    
-    
+    obj->var_lkg_nl_arr = NULL;
+    obj->var_lkg_cls_arr = NULL;
+    obj->var_d_lkg_arr = NULL;
+
     /* Delete sensors */
     thsmsen_delete(THOR_SMSEN(obj->_var_sm_sen));
     thgsensor_delete(THOR_GSEN(obj->_var_st_sen));
@@ -211,7 +229,10 @@ void thapp_lkg_delete(thapp_lkg* obj)
  */
 static int _thapp_new_helper(thapp_lkg* obj)
 {
+    int i;
     const config_setting_t* _setting;
+    const config_setting_t* _setting2;
+    const char* _t_buff;
 
     /* Initialise sensor variables */
     obj->_var_sm_sen = NULL;
@@ -254,6 +275,67 @@ static int _thapp_new_helper(thapp_lkg* obj)
     if(_setting)
 	obj->var_calib_wait_ext = config_setting_get_int(_setting);
 
+    /* Load timing settings */
+    _setting = config_lookup(&obj->_var_parent.var_config, THAPP_LKG_AHU_TST_TIME_KEY);
+    if(_setting)
+	obj->var_ahu_lkg_tst_time = config_setting_get_int(_setting);
+    
+    _setting = config_lookup(&obj->_var_parent.var_config, THAPP_LKG_AHU_TST_INCR_KEY);
+    if(_setting)
+	obj->var_ahu_lkg_tst_incr = config_setting_get_int(_setting);
+
+    /* Get positive and negative pressure values */
+    _setting = config_lookup(&obj->_var_parent.var_config, THAPP_LKG_P_PRE_KEY);
+    if(_setting)
+	obj->var_tst_positive_pre = config_setting_get_float(_setting);
+    _setting = config_lookup(&obj->_var_parent.var_config, THAPP_LKG_N_PRE_KEY);
+    if(_setting)
+	obj->var_tst_negative_pre = config_setting_get_float(_setting);
+
+
+    /* Get the size of the array positive and negative values and create the buffer to hold it */
+    _setting = config_lookup(&obj->_var_parent.var_config, THAPP_LKG_P_ARR_KEY);
+    _setting2 = config_lookup(&obj->_var_parent.var_config, THAPP_LKG_N_ARR_KEY);
+    if(_setting && _setting2)
+	{
+	    obj->var_num_lkg_arr = config_setting_length(_setting);
+	    if(obj->var_num_lkg_arr != config_setting_length(_setting2));
+	    {
+		obj->var_num_lkg_arr = 0;
+		return 0;
+	    }
+		
+	    if(obj->var_num_lkg_arr <= 0)
+		return 0;
+
+	    obj->var_lkg_nl_arr = (double*) calloc(obj->var_num_lkg_arr, sizeof(double));
+	    obj->var_lkg_pl_arr = (double*) calloc(obj->var_num_lkg_arr, sizeof(double));
+
+	    for(i=0; i<obj->var_num_lkg_arr; i++)
+		{
+		    obj->var_lkg_nl_arr[i] = config_setting_get_float_elem(_setting2, i);
+		    obj->var_lkg_pl_arr[i] = config_setting_get_float_elem(_setting, i);
+		}	   		
+	}
+
+    /* Get a cont of leakage class variables and prepare array */
+    _setting = config_lookup(&obj->_var_parent.var_config, THAPP_LKG_CLS_ARR_KEY);
+    if(_setting)
+	{
+	    /* Count the number of elements */
+	    i = config_setting_length(_setting);
+	    if(i <= obj->var_num_lkg_arr)
+		return 0;
+
+	    /* Create array */
+	    obj->var_lkg_cls_arr = (lkg_cls_arr*) calloc(i, sizeof(lkg_cls_arr));
+	    for(i=0; i < (obj->var_num_lkg_arr+1); i++)
+		{
+		    _t_buff = config_setting_get_string_elem(_setting, i);
+		    memset(obj->var_lkg_cls_arr[i], 0, THAPP_LKG_CLASS_BUFF);
+		    strcpy(obj->var_lkg_cls_arr[i], (_t_buff? _t_buff : "N/A"));
+		}
+	}
     return 0;
 }
 
@@ -319,6 +401,7 @@ static int _thapp_lkg_start(thapp* obj, void* self)
     _obj->_var_lkg = 0.0;
     _obj->_var_lkg_m2 = 0.0;
     _obj->_var_lkg_f700 = 0.0;
+    _obj->_var_lkg_f770_base_pressure = 0.0;
 
     _obj->var_max_static = 0.0;
     _obj->var_max_leakage = 0.0;
@@ -405,6 +488,17 @@ static int _thapp_lkg_start(thapp* obj, void* self)
 		    THAPP_DISP_MESG(THAPP_LKG_OPT11, _scr_input_buff);
 		    _obj->var_positive_flg = atoi(_scr_input_buff);
 		    _pos += sprintf(obj->var_disp_opts+_pos, "%s%s\n", THAPP_LKG_DISP_OPT11, _thapp_lkg_get_desc_from_ix(THAPP_LKG_OPT11, _obj->var_positive_flg));
+
+		    if(_obj->var_positive_flg > 0)
+			{
+			    _obj->_var_lkg_f770_base_pressure = _obj->var_tst_positive_pre;
+			    _obj->var_d_lkg_arr = _obj->var_lkg_pl_arr;
+			}
+		    else
+			{
+			    _obj->_var_lkg_f770_base_pressure = _obj->var_tst_negative_pre;
+			    _obj->var_d_lkg_arr = _obj->var_lkg_nl_arr;
+			}
 		}
 	    
 	    /*
@@ -428,31 +522,25 @@ static int _thapp_lkg_start(thapp* obj, void* self)
     obj->var_max_opt_rows = THAPP_LKG_MAX_OPT_MESSAGE_LINES;
     if(_obj->var_prod_type == thapp_lkg_ahu)
 	{
-	    sprintf(_obj->_var_parent.var_disp_header,
-		    "\n\t"
-		    "DP\t"
-		    "ST\t"
-		    "LKG\t"
-		    "F700\t"
-		    "TMP\r");
-
 	    /* Calculate surface area */
 	    _obj->var_s_area = _obj->var_height * _obj->var_depth * 2 +
 		_obj->var_width * _obj->var_height * 2 +
 		_obj->var_depth * _obj->var_width * 2;
 	}
     else
-	{
-	    sprintf(_obj->_var_parent.var_disp_header,
-		    "\n\t"
-		    "DP\t"
-		    "ST\t"
-		    "LKG\t"
-		    "LKG_m2\t"
-		    "TMP\r");
+	_obj->var_s_area = _obj->var_width * _obj->var_height;
 
-	    _obj->var_s_area = _obj->var_width * _obj->var_height;
-	}
+    /* Display header */
+    sprintf(_obj->_var_parent.var_disp_header,
+	    "\n\t"
+	    "DP\t"
+	    "ST\t"
+	    "LKG\t"
+	    "LKG_m2\t"
+	    "F700\t"
+	    "Class\t\t"
+	    "TMP\r");
+
 
     /* Convert to m^2 */
     _obj->var_s_area /= pow(10, -6);
@@ -489,10 +577,13 @@ static int _thapp_lkg_stop(thapp* obj, void* self)
 static int _thapp_lkg_cmd(thapp* obj, void* self, char cmd)
 {
     int _rt_val;
+    unsigned int i;
     thapp_lkg* _obj;
+    const char* _cls;
 
     _rt_val = THAPP_RT_CHILD;
-
+    _cls = NULL;
+    
     if(self == NULL)
 	return _rt_val;
 
@@ -563,8 +654,35 @@ static int _thapp_lkg_cmd(thapp* obj, void* self, char cmd)
 	    break;
 	}
 
-    /* Calculate leakge per unit area */
+    /*
+     * Calculate leakge per unit area and F700.
+     * F700 and leakage class shall only be displayed to the AHU test.
+     */
     _obj->_var_lkg_m2 = _obj->_var_lkg / (_obj->var_s_area <=0.0? 1 : _obj->var_s_area);
+    if(_obj->_var_lkg_f770_base_pressure > 0.0 && _obj->_var_ext_static > 0.0)
+	{
+	    _obj->_var_lkg_f700 = _obj->_var_lkg * pow((_obj->_var_lkg_f770_base_pressure / _obj->_var_ext_static), 0.65);
+
+	    /* Get class */
+	    i = 0;
+	    do
+		{
+    		    _cls = _obj->var_lkg_cls_arr[i];
+		    if(!_obj->var_lkg_cls_arr)
+			break;
+		    if(i >= _obj->var_num_lkg_arr)
+			break;
+
+		    /* Set class name */
+
+		    /* Check if f700 values are within the class */
+		    if(_obj->_var_lkg_f700 < _obj->var_d_lkg_arr[i])
+			break;
+		    i++;
+		}while(_obj->var_lkg_cls_arr[i]);
+	}
+    else
+	_obj->_var_lkg_f700 = 0.0;
 
     /* Temporary message buffer */
     memset(_obj->_var_parent.var_disp_vals, 0, THAPP_DISP_BUFF_SZ);
@@ -574,11 +692,15 @@ static int _thapp_lkg_cmd(thapp* obj, void* self, char cmd)
 	    "%.2f\t"
 	    "%.2f\t"
 	    "%.2f\t"
+	    "%.2f\t"
+	    "%s\t\t"
 	    "%.2f\t\r",
 	    _obj->var_raw_flg? (_obj->var_raw_act_ptr && *_obj->var_raw_act_ptr? *(*_obj->var_raw_act_ptr) : 0.0)  : _obj->_var_dp,
 	    _obj->var_raw_flg? _obj->_var_parent._msg_buff._ai3_val : _obj->_var_ext_static,
 	    _obj->var_raw_flg? 0.0 : _obj->_var_lkg,
 	    _obj->var_raw_flg? 0.0 : _obj->_var_lkg_m2,
+	    _obj->var_raw_flg? 0.0 : (_obj->var_prod_type == thapp_lkg_ahu? _obj->_var_lkg_f700 : 0.0),
+	    ((_obj->var_raw_flg>0 || _cls==NULL)? "ER" : _cls),
 	    _obj->var_raw_flg? _obj->_var_parent._msg_buff._ai0_val : thsen_get_value(_obj->_var_tmp_sen));
 
     return _rt_val;

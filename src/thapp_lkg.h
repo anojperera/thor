@@ -36,6 +36,9 @@ typedef enum {
     thapp_lkg_vent
 } thapp_lkg_orifix_sz;
 
+/* Typedef of leakage class array */
+typedef char lkg_cls_arr[THAPP_LKG_CLASS_BUFF];
+
 typedef struct _thapp_lkg thapp_lkg;
 
 struct _thapp_lkg
@@ -82,7 +85,7 @@ struct _thapp_lkg
     double* var_lkg_nl_arr;
     double* var_lkg_pl_arr;
     const double* var_d_lkg_arr;
-    char* var_lkg_cls_arr[THAPP_LKG_CLASS_BUFF];
+    lkg_cls_arr* var_lkg_cls_arr;
     
     double var_tst_positive_pre;
     double var_tst_negative_pre;
