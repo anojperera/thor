@@ -43,8 +43,9 @@
 
 /* Display lines for the messages */
 #define THAPP_VAL_LINE 2
-#define THAPP_CMD_LINE 1
-#define THAPP_SP_LINE 5
+#define THAPP_CMD_LINE 0
+#define THAPP_HDD_LINE 1
+#define THAPP_SP_LINE 8
 
 #define THAPP_CLOSE_LOG(obj)			\
     if((obj)->var_def_log)			\
@@ -378,7 +379,7 @@ static void* _thapp_start_handler(void* obj)
 		    /* Temporary print statements for the display values */
 		    if(_obj->var_disp_opts != NULL || _obj->var_disp_opts[0] != 0)
 			mvprintw(0, 0, "%s", _obj->var_disp_opts);
-		    mvprintw(_t_msg_pos, 0,"%s", _obj->var_disp_header);
+		    mvprintw(_t_msg_pos+THAPP_HDD_LINE, 0,"%s", _obj->var_disp_header);
 		    break;
 		case THAPP_STOP_CODE:
 
@@ -489,8 +490,8 @@ static void* _thapp_start_handler(void* obj)
 
 	    /* Display special message */
 	    if(_obj->var_disp_sp != 0)
-		mvprintw(_t_msg_pos-THAPP_SP_LINE, 0,"%s", _obj->var_disp_sp);		    
-	       
+		mvprintw(_t_msg_pos-THAPP_SP_LINE, 0,"%s", _obj->var_disp_sp);
+
 
 	    /* Print the result  values */
 	    mvprintw(_t_msg_pos+THAPP_VAL_LINE, 0,"%s", _obj->var_disp_vals);

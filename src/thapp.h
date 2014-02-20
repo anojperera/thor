@@ -192,7 +192,11 @@ extern "C" {
     /* Get message count */
 #define thapp_get_msg_cnt(obj_ptr)		\
     (obj_ptr)->_msg_cnt
-
+    
+    /* Reset message counter */
+#define thapp_reset_msg_cnt(obj_ptr)		\
+    (obj_ptr)->_msg_cnt = 0
+    
     /* Macro for resetting the special message buffer */
 #define thapp_reset_sp_buff(obj_ptr)				\
     memset((void*) (obj_ptr)->var_disp_sp, 0, THOR_BUFF_SZ)
