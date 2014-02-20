@@ -45,7 +45,7 @@
 #define THAPP_VAL_LINE 2
 #define THAPP_CMD_LINE 0
 #define THAPP_HDD_LINE 1
-#define THAPP_SP_LINE 8
+#define THAPP_SP_LINE 10
 
 #define THAPP_CLOSE_LOG(obj)			\
     if((obj)->var_def_log)			\
