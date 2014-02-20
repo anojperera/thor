@@ -44,9 +44,8 @@
 #define THAPP_LKG_DISP_OPT11 "Positive or Negative Pressure: "
 
 #define THAPP_LKG_DISP_SP_HDDR	"|------------------------- Readings -------------------------|\n" \
-				"|-------------------------   %03i    -------------------------|\n"	\
-				"|%s  |\n"
-
+    				"|-------------------------   %03i    -------------------------|\n" \
+    				"%s"
 
 /* Control Keys */
 #define THAPP_LKG_FAN_INCR_CODE 43							/* + */
@@ -652,12 +651,13 @@ static int _thapp_lkg_cmd(thapp* obj, void* self, char cmd)
 		    _obj->var_lkg_start_flg = 1;
 		    thapp_reset_msg_cnt(obj);
 
+		    sprintf(_obj->_var_t_sp_buff, "|%s  |\n", _obj->_var_parent.var_disp_header);
+		    
 		    /* Add special message to the headder */
 		    _obj->var_disp_sp_pos = sprintf(_obj->_var_parent.var_disp_sp,
 						    THAPP_LKG_DISP_SP_HDDR,
 						    thapp_get_msg_cnt(obj),
-						    _obj->_var_parent.var_disp_header);
-		    sprintf(_obj->_var_t_sp_buff, "%s", _obj->_var_parent.var_disp_header);
+						    _obj->_var_t_sp_buff);
 		}
 	    break;
 	default:
