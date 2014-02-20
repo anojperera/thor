@@ -41,6 +41,11 @@
 #define THAPP_PAUSE_CODE1 112								/* p */
 #define THAPP_PAUSE_CODE2 32								/* p */
 
+/* Display lines for the messages */
+#define THAPP_VAL_LINE 2
+#define THAPP_CMD_LINE 1
+#define THAPP_SP_LINE 5
+
 #define THAPP_CLOSE_LOG(obj)			\
     if((obj)->var_def_log)			\
 	fclose((obj)->var_def_log);		\
@@ -470,21 +475,25 @@ static void* _thapp_start_handler(void* obj)
 	    if(_obj->var_cmd_vals[0] != 0)
 		{
 		    if(_obj->_msg_cnt%_sec_cnt)
-			mvprintw(_t_msg_pos-1, 0,"%s", _obj->var_cmd_vals);
+			mvprintw(_t_msg_pos-THAPP_CMD_LINE, 0,"%s", _obj->var_cmd_vals);
 		    else
-			mvprintw(_t_msg_pos-1, 0,"%s", THAPP_MSG_BLANK);
+			mvprintw(_t_msg_pos-THAPP_CMD_LINE, 0,"%s", THAPP_MSG_BLANK);
 		    
 		    if(++_obj->_msg_cnt >= _msg_cnt_max && _flg != 2)
 			{
 			    _obj->_msg_cnt = 0;
 			    memset((void*) _obj->var_cmd_vals, 0, THAPP_DISP_BUFF_SZ);
-			    mvprintw(_t_msg_pos-1, 0, "%s", THAPP_MSG_BLANK);
+			    mvprintw(_t_msg_pos-THAPP_CMD_LINE, 0, "%s", THAPP_MSG_BLANK);
 			}
 		}
+
+	    /* Display special message */
+	    if(_obj->var_disp_sp != 0)
+		mvprintw(_t_msg_pos-THAPP_SP_LINE, 0,"%s", _obj->var_disp_sp);		    
 	       
 
 	    /* Print the result  values */
-	    mvprintw(_t_msg_pos+2, 0,"%s", _obj->var_disp_vals);
+	    mvprintw(_t_msg_pos+THAPP_VAL_LINE, 0,"%s", _obj->var_disp_vals);
 	    refresh();
 
 	    memset(_obj->var_disp_vals, 0, THAPP_DISP_BUFF_SZ);
