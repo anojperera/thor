@@ -48,7 +48,8 @@ struct _thapp_lkg
 
     int var_ahu_lkg_tst_time;					/* Total test time */
     int var_ahu_lkg_tst_incr;					/* Increment the readings should be taken */
-
+    unsigned int var_ahu_lkg_m_cnt;				/* Measurement counter for the leakage test */
+    
     /*
      * Leak test type which controls the fan.
      */

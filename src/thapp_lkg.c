@@ -186,6 +186,7 @@ thapp* thapp_lkg_new(void)
 
     _obj->var_ahu_lkg_tst_time = 0;
     _obj->var_ahu_lkg_tst_incr = 0;
+    _obj->var_ahu_lkg_m_cnt = 0;
 
     _obj->var_num_lkg_arr = 0;
     _obj->var_lkg_nl_arr = NULL;
@@ -439,6 +440,7 @@ static int _thapp_lkg_start(thapp* obj, void* self)
     _obj->var_positive_flg = 0;
     _obj->var_lkg_start_flg = 0;
     _obj->var_disp_sp_pos = 0;
+    _obj->var_ahu_lkg_m_cnt = 0;    
 
     memset(_obj->_var_t_sp_buff, 0, THOR_BUFF_SZ);    
     
@@ -760,13 +762,20 @@ static int _thapp_lkg_cmd(thapp* obj, void* self, char cmd)
 		    _obj->_var_t_sp_buff);
 
 	    /* If the counter is greater than the increment add result */
-	    if(thapp_get_msg_cnt(obj) >= (_obj->var_ahu_lkg_tst_incr*THAPP_SEC_DIV(obj)*10.0))
+	    if(thapp_get_msg_cnt(obj) >= (_obj->var_ahu_lkg_tst_incr*THAPP_SEC_DIV(obj)*60.0))
 		{
 		    _obj->var_disp_sp_pos += sprintf(_obj->_var_t_sp_buff+strlen(_obj->_var_t_sp_buff),
 						     "|%s |\n",
 						     _obj->_var_parent.var_disp_vals);
 		    /* Reset the counter */
 		    thapp_reset_msg_cnt(obj);
+
+		    /* If The counter has exceeded the amount, we stop taking readings */
+		    if(++_obj->var_ahu_lkg_m_cnt > (_obj->var_ahu_lkg_tst_time/_obj->var_ahu_lkg_tst_incr))
+			{
+			    _obj->var_lkg_start_flg = 0;
+			    thapp_reset_msg_cnt(obj);
+			}
 		}
 
 	}
