@@ -41,15 +41,15 @@
 /*
  * Macro for initialising the function pointer table.
  */
-#define THAPP_INIT_FPTR(obj)				\
-    (obj)->_var_fptr.var_init_ptr = NULL;		\
-    (obj)->_var_fptr.var_del_ptr = NULL;		\
-    (obj)->_var_fptr.var_start_ptr = NULL;		\
-    (obj)->_var_fptr.var_stop_ptr = NULL;		\
-    (obj)->_var_fptr.var_read_ptr = NULL;		\
-    (obj)->_var_fptr.var_write_ptr = NULL;		\
-    (obj)->_var_fptr.var_log_ptr = NULL;		\
-    (obj)->_var_fptr.var_report_ptr = NULL;		\
+#define THAPP_INIT_FPTR(obj)			\
+    (obj)->_var_fptr.var_init_ptr = NULL;	\
+    (obj)->_var_fptr.var_del_ptr = NULL;	\
+    (obj)->_var_fptr.var_start_ptr = NULL;	\
+    (obj)->_var_fptr.var_stop_ptr = NULL;	\
+    (obj)->_var_fptr.var_read_ptr = NULL;	\
+    (obj)->_var_fptr.var_write_ptr = NULL;	\
+    (obj)->_var_fptr.var_log_ptr = NULL;	\
+    (obj)->_var_fptr.var_report_ptr = NULL;	\
     (obj)->_var_fptr.var_cmdhnd_ptr = NULL
 
 
@@ -85,7 +85,7 @@ struct _thapp
     unsigned int var_run_flg;							/* flag to indicate test is running */
     unsigned int var_sleep_time;						/* sleep time (miliseconds) */
     unsigned int var_max_opt_rows;						/* Maximum optional rows */
-    unsigned int var_queue_limit;	
+    unsigned int var_queue_limit;
     int _msg_cnt;
 
     thapp_opmode var_op_mode;							/* operation mode */
@@ -192,7 +192,7 @@ extern "C" {
     /* Get message count */
 #define thapp_get_msg_cnt(obj_ptr)		\
     (obj_ptr)->_msg_cnt
-    
+
 #ifdef __cplusplus
 }
 #endif
