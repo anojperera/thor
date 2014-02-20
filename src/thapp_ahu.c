@@ -303,6 +303,13 @@ static int _thapp_ahu_start(thapp* obj, void* self)
 	return -1;
     _obj = (thapp_ahu*) self;
 
+    _num_sensors = 0;
+    _def_flg = 0;
+    _f_dia = 0.0;
+    _m_dia = 0.0;
+    _ratio = 0.0;
+    _pos = 0;
+
     /* Reset all sensors before start */
     thsen_reset_sensor(_obj->_var_vsen);
     thsen_reset_sensor(_obj->_var_tp_sen);
@@ -355,7 +362,7 @@ static int _thapp_ahu_start(thapp* obj, void* self)
 	    getnstr(_scr_input_buff, THAPP_DISP_BUFF_SZ-1);
 
 	    _num_sensors = atoi(_scr_input_buff);
-	    _pos += sprintf(&obj->var_disp_opts[_pos], "%s%i\n", THAPP_AHU_OPT2, _num_sensors);
+	    _pos += sprintf(&obj->var_disp_opts+_pos, "%s%i\n", THAPP_AHU_OPT2, _num_sensors);
 	    /* Adjust for actual number of sensors */
 	    if(_num_sensors > 2)
 		_num_sensors = 4;
@@ -371,14 +378,14 @@ static int _thapp_ahu_start(thapp* obj, void* self)
 
 	    _obj->var_def_static = atof(_scr_input_buff);
 	    clear();
-	    _pos += sprintf(&obj->var_disp_opts[_pos], "%s%i\n", THAPP_AHU_OPT3, (int) _obj->var_def_static);
+	    _pos += sprintf(&obj->var_disp_opts+_pos, "%s%i\n", THAPP_AHU_OPT3, (int) _obj->var_def_static);
 
 	    printw(THAPP_AHU_OPT11);
 	    refresh();
 	    getnstr(_scr_input_buff, THAPP_DISP_BUFF_SZ-1);
 	    _obj->var_duct_loss = (double) atoi(_scr_input_buff);
 	    clear();	    
-	    _pos += sprintf(&obj->var_disp_opts[_pos], "%s%i\n", THAPP_AHU_OPT11, (int) _obj->var_duct_loss);
+	    _pos += sprintf(&obj->var_disp_opts+_pos, "%s%i\n", THAPP_AHU_OPT11, (int) _obj->var_duct_loss);
 
 	    printw(THAPP_AHU_OPT4);
 	    refresh();
@@ -395,7 +402,7 @@ static int _thapp_ahu_start(thapp* obj, void* self)
 
 		    _f_dia = atof(_scr_input_buff);
 		    clear();
-		    _pos += sprintf(&obj->var_disp_opts[_pos], "%s%i\n", THAPP_AHU_OPT5, (int) _f_dia);
+		    _pos += sprintf(&obj->var_disp_opts+_pos, "%s%i\n", THAPP_AHU_OPT5, (int) _f_dia);
 
     		    memset(_scr_input_buff, 0, THAPP_DISP_BUFF_SZ);
 		    printw(THAPP_AHU_OPT6);
@@ -404,11 +411,11 @@ static int _thapp_ahu_start(thapp* obj, void* self)
 		    _m_dia = atof(_scr_input_buff);
 		    clear();
 
-		    _pos += sprintf(&obj->var_disp_opts[_pos], "%s%i\n", THAPP_AHU_OPT6, (int) _m_dia);
+		    _pos += sprintf(&obj->var_disp_opts+_pos, "%s%i\n", THAPP_AHU_OPT6, (int) _m_dia);
 		    if(_m_dia > 0.0)
 			_ratio = (double) _f_dia / _m_dia;
 
-		    _pos += sprintf(&obj->var_disp_opts[_pos], "%s%.1f\n", THAPP_AHU_OPT7, _ratio);
+		    _pos += sprintf(&obj->var_disp_opts+_pos, "%s%.1f\n", THAPP_AHU_OPT7, _ratio);
 		    _obj->var_fm_ratio = _ratio;
 		    refresh();
 		}
@@ -536,7 +543,7 @@ static int _thapp_cmd(thapp* obj, void* self, char cmd)
     if(_obj->var_raw_flg || _obj->var_calib_flg)
 	{
 	    _rt_val = THAPP_RT_CONT;
-	    obj->_msg_cnt++;
+	    THAPP_POST_INC_MSGCOUNT(obj);
 	}
     else
 	_rt_val = THAPP_RT_CHILD;
@@ -545,6 +552,7 @@ static int _thapp_cmd(thapp* obj, void* self, char cmd)
      * Handle calibration
      */
     /*======================================================================*/
+    /* Actuator is throttled up and down in a sin curve periodically */
     if(_obj->var_calib_flg && !(obj->_msg_cnt%(THAPP_SEC_DIV(obj)+_obj->var_calib_wait_ext)))
 	{
 	    _thapp_act_ctrl(_obj, 0, &_obj->var_dmp_buff[_obj->var_dmp_cnt], &_act_per, 1);
@@ -571,11 +579,14 @@ static int _thapp_cmd(thapp* obj, void* self, char cmd)
 		    _obj->var_calib_app_flg = 1;
 		}
 	}
-
+    
+    /*
+     * After the cycle is complete, we display the results to the user
+     */
     if(_obj->var_calib_app_flg > 0 && _obj->var_dmp_cnt < _obj->var_calib_settle_time)
 	{
 	    _obj->var_duct_loss = thsen_get_value(_obj->_var_stm_sen);
-	    if(!((obj->_msg_cnt++)%THAPP_SEC_DIV(obj)))
+	    if(!((THAPP_POST_INC_MSGCOUNT(obj))%THAPP_SEC_DIV(obj)))
 		    _obj->var_dmp_cnt++;
 
 
@@ -585,7 +596,7 @@ static int _thapp_cmd(thapp* obj, void* self, char cmd)
 	     * If the counter has reached maximum reset both counters and
 	     * set the default system loss.
 	     */
-	    if(_obj->var_dmp_cnt > _obj->var_calib_settle_time)
+	    if(_obj->var_dmp_cnt >= _obj->var_calib_settle_time)
 		{
 		    _obj->var_dmp_cnt = 0;
 		    _rt_val = THAPP_RT_CHILD;
