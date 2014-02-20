@@ -43,6 +43,10 @@
 #define THAPP_LKG_DISP_OPT7 "Enter product type: "
 #define THAPP_LKG_DISP_OPT11 "Positive or Negative Pressure: "
 
+#define THAPP_LKG_DISP_SP_HDDR	"|------------------------- Readings -------------------------|\n" \
+				"|-------------------------   %03i    -------------------------|\n"	\
+				"|%s  |\n"
+
 
 /* Control Keys */
 #define THAPP_LKG_FAN_INCR_CODE 43							/* + */
@@ -50,6 +54,7 @@
 #define THAPP_LKG_FAN_INCRF_CODE 42							/* * */
 #define THAPP_LKG_FAN_DECRF_CODE 47							/* / */
 #define THAPP_LKG_RAW_VALUES 82								/* R */
+#define THAPP_LKG_LKG_START_VALUE 76							/* L */
 
 /* Configuration keys */
 #define THAPP_LKG_SM_KEY "lkg"
@@ -65,23 +70,21 @@
 #define THAPP_LKG_N_ARR_KEY "clkg.leakage_negative"
 #define THAPP_LKG_CLS_ARR_KEY "clkg.leakage_class"
 
-#define THAPP_LKG_TST_HEADER1 "\n\t"		\
-    "DP\t"					\
+#define THAPP_LKG_TST_HEADER1 "DP\t"		\
     "ST\t"					\
     "LKG\t"					\
     "LKG_m2\t"					\
     "F700\t"					\
     "Class\t\t"					\
-    "TMP\r"
+    "TMP"
 
-#define THAPP_LKG_TST_HEADER2 "\n\t"		\
-    "DP\t"					\
+#define THAPP_LKG_TST_HEADER2 "DP\t"		\
     "ST\t"					\
     "LKG\t"					\
     "LKG_m2\t"					\
     "F400\t"					\
     "Class\t\t"					\
-    "TMP\r"
+    "TMP"
 
 #define THAPP_LKG_MAX_FAN_PER 99
 #define THAPP_LKG_MIN_FAN_PER 0
@@ -152,10 +155,12 @@ thapp* thapp_lkg_new(void)
 
     _obj->var_or_ix = 0;
     _obj->var_calib_flg = 0;
+    _obj->var_lkg_start_flg = 0;
 
     _obj->var_raw_flg = 0;
     _obj->var_fan_pct = 0;
     _obj->var_positive_flg = 0;
+    _obj->var_disp_sp_pos = 0;
     _obj->var_raw_act_ptr = NULL;
     for(i=0; i<THAPP_LKG_BUFF; i++)
 	_obj->var_fan_buff[i] = 0.0;
@@ -193,6 +198,8 @@ thapp* thapp_lkg_new(void)
     _obj->var_tst_negative_pre = 0.0;
 
     _obj->_var_lkg_f770_base_pressure = 0.0;
+
+    memset(_obj->_var_t_sp_buff, 0, THOR_BUFF_SZ);
 
     /* Help new helper */
     if(_thapp_new_helper(_obj))
@@ -431,6 +438,11 @@ static int _thapp_lkg_start(thapp* obj, void* self)
     _obj->var_s_area = 0.0;
 
     _obj->var_positive_flg = 0;
+    _obj->var_lkg_start_flg = 0;
+    _obj->var_disp_sp_pos = 0;
+
+    memset(_obj->_var_t_sp_buff, 0, THOR_BUFF_SZ);    
+    
 
     /*
      * If the app is not running in headless mode, query for
@@ -559,7 +571,7 @@ static int _thapp_lkg_start(thapp* obj, void* self)
 
     /* Start the fan */
     _obj->_var_parent._msg_buff._ao0_val = THAPP_LKG_RELAY1_ON;
-    _thapp_fan_ctrl(_obj, THAPP_LKG_INCRF_PER, &_f_stop_v, NULL, 0);
+    _thapp_fan_ctrl(_obj, THAPP_LKG_INCRF_PER, &_f_stop_v, NULL, 1);
     return 0;
 }
 
@@ -628,10 +640,35 @@ static int _thapp_lkg_cmd(thapp* obj, void* self, char cmd)
 			    "<==================== Raw Voltage Values ====================>");
 		}
 	    break;
+	case THAPP_LKG_LKG_START_VALUE:
+	    /*
+	     * Command to start the leakge test mode.
+	     * Checks for all time settings.
+	     */
+	    if(_obj->var_lkg_start_flg <= 0 &&
+	       _obj->var_ahu_lkg_tst_time > 0 &&
+	       _obj->var_ahu_lkg_tst_incr)
+		{
+		    _obj->var_lkg_start_flg = 1;
+		    thapp_reset_msg_cnt(obj);
+
+		    /* Add special message to the headder */
+		    _obj->var_disp_sp_pos = sprintf(_obj->_var_parent.var_disp_sp,
+						    THAPP_LKG_DISP_SP_HDDR,
+						    thapp_get_msg_cnt(obj),
+						    _obj->_var_parent.var_disp_header);
+		    sprintf(_obj->_var_t_sp_buff, "%s", _obj->_var_parent.var_disp_header);
+		}
+	    break;
 	default:
 	    break;
 	}
 
+    /*
+     * If either raw flag was on or leakage start flag was on
+     * indicate to the parent class to continue displaying the
+     * message.
+     */
     if(_obj->var_raw_flg)
 	_rt_val = THAPP_RT_CONT;
 
@@ -699,14 +736,13 @@ static int _thapp_lkg_cmd(thapp* obj, void* self, char cmd)
     /* Temporary message buffer */
     memset(_obj->_var_parent.var_disp_vals, 0, THAPP_DISP_BUFF_SZ);
     sprintf(_obj->_var_parent.var_disp_vals,
-	    "\t"
 	    "%.2f\t"
 	    "%.2f\t"
 	    "%.2f\t"
 	    "%.2f\t"
 	    "%.2f\t"
 	    "%s\t\t"
-	    "%.2f\t\r",
+	    "%.2f",
 	    _obj->var_raw_flg? (_obj->var_raw_act_ptr && *_obj->var_raw_act_ptr? *(*_obj->var_raw_act_ptr) : 0.0)  : _obj->_var_dp,
 	    _obj->var_raw_flg? _obj->_var_parent._msg_buff._ai3_val : _obj->_var_ext_static,
 	    _obj->var_raw_flg? 0.0 : _obj->_var_lkg,
@@ -714,6 +750,26 @@ static int _thapp_lkg_cmd(thapp* obj, void* self, char cmd)
 	    _obj->var_raw_flg? 0.0 : (_obj->var_prod_type == thapp_lkg_ahu? _obj->_var_lkg_f700 : 0.0),
 	    ((_obj->var_raw_flg>0 || _cls==NULL)? "ER" : _cls),
 	    _obj->var_raw_flg? _obj->_var_parent._msg_buff._ai0_val : thsen_get_value(_obj->_var_tmp_sen));
+
+    /* Handle Leak Test Auto Mode */
+    if((_obj->var_lkg_start_flg>0) && (!(THAPP_PRE_INC_MSGCOUNT(obj)%THAPP_SEC_DIV(obj))))
+	{
+	    sprintf(_obj->_var_parent.var_disp_sp,
+		    THAPP_LKG_DISP_SP_HDDR,
+		    thapp_get_msg_cnt(obj),
+		    _obj->_var_t_sp_buff);
+
+	    /* If the counter is greater than the increment add result */
+	    if(thapp_get_msg_cnt(obj) >= (_obj->var_ahu_lkg_tst_incr*THAPP_SEC_DIV(obj)*10.0))
+		{
+		    _obj->var_disp_sp_pos += sprintf(_obj->_var_t_sp_buff+strlen(_obj->_var_t_sp_buff),
+						     "|%s |\n",
+						     _obj->_var_parent.var_disp_vals);
+		    /* Reset the counter */
+		    thapp_reset_msg_cnt(obj);
+		}
+
+	}
 
     return _rt_val;
 }

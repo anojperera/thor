@@ -64,6 +64,7 @@ struct _thapp_lkg
      */
     int var_calib_wait_ext;
 
+    unsigned int var_lkg_start_flg;				/* Flag to indicate leakage test is started */
     unsigned int var_or_ix;					/* Orifice plate index */
     unsigned int var_calib_flg;
 
@@ -74,7 +75,12 @@ struct _thapp_lkg
 								 * positive pressure. This option is only
 								 *applicable for the AHU test.
 								 */
-
+    /*
+     * Variable to store the last insertion position
+     * into the buffer.
+     */    
+    unsigned int var_disp_sp_pos;				
+    char _var_t_sp_buff[THOR_BUFF_SZ];
     
     /*
      * AHU case leak figures are expressed in L1,L2...
