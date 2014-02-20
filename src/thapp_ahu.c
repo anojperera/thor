@@ -34,6 +34,19 @@
 #define THAPP_WAIT_EXT_KEY "ahu_calib_wait_ext"
 #define THAPP_CALIB_SETTLE_KEY "ahu_calib_settle_time"
 
+#define THAPP_AHU_DISP_HEADER1			\
+    "DP1\t"					\
+    "DP2\t"					\
+    "DP3\t"					\
+    "DP4\t"					\
+    "Vel\t"					\
+    "Vol\t"					\
+    "ST\t"					\
+    "F_SP\t"					\
+    "M_SP\t"					\
+    "TMP\r"
+
+
 /* Control Keys */
 #define THAPP_AHU_ACT_INCR_CODE 43							/* + */
 #define THAPP_AHU_ACT_DECR_CODE 45							/* - */
@@ -425,17 +438,7 @@ static int _thapp_ahu_start(thapp* obj, void* self)
 
     /* Add header information */
     memset(_obj->_var_parent.var_disp_header, 0, THAPP_DISP_BUFF_SZ);
-    sprintf(_obj->_var_parent.var_disp_header,
-	    "DP1\t"
-	    "DP2\t"
-	    "DP3\t"
-	    "DP4\t"
-	    "Vel\t"
-	    "Vol\t"
-	    "ST\t"
-	    "F_SP\t"
-	    "M_SP\t"
-	    "TMP\r");
+    sprintf(_obj->_var_parent.var_disp_header, THAPP_AHU_DISP_HEADER1);
     return 0;
 }
 
