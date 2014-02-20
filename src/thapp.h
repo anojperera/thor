@@ -99,7 +99,7 @@ struct _thapp
     char var_disp_header[THAPP_DISP_BUFF_SZ];
     char var_disp_vals[THAPP_DISP_BUFF_SZ];
     char var_cmd_vals[THAPP_DISP_BUFF_SZ];
-    char var_disp_sp[THAPP_DISP_BUFF_SZ];
+    char var_disp_sp[THOR_BUFF_SZ];
 
     char var_disp_opts[THOR_BUFF_SZ]; 						/* Option buffer */
 

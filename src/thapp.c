@@ -340,6 +340,7 @@ static void* _thapp_start_handler(void* obj)
 		    memset(_obj->var_disp_header, 0, THAPP_DISP_BUFF_SZ);
 		    memset(_obj->var_disp_vals, 0, THAPP_DISP_BUFF_SZ);
 		    memset(_obj->var_disp_opts, 0, THOR_BUFF_SZ);
+		    memset(_obj->var_disp_sp, 0, THOR_BUFF_SZ);
 		    memset(_obj->var_job_num, 0, THAPP_DISP_BUFF_SZ);
 		    memset(_obj->var_tag_num, 0, THAPP_DISP_BUFF_SZ);
 		    thorinifix_init_msg(&_obj->_msg_buff);
