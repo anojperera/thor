@@ -426,7 +426,6 @@ static int _thapp_ahu_start(thapp* obj, void* self)
     /* Add header information */
     memset(_obj->_var_parent.var_disp_header, 0, THAPP_DISP_BUFF_SZ);
     sprintf(_obj->_var_parent.var_disp_header,
-	    "\n"
 	    "DP1\t"
 	    "DP2\t"
 	    "DP3\t"
