@@ -26,6 +26,10 @@
 #define THAPP_DISP_BUFF_SZ 256
 #define THAPP_SEC_DIV(obj_ptr)			\
     1000000 / (obj_ptr)->var_sleep_time
+#define THAPP_POST_INC_MSGCOUNT(obj_ptr)	\
+    (obj_ptr)->_msg_cnt++
+#define THAPP_PRE_INC_MSGCOUNT(obj_ptr)		\
+    ++(obj_ptr)->_msg_cnt
 
 /* Helper macro for displaying messages */
 #define THAPP_DISP_MESG(STR, BUFF)		\
@@ -184,6 +188,11 @@ extern "C" {
      */
 #define thapp_get_con_obj_ptr(obj_ptr)		\
     &(obj_ptr)->_var_con
+
+    /* Get message count */
+#define thapp_get_msg_cnt(obj_ptr)		\
+    (obj_ptr)->_msg_cnt
+    
 #ifdef __cplusplus
 }
 #endif
