@@ -45,7 +45,7 @@
 #define THAPP_VAL_LINE 2
 #define THAPP_CMD_LINE 0
 #define THAPP_HDD_LINE 1
-#define THAPP_SP_LINE 10
+#define THAPP_SP_LINE 11
 
 #define THAPP_CLOSE_LOG(obj)			\
     if((obj)->var_def_log)			\
@@ -298,7 +298,7 @@ static void* _thapp_start_handler(void* obj)
 
 	    /* If program is not running display message to start */
 	    getmaxyx(stdscr, _max_row, _max_col);
-	    _t_msg_pos = (_max_row*2)/3;
+	    _t_msg_pos = _max_row-3;
 	    if(_st_flg == 0)
 		{
 		    clear();
