@@ -11,6 +11,7 @@
 #define THAPP_LKG_BUFF 500
 #define THAPP_LKG_MAX_SM_SEN 4
 #define THAPP_LKG_CLASS_BUFF 8
+#define THAPP_LKG_AVE_BUFF_COLS 4
 
 /* Enummerated types of leak testing default shall be the manual method */
 typedef enum {
@@ -110,6 +111,7 @@ struct _thapp_lkg
     double var_fan_pct;
 
     double var_fan_buff[THAPP_LKG_BUFF];
+    double var_ave_buff[THAPP_LKG_AVE_BUFF_COLS];		/* Averaging buffers */
 
     /*
      * Sensor collections
