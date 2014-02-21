@@ -899,7 +899,7 @@ static inline __attribute__ ((always_inline)) int _thapp_lkg_ave_reading_buff(th
     for(i=0; i<THAPP_LKG_AVE_BUFF_COLS; i++)
 	{
 	    obj->var_ave_buff[i] /=
-		(double) (obj->var_ahu_lkg_m_cnt>0? obj->var_ahu_lkg_m_cnt : 1);
+		(double) (obj->var_ahu_lkg_m_cnt>0? obj->var_ahu_lkg_m_cnt+1 : 1);
 	}
 
     return 0;
