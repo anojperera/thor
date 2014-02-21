@@ -44,7 +44,7 @@
 #define THAPP_LKG_DISP_OPT11 "Positive or Negative Pressure: "
 
 #define THAPP_LKG_DISP_SP_HDDR	"|------------------------- Readings -------------------------|\n" \
-    				"|-------------------------   %03i    -------------------------|\n" \
+    				"|-------------------------   %04i   -------------------------|\n" \
     				"%s"
 
 /* Control Keys */
@@ -763,21 +763,24 @@ static int _thapp_lkg_cmd(thapp* obj, void* self, char cmd)
 		    thapp_get_msg_cnt(obj),
 		    _obj->_var_t_sp_buff);
 
+	    /* If The counter has exceeded the amount, we stop taking readings */
+	    if(_obj->var_ahu_lkg_m_cnt >= (_obj->var_ahu_lkg_tst_time/_obj->var_ahu_lkg_tst_incr))
+		{
+		    _obj->var_lkg_start_flg = 0;
+		    thapp_reset_msg_cnt(obj);
+			    
+		}
+
 	    /* If the counter is greater than the increment add result */
-	    if(thapp_get_msg_cnt(obj) >= (_obj->var_ahu_lkg_tst_incr*THAPP_SEC_DIV(obj)*10.0))
+	    if(thapp_get_msg_cnt(obj) >= (_obj->var_ahu_lkg_tst_incr*THAPP_SEC_DIV(obj)*60.0))
 		{
 		    _obj->var_disp_sp_pos += sprintf(_obj->_var_t_sp_buff+_obj->var_disp_sp_pos,
 						     "|%s |\n",
 						     _obj->_var_parent.var_disp_vals);
 		    /* Reset the counter */
 		    thapp_reset_msg_cnt(obj);
+		    _obj->var_ahu_lkg_m_cnt++;
 
-		    /* If The counter has exceeded the amount, we stop taking readings */
-		    if(++_obj->var_ahu_lkg_m_cnt >= (_obj->var_ahu_lkg_tst_time/_obj->var_ahu_lkg_tst_incr))
-			{
-			    _obj->var_lkg_start_flg = 0;
-			    thapp_reset_msg_cnt(obj);
-			}
 		}
 
 	}
