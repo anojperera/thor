@@ -46,6 +46,8 @@
 #define THAPP_LKG_DISP_SP_HDDR	"|------------------------- Readings -------------------------|\n" \
     				"|-------------------------   %04i   -------------------------|\n" \
     				"%s"
+#define THAPP_LKG_DISP_SP_HDDR1 "|------------------------------------------------------------|\n" \
+				"|%.2f\t%.2f\t%.2f\t%.2f\t\t\t\t\t|"
 
 /* Control Keys */
 #define THAPP_LKG_FAN_INCR_CODE 43							/* + */
@@ -108,6 +110,8 @@ static int _thapp_lkg_cmd(thapp* obj, void* self, char cmd);
  */
 static inline __attribute__ ((always_inline)) const char* _thapp_lkg_get_desc_from_ix(const char* opts, unsigned int ix);
 
+/* Add to buffer and average */
+static inline __attribute__ ((always_inline)) int _thapp_lkg_ave_reading_buff(thapp_lkg* obj);
 
 /* Helper method for loading configuration settings */
 static int _thapp_new_helper(thapp_lkg* obj);
@@ -310,6 +314,7 @@ static int _thapp_new_helper(thapp_lkg* obj)
     if(_setting)
 	obj->var_ahu_lkg_tst_incr = config_setting_get_int(_setting);
 
+
     /* Get positive and negative pressure values */
     _setting = config_lookup(&obj->_var_parent.var_config, THAPP_LKG_P_PRE_KEY);
     if(_setting)
@@ -404,7 +409,7 @@ static int _thapp_lkg_init(thapp* obj, void* self)
 /* Start callback method */
 static int _thapp_lkg_start(thapp* obj, void* self)
 {
-    int _pos;
+    int _pos, i;
     thapp_lkg* _obj;
     char _scr_input_buff[THAPP_DISP_BUFF_SZ];
     double _f_stop_v;
@@ -441,6 +446,9 @@ static int _thapp_lkg_start(thapp* obj, void* self)
     _obj->var_lkg_start_flg = 0;
     _obj->var_disp_sp_pos = 0;
     _obj->var_ahu_lkg_m_cnt = 0;
+
+    for(i=0; i<THAPP_LKG_AVE_BUFF_COLS; i++)
+	_obj->var_ave_buff[i] = 0.0;    
 
     memset(_obj->_var_t_sp_buff, 0, THOR_BUFF_SZ);
 
@@ -758,18 +766,27 @@ static int _thapp_lkg_cmd(thapp* obj, void* self, char cmd)
     /* Handle Leak Test Auto Mode */
     if((_obj->var_lkg_start_flg>0) && (!(THAPP_PRE_INC_MSGCOUNT(obj)%THAPP_SEC_DIV(obj))))
 	{
-	    sprintf(_obj->_var_parent.var_disp_sp,
-		    THAPP_LKG_DISP_SP_HDDR,
-		    thapp_get_msg_cnt(obj),
-		    _obj->_var_t_sp_buff);
 
 	    /* If The counter has exceeded the amount, we stop taking readings */
 	    if(_obj->var_ahu_lkg_m_cnt >= (_obj->var_ahu_lkg_tst_time/_obj->var_ahu_lkg_tst_incr))
 		{
 		    _obj->var_lkg_start_flg = 0;
 		    thapp_reset_msg_cnt(obj);
-			    
+
+		    /* Add average values to the display */
+		    sprintf(_obj->_var_t_sp_buff+_obj->var_disp_sp_pos,
+			    THAPP_LKG_DISP_SP_HDDR1,
+			    _obj->var_ave_buff[0],
+			    _obj->var_ave_buff[1],
+			    _obj->var_ave_buff[2],
+			    _obj->var_ave_buff[3]);
+				    
 		}
+	    
+	    sprintf(_obj->_var_parent.var_disp_sp,
+		    THAPP_LKG_DISP_SP_HDDR,
+		    thapp_get_msg_cnt(obj),
+		    _obj->_var_t_sp_buff);
 
 	    /* If the counter is greater than the increment add result */
 	    if(thapp_get_msg_cnt(obj) >= (_obj->var_ahu_lkg_tst_incr*THAPP_SEC_DIV(obj)*60.0))
@@ -777,6 +794,10 @@ static int _thapp_lkg_cmd(thapp* obj, void* self, char cmd)
 		    _obj->var_disp_sp_pos += sprintf(_obj->_var_t_sp_buff+_obj->var_disp_sp_pos,
 						     "|%s |\n",
 						     _obj->_var_parent.var_disp_vals);
+
+		    /* Call to add the averaged values */
+		    _thapp_lkg_ave_reading_buff(_obj);
+		    
 		    /* Reset the counter */
 		    thapp_reset_msg_cnt(obj);
 		    _obj->var_ahu_lkg_m_cnt++;
@@ -864,4 +885,22 @@ static inline __attribute__ ((always_inline)) const char* _thapp_lkg_get_desc_fr
 	}
 
     return _str;
+}
+
+/* Method for handling the averaging function */
+static inline __attribute__ ((always_inline)) int _thapp_lkg_ave_reading_buff(thapp_lkg* obj)
+{
+    int i;
+    obj->var_ave_buff[0] += obj->_var_dp;
+    obj->var_ave_buff[1] += obj->_var_ext_static;
+    obj->var_ave_buff[2] += obj->_var_lkg;
+    obj->var_ave_buff[3] += obj->_var_lkg_m2;
+
+    for(i=0; i<THAPP_LKG_AVE_BUFF_COLS; i++)
+	{
+	    obj->var_ave_buff[i] /=
+		(double) (obj->var_ahu_lkg_m_cnt>0? obj->var_ahu_lkg_m_cnt : 1);
+	}
+
+    return 0;
 }
