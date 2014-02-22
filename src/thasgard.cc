@@ -243,7 +243,7 @@ int _thasg::add_msg(void* msg_ptr, size_t sz)
 
     /* Check for arguments */
     if(msg_ptr == NULL || sz <= 0)
-	return;
+	return 0;
     
     /* Initialise message object */
     memset((void*) &_msg_obj, 0, sizeof(struct _thasg_msg_wrap));
