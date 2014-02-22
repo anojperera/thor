@@ -3,6 +3,7 @@
  * handling of logging messages.
  */
 #include <stdlib.h>
+#include <cstring>
 #include <pthread.h>
 #include <unistd.h>
 #include <libconfig.h>
@@ -320,6 +321,8 @@ int _thasg::write_file(void)
 
 
 	    /* Write to file */
+	    /* Append return character */
+	    strcat(_t_msg->_msg, "\n");
 	    write(_file_des, _t_msg->_msg, _t_msg->_msg_sz);
 	exit_loop:
 	    pthread_mutex_lock(&var_mutex);
