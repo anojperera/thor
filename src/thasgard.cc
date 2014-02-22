@@ -288,7 +288,7 @@ int _thasg::write_file(void)
 		    _thasg::create_file_name(_file_name, THASG_FILE_NAME_BUFF_SZ);
 
 		    /* Open file and store file and socket descriptors */
-		    _file_des = open(_file_name, O_CREAT | O_APPEND);
+		    _file_des = open(_file_name, O_CREAT | O_APPEND | O_RDWR);
 		    if(_file_des == -1)
 			goto exit_loop;
 
