@@ -36,7 +36,7 @@
 #define THASG_DEF_WAIT_TIME 200000
 
 #define THASG_FILE_NAME_BUFF_SZ 256
-#define THASG_DEFAULT_LOG_FILE_NAME "/tmp/%Y-%m-%d-%I-%M-%S.txt"
+#define THASG_DEFAULT_LOG_FILE_NAME "%Y-%m-%d-%I-%M-%S.txt"
 
 volatile sig_atomic_t _flg = 1;
 
