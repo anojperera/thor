@@ -19,6 +19,8 @@
 #define THAPP_PORT_KEY "main_con_port"
 #define THAPP_SERVER_NAME_KEY "self_url"
 #define THAPP_QUEUE_LIMIT_KEY "app_queue_limit"
+#define THAPP_LOG_URL_KEY "main_log_url"
+#define THAPP_LOG_URL_PORT_KEY "sec_con_port"
 
 #define THAPP_DEFAULT_PORT "11000"
 #define THAPP_DEFAULT_SLEEP 100000
@@ -73,6 +75,7 @@ static char _thapp_get_cmd(void);
 /*---------------------------------------------------------------------------*/
 /* Callback methods for handling connection related messages */
 static int _thapp_con_recv_callback(void* obj, void* msg, size_t sz);
+static int _thapp_con_recv_url_callback(void* obj, void* msg, size_t sz);
 
 static void _thapp_queue_del_helper(void* data);
 /*===========================================================================*/
@@ -103,6 +106,24 @@ int thapp_init(thapp* obj)
      */
     thcon_set_ext_obj(&obj->_var_con, ((void*) obj));
     thcon_set_recv_callback(&obj->_var_con, _thapp_con_recv_callback);
+
+    /*
+     * Initialise the url logging connection. All test data
+     * processed by the application shall be relayed to this
+     * server. Since this connection is not critical to the operation
+     * we can proceed with the reset of the initialisation.
+     */
+    obj->var_sec_con_init_flg = 0;
+    if(!thcon_init(&obj->_var_con_sec, thcon_mode_client))
+	{
+	    /* Set external object and callback pointer */
+	    thcon_set_ext_obj(&obj->_var_con_sec, ((void*) obj));
+	    thcon_set_recv_callback(&obj->_var_con_sec, _thapp_con_recv_url_callback);
+	    obj->var_sec_con_init_flg = 1;
+
+	    /* Port number and server address are set in the config read method */
+	}
+    
 
     obj->var_init_flg = 1;
     obj->var_run_flg = 0;
@@ -155,6 +176,17 @@ void thapp_delete(thapp* obj)
     /* Delete config object */
     thcon_stop(&obj->_var_con);
     thcon_delete(&obj->_var_con);
+
+    /*
+     * If the secondary connection was successfully initialised
+     * we stop the connection and delete the object.
+     */
+    if(obj->var_sec_con_init_flg)
+	{
+	    thcon_stop(&obj->_var_con_sec);
+	    thcon_delete(&obj->_var_con_sec);
+	    obj->var_sec_con_init_flg = 0;	    
+	}
 
     /* Check configuration pointer and delete it */
     config_destroy(&obj->var_config);
@@ -593,6 +625,26 @@ static int _thapp_init_helper(thapp* obj)
     if(_setting != NULL)
       obj->var_queue_limit = (unsigned int) config_setting_get_int(_setting);
 
+    /* Get secondary server port and address */
+    if(obj->var_sec_con_init_flg)
+	{
+	    _setting = config_lookup(&obj->var_config, THAPP_LOG_URL_KEY);
+	    if(_setting)
+		{
+		    _t_buff = config_setting_get_string(_setting);
+		    if(_t_buff)
+			thcon_set_server_name(&obj->_var_con_sec, _t_buff);
+		}
+
+	    _setting = config_lookup(&obj->var_config, THAPP_LOG_URL_PORT_KEY);
+	    if(_setting)
+		{
+		    _t_buff = config_setting_get_string(_setting);
+		    if(_t_buff)
+			thcon_set_port_name(&obj->_var_con_sec, _t_buff);
+		}
+
+	}
 
     return 0;
 }
