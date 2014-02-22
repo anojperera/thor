@@ -92,6 +92,7 @@ struct _thapp
     config_t var_config;							/* configuration pointer */
     struct thor_msg _msg_buff;							/* message buffer */
     thcon _var_con;								/* connection object */
+    thcon _var_con_sec;								/* secondary connection to the log server */
 
     void* var_child;								/* child object */
 
