@@ -543,7 +543,7 @@ static void* _thapp_start_handler(void* obj)
 	    mvprintw(_t_msg_pos+THAPP_VAL_LINE, 0,"%s", _obj->var_disp_vals);
 
 	    /* Send message to the loging server */
-	    THAPP_SEND_MSG(_obj, _obj->var_disp_vals, strlen(_obj->var_disp_vals));
+	    THAPP_SEND_MSG(_obj, _obj->var_disp_vals, THAPP_DISP_BUFF_SZ);
 
 	    refresh();
 
