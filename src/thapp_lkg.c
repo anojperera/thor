@@ -773,6 +773,9 @@ static int _thapp_lkg_cmd(thapp* obj, void* self, char cmd)
 		    _obj->var_lkg_start_flg = 0;
 		    thapp_reset_msg_cnt(obj);
 
+		    /* Call averaging method to average the values */
+		    _thapp_lkg_ave_reading_buff(_obj);
+		    
 		    /* Add average values to the display */
 		    sprintf(_obj->_var_t_sp_buff+_obj->var_disp_sp_pos,
 			    THAPP_LKG_DISP_SP_HDDR1,
@@ -891,15 +894,24 @@ static inline __attribute__ ((always_inline)) const char* _thapp_lkg_get_desc_fr
 static inline __attribute__ ((always_inline)) int _thapp_lkg_ave_reading_buff(thapp_lkg* obj)
 {
     int i;
-    obj->var_ave_buff[0] += obj->_var_dp;
-    obj->var_ave_buff[1] += obj->_var_ext_static;
-    obj->var_ave_buff[2] += obj->_var_lkg;
-    obj->var_ave_buff[3] += obj->_var_lkg_m2;
-
-    for(i=0; i<THAPP_LKG_AVE_BUFF_COLS; i++)
+    /*
+     * Only add figures when we are recording. Once the flag is reset
+     * we simply average the figures.
+     */
+    if(obj->var_lkg_start_flg)
 	{
-	    obj->var_ave_buff[i] /=
-		(double) (obj->var_ahu_lkg_m_cnt>0? obj->var_ahu_lkg_m_cnt+1 : 1);
+	    obj->var_ave_buff[0] += obj->_var_dp;
+	    obj->var_ave_buff[1] += obj->_var_ext_static;
+	    obj->var_ave_buff[2] += obj->_var_lkg;
+	    obj->var_ave_buff[3] += obj->_var_lkg_m2;
+	}
+    else
+	{
+	    for(i=0; i<THAPP_LKG_AVE_BUFF_COLS; i++)
+		{
+		    obj->var_ave_buff[i] /=
+			(double) (obj->var_ahu_lkg_m_cnt>0? obj->var_ahu_lkg_m_cnt : 1);
+		}
 	}
 
     return 0;
