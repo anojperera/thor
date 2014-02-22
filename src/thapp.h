@@ -13,6 +13,7 @@
 #include <pthread.h>
 #include <semaphore.h>
 #include <gqueue.h>
+#include <signal.h>
 #include <libconfig.h>
 #include "thornifix.h"
 #include "thcon.h"
@@ -87,8 +88,14 @@ struct _thapp
     unsigned int var_max_opt_rows;						/* Maximum optional rows */
     unsigned int var_queue_limit;
 
+    volatile sig_atomic_t _var_con_sec_flg;					/* Flag to indicate the secondary connection was established */
+
     /* flag to indicate secondary connection was successfully initialised */
     unsigned int var_sec_con_init_flg;
+
+    /* Flag to indicate secondary connection was started with a thread */
+    unsigned int var_sec_con_start_flg;
+    
     int _msg_cnt;
 
     thapp_opmode var_op_mode;							/* operation mode */
@@ -128,6 +135,7 @@ struct _thapp
 
     sem_t _var_sem;
     pthread_t _var_thread;
+    pthread_t _var_sec_thread;							/* Secondary thread */
     pthread_mutex_t _var_mutex;
 };
 

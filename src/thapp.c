@@ -72,6 +72,9 @@ static int _thapp_init_helper(thapp* obj);
 /*---------------------------------------------------------------------------*/
 static char _thapp_get_cmd(void);
 
+/* Start the secondary connection in three atempts */
+static void* _thapp_start_secon(void* obj);
+
 /*---------------------------------------------------------------------------*/
 /* Callback methods for handling connection related messages */
 static int _thapp_con_recv_callback(void* obj, void* msg, size_t sz);
@@ -129,10 +132,14 @@ int thapp_init(thapp* obj)
     obj->var_run_flg = 0;
     obj->var_max_opt_rows = 0;
     obj->_msg_cnt = 0;
+    obj->_var_con_sec_flg = 0;
     obj->var_sleep_time = THAPP_DEFAULT_SLEEP;
     obj->var_queue_limit = THAPP_DEFAULT_QUEUE_LIMIT;
     obj->var_child = NULL;
     obj->var_def_log = NULL;
+
+    obj->_var_con_sec_flg = 0;
+    obj->var_sec_con_start_flg = 0;
 
     /* Call initialisation helper method to load configuration settings */
     /*
@@ -183,6 +190,9 @@ void thapp_delete(thapp* obj)
      */
     if(obj->var_sec_con_init_flg)
 	{
+	    /* Join the thread if it was created */
+	    if(obj->var_sec_con_start_flg)
+		pthread_join(&obj->_var_sec_thread);
 	    thcon_stop(&obj->_var_con_sec);
 	    thcon_delete(&obj->_var_con_sec);
 	    obj->var_sec_con_init_flg = 0;	    
@@ -289,7 +299,7 @@ static void* _thapp_start_handler(void* obj)
 	return NULL;
 
     _obj = (thapp*) obj;
-    
+
     /*
      * First thing we do is to check if the any derived child
      * classes has set initialise and start methods and call
@@ -644,6 +654,10 @@ static int _thapp_init_helper(thapp* obj)
 			thcon_set_port_name(&obj->_var_con_sec, _t_buff);
 		}
 
+	    /* Start server and set the flag to indicate that thread needs joining */
+	    pthread_create(&obj->_var_sec_thread, NULL, _thapp_start_secon, (void*) obj);
+	    obj->var_sec_con_start_flg = 1;
+
 	}
 
     return 0;
@@ -732,4 +746,28 @@ static void _thapp_open_log_file(thapp* obj)
 	sprintf(_file_name, "%s", _time_sig);
     obj->var_def_log = fopen(_time_sig, "w+");
     return;
+}
+
+/* Starts the secondary connection in three attempts */
+static void* _thapp_start_secon(void* obj)
+{
+    thapp* _obj;
+    int _cnt;
+
+    /* Cast object poitner */
+    if(obj == NULL)
+	return NULL;
+
+    _obj = (thapp*) obj;
+    _obj->_var_con_sec_flg = 1;
+    while(thcon_start(&_obj->_var_con_sec))
+	{
+	    _obj->_var_con_sec_flg = 0;
+	    if(++_cnt > 3)
+		break;
+
+	    _obj->_var_con_sec_flg =1;
+	}
+    
+    return NULL;
 }
