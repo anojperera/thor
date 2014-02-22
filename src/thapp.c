@@ -54,6 +54,10 @@
 	fclose((obj)->var_def_log);		\
     (obj)->var_def_log = NULL
 
+#define THAPP_SEND_MSG(obj_ptr, msg_ptr, msg_sz)			\
+    if((obj_ptr)->_var_con_sec_flg)					\
+	thcon_send_info(&(obj_ptr)->_var_sec_con, (void*) (msg_ptr), (msg_sz))
+
 volatile sig_atomic_t _flg = 1;
 static void _thapp_sig_handler(int signo);
 
@@ -537,6 +541,9 @@ static void* _thapp_start_handler(void* obj)
 
 	    /* Print the result  values */
 	    mvprintw(_t_msg_pos+THAPP_VAL_LINE, 0,"%s", _obj->var_disp_vals);
+
+	    /* Send message to the loging server */
+	    THAPP_SEND_MSG(_obj, _obj->var_disp_vals, THAPP_DISP_BUFF_SZ);
 	    refresh();
 
 	    memset(_obj->var_disp_vals, 0, THAPP_DISP_BUFF_SZ);
@@ -767,7 +774,14 @@ static void* _thapp_start_secon(void* obj)
 		break;
 
 	    _obj->_var_con_sec_flg =1;
+	    sleep(THAPP_DEFAULT_WAIT_TIME);
 	}
     
     return NULL;
+}
+
+/* Recieved messages from the secondary server */
+static int _thapp_con_recv_url_callback(void* obj, void* msg, size_t sz)
+{
+    return 0;
 }
