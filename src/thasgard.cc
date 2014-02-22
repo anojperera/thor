@@ -241,6 +241,10 @@ int _thasg::add_msg(void* msg_ptr, size_t sz)
 {
     struct _thasg_msg_wrap _msg_obj;
 
+    /* Check for arguments */
+    if(msg_ptr == NULL || sz <= 0)
+	return;
+    
     /* Initialise message object */
     memset((void*) &_msg_obj, 0, sizeof(struct _thasg_msg_wrap));
 
@@ -248,10 +252,10 @@ int _thasg::add_msg(void* msg_ptr, size_t sz)
     _msg_obj._fd = THCON_GET_ACTIVE_SOCK(&var_con);
     
     /* Copy message to the internal buffer */
-    memcpy((void*) _msg_obj._msg, msg_ptr, sz);
-    _msg_obj._msg[sz] = '\0';
+    memcpy((void*) _msg_obj._msg, msg_ptr, THORNIFIX_MSG_BUFF_SZ);
+    _msg_obj._msg[THORNIFIX_MSG_BUFF_SZ-1] = '\0';
 
-    _msg_obj._msg_sz = sz;
+    _msg_obj._msg_sz = THORNIFIX_MSG_BUFF_SZ;
 
     /* Insert to queue */
     pthread_mutex_lock(&var_mutex);
@@ -323,7 +327,7 @@ int _thasg::write_file(void)
 	    /* Write to file */
 	    /* Append return character */
 	    strcat(_t_msg->_msg, "\n");
-	    write(_file_des, _t_msg->_msg, _t_msg->_msg_sz);
+	    write(_file_des, _t_msg->_msg, strlen(_t_msg->_msg));
 	exit_loop:
 	    pthread_mutex_lock(&var_mutex);
 	    _msg_queue.pop();
