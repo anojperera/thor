@@ -33,6 +33,8 @@ _thasg_websock::_thasg_websock(int port):_num_cons(0),_err_flg(0), _cont_flg(0)
     /* Set self pointer */
     _self_ptr = reinterpret_cast<void*>(this);
 
+    pthread_mutex_init(&var_mutex, NULL);
+
     /* initialise the lws info struct */
     _websock_info.port = port;
     _websock_info.iface = NULL;
@@ -111,7 +113,9 @@ int _thasg_websock::service_server(const char* msg, size_t sz)
 	    _msg_wrap._msg[THORNIFIX_MSG_BUFF_SZ-1] = '\0';
 	    _msg_wrap._msg_sz = sz;
 
+	    pthread_mutex_lock(&var_mutex);
 	    _msg_queue.push(_msg_wrap);
+	    pthread_mutex_unlock(&var_mutex);
 	}
 
     return _thasg_websock::service_server();
@@ -148,8 +152,11 @@ int _thasg_websock::pop_queue()
 {
     if(_msg_queue.empty())
 	return 1;
-
+    
+    pthread_mutex_lock(&var_mutex);
     _msg_queue.pop();
+    pthread_mutex_unlock(&var_mutex);
+    
     return 0;
 }
 

@@ -9,6 +9,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <pthread.h>
 #include <libwebsockets/libwebsockets.h>
 
 #include "thornifix.h"
@@ -37,6 +38,8 @@ class _thasg_websock
     struct lws_context_creation_info _websock_info;	/* Infor struct */
 
     void* _self_ptr;					/* Self pointer */
+
+    pthread_mutex_t var_mutex;				/* Lock for the queue */
 
  public:
     _thasg_websock(int port);
