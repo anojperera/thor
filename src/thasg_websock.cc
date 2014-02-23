@@ -5,7 +5,7 @@
 /* Callback method for handling the connection */
 static int _thasg_websock_callback(struct libwebsocket_context* context,
 				   struct libwebsocket* wsi,
-				   enum libwebsocket_callback_reason reason,
+				   enum libwebsocket_callback_reasons reason,
 				   void* user,
 				   void* in,
 				   size_t len);
@@ -61,7 +61,7 @@ _thasg_websock::_thasg_websock(int port):_num_cons(0),_err_flg(0), _cont_flg(0)
 }
 
 /* Destructor */
-virtual _thasg_websock::~_thasg_websock()
+_thasg_websock::~_thasg_websock()
 {
     /* Check if errors occured */
     if(_err_flg)
@@ -77,6 +77,23 @@ virtual _thasg_websock::~_thasg_websock()
     return;
 }
 
+int _thasg_websock::service_server()
+{
+    /* Service all pending sockets */
+    while(1)
+	{
+	    libwebsocket_service(_websock_context, 0);
+	    libwebsocket_callback_on_writable_all_protocol(&_protocols[0]);
+	    if(_cont_flg > 0 && !_msg_queue.empty())
+		{
+		    continue;
+		}
+	    else
+		break;
+	}
+    return 0;
+}
+
 /* Serivce web sockets */
 int _thasg_websock::service_server(const char* msg, size_t sz)
 {
@@ -86,19 +103,18 @@ int _thasg_websock::service_server(const char* msg, size_t sz)
 	return 0;
 
     /* Add message to the queue */
-    memset(reinterpret_cast<void*>(&_msg_wrap), 0, sizeof(struct _thasg_msg_wrap));
-    _msg_wrap._fd = 0;
-    strncpy(_msg_wrap._msg, msg, (sz > (THORNIFIX_MSG_BUFF_SZ-1)? THORNIFIX_MSG_BUFF_SZ-1 : sz));
-    _msg_wrap._msg[THORNIFIX_MSG_BUFF_SZ-1] = '\0';
-    _msg_wrap._msg_sz = sz;
+    if(msg != NULL && sz > 0)
+	{
+	    memset(reinterpret_cast<void*>(&_msg_wrap), 0, sizeof(struct _thasg_msg_wrap));
+	    _msg_wrap._fd = 0;
+	    strncpy(_msg_wrap._msg, msg, (sz > (THORNIFIX_MSG_BUFF_SZ-1)? THORNIFIX_MSG_BUFF_SZ-1 : sz));
+	    _msg_wrap._msg[THORNIFIX_MSG_BUFF_SZ-1] = '\0';
+	    _msg_wrap._msg_sz = sz;
 
-    _msg_queue.puch(_msg_wrap);
+	    _msg_queue.push(_msg_wrap);
+	}
 
-    /* Service all pending sockets */
-    libwebsocket_service(_websock_context, 0);
-    libwebsocket_callback_on_writable_all_protocol(&_protocols[0]);
-
-    return 0;
+    return _thasg_websock::service_server();
 }
 
 /* Increment operator for number of connections */
@@ -124,7 +140,7 @@ struct _thasg_msg_wrap* _thasg_websock::get_queue_front()
     if(_msg_queue.empty())
 	return NULL;
 
-    return _msg_queue.front();
+    return &_msg_queue.front();
 }
 
 /* Remove the element from the queue */
@@ -141,14 +157,14 @@ int _thasg_websock::pop_queue()
 /***************************** Private Methods **************************/
 static int _thasg_websock_callback(struct libwebsocket_context* context,
 				   struct libwebsocket* wsi,
-				   enum libwebsocket_callback_reason reason,
+				   enum libwebsocket_callback_reasons reason,
 				   void* user,
 				   void* in,
 				   size_t len)
 {
     struct _thasg_msg_wrap* _msg_ptr;
     void* _t_ptr;
-    char _t_buff[LWS_SEND_BUFFER_PRE_PADDING+THORNIFIX_MSG_BUFF_SZ+LWS_SEND_BUFFER_POST_PADDING];
+    unsigned char _t_buff[LWS_SEND_BUFFER_PRE_PADDING+THORNIFIX_MSG_BUFF_SZ+LWS_SEND_BUFFER_POST_PADDING];
     _thasg_websock* _websock_obj;
 
     
@@ -180,12 +196,11 @@ static int _thasg_websock_callback(struct libwebsocket_context* context,
 		break;
 
 	    /* Write to the websocket */
-	    strncpy(_t_buff+LWS_SEND_BUFFER_PRE_PADDING, _msg_ptr->_msg, THORNIFIX_MSG_BUFF_SZ-1);
-	    _t_buff[LWS_SEND_BUFFER_PRE_PADDING+THORNIFIX_MSG_BUFF_SZ-1] = '\0';
+	    memcpy(_t_buff+LWS_SEND_BUFFER_PRE_PADDING, reinterpret_cast<void*>(_msg_ptr->_msg), _msg_ptr->_msg_sz);
 
 	    libwebsocket_write(wsi,
 			       _t_buff+LWS_SEND_BUFFER_PRE_PADDING,
-			       strlen(_t_buff+LWS_SEND_BUFFER_PRE_PADDING),
+			       _msg_ptr->_msg_sz,
 			       LWS_WRITE_TEXT);
 	    
 	    _websock_obj->pop_queue();

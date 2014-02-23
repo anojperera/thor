@@ -9,7 +9,9 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <libwebsockets.h>
+#include <libwebsockets/libwebsockets.h>
+
+#include "thornifix.h"
 
 /* STL queue for storing the messages */
 #include <queue>
@@ -40,6 +42,7 @@ class _thasg_websock
     _thasg_websock(int port);
     virtual ~_thasg_websock();
 
+    int service_server();
     int service_server(const char* msg, size_t sz);
 
     /* Increment and decrement operators for the clinet */
