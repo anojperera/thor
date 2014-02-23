@@ -75,7 +75,7 @@ _thasg_websock::~_thasg_websock()
 
     /* Destroy webcontext */
     libwebsocket_context_destroy(_websock_context);
-
+    pthread_mutex_destroy(&var_mutex);
     return;
 }
 
