@@ -18,6 +18,7 @@
 
 #include "thornifix.h"
 #include "thcon.h"
+#include "thsg_websock.h"
 
 #define THASG_DEFAULT_CONFIG_PATH1 "thor.cfg"
 #define THASG_DEFAULT_CONFIG_PATH2 "../config/thor.cfg"
@@ -40,13 +41,6 @@
 #define THASG_DEFAULT_LOG_FILE_NAME "%Y-%m-%d-%I-%M-%S.txt"
 
 volatile sig_atomic_t _flg = 1;
-
-struct _thasg_msg_wrap
-{
-    int _fd;						/* File descriptor */
-    char _msg[THORNIFIX_MSG_BUFF_SZ];			/* message buffer */
-    size_t _msg_sz;
-};
 
 
 class _thasg
