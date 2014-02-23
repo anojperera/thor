@@ -31,28 +31,30 @@ int main(int argc, char** argv)
     int i, c;
     unsigned int _exit_flg = 0;
     int (*_item_fptr)(void);
-    /*
-     * Initialise ncurses system.
-     */
-    initscr();
-
-    cbreak();
-    noecho();
-    keypad(stdscr, TRUE);
-
-    for(i=0; i<THAPP_MENU_ITEMS; i++)
-	_menu_items[i] = new_item(_menu_opts[i], _menu_opts[i]);
-    _menu_items[i] = NULL;
-
-    /* Set user pointers to call function pointer for the relevant test */
-    set_item_userptr(_menu_items[0], (void*) _thor_test_ahu);
-    set_item_userptr(_menu_items[1], (void*) _thor_test_lkg);
-
-    /* Create new menu */
-    _menu = new_menu((ITEM**) _menu_items);
 
     while(1)
 	{
+
+	    /*
+	     * Initialise ncurses system.
+	     */
+	    initscr();
+
+	    cbreak();
+	    noecho();
+	    keypad(stdscr, TRUE);
+
+	    for(i=0; i<THAPP_MENU_ITEMS; i++)
+		_menu_items[i] = new_item(_menu_opts[i], _menu_opts[i]);
+	    _menu_items[i] = NULL;	    
+
+	    /* Set user pointers to call function pointer for the relevant test */
+	    set_item_userptr(_menu_items[0], (void*) _thor_test_ahu);
+	    set_item_userptr(_menu_items[1], (void*) _thor_test_lkg);
+
+	    /* Create new menu */
+	    _menu = new_menu((ITEM**) _menu_items);
+    
 	    mvprintw(LINES - 2, 0, "Select test from above, press 'q' to Exit");
 	    post_menu(_menu);
 	    refresh();
@@ -79,12 +81,12 @@ int main(int argc, char** argv)
 		    if(_exit_flg)
 			break;
 	    
-		    usleep(200000);
+		    usleep(100000);
 		}
 
 	    /* If application was quit in the main screen it will exit it */
 	    if(c == THAPP_QUIT_CODE2)
-		break;
+		goto thappe_loop_end;
 
 	    /* Get user pointer */
 	    _item_fptr = (int(*)(void)) item_userptr(_cur_item);
@@ -99,17 +101,21 @@ int main(int argc, char** argv)
 	    c = 0;
 	    _exit_flg = 0;
 	    clear();
+
+	thappe_loop_end:
+	    free_menu(_menu);
+	    free_item(_menu_items[0]);
+	    free_item(_menu_items[1]);
+
+
+	    clear();
+	    _menu = NULL;
+    
+	    endwin();
+	    if(c == THAPP_QUIT_CODE2)
+		break;
 	}
     
-    clear();
-    free_menu(_menu);
-    free_item(_menu_items[0]);
-    free_item(_menu_items[1]);    
-    
-
-    _menu = NULL;
-    
-    endwin();
     return 0;
 }
 
