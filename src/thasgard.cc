@@ -18,7 +18,7 @@
 
 #include "thornifix.h"
 #include "thcon.h"
-#include "thsg_websock.h"
+#include "thasg_websock.h"
 
 #define THASG_DEFAULT_CONFIG_PATH1 "thor.cfg"
 #define THASG_DEFAULT_CONFIG_PATH2 "../config/thor.cfg"
@@ -35,6 +35,7 @@
 #define THASG_COM_PORT "sec_con_port"
 #define THASG_DEF_COM_PORT "11001"
 #define THASG_DEF_TIMEOUT "def_time_out"
+#define THASG_WEBSOCK_PORT "websock_port"
 #define THASG_DEF_WAIT_TIME 200000
 
 #define THASG_FILE_NAME_BUFF_SZ 256
@@ -62,6 +63,8 @@ private:
     void* _var_self;
 
     int create_file_name(char* f_name, size_t sz);
+
+    _thasg_websock* var_websock;			 /* Websocket server */
 
 public:
     _thasg();
@@ -129,6 +132,8 @@ _thasg::_thasg():err_flg(0), f_flg(0)
     /* Set this pointer as the self */
     _var_self = reinterpret_cast<void*>(this);
 
+    
+    var_websock = NULL;
     /* Check the default paths for the configuration file and find the settings */
     while(1)
 	{
@@ -196,6 +201,18 @@ _thasg::_thasg():err_flg(0), f_flg(0)
     else
 	thcon_set_port_name(&var_con, THASG_DEF_COM_PORT);
 
+    /* Get port number for the websocket server */
+    _setting = config_lookup(&var_config, THASG_WEBSOCK_PORT);
+    if(_setting)
+	{
+	    _t_buff = config_setting_get_string(_setting);
+	    if(_t_buff)
+		{
+		    /* Create websocket server */
+		    var_websock = new _thasg_websock(atoi(_t_buff));
+		}
+	}
+
     /* Reset connection struct info */
     thcon_reset_my_info(&var_con);
     return;
@@ -216,8 +233,14 @@ _thasg::~_thasg()
 	    if(_m_itr->second > 0)
 		close(_m_itr->second);
 	}
+    
     /* Empty container */
     _fds.erase(_fds.begin(), _fds.end());
+
+    
+    /* If the websocket server was created destroy it */
+    if(var_websock != NULL)
+	delete var_websock;
 
     /* Destroy the configuration object */
     config_destroy(&var_config);
@@ -322,6 +345,11 @@ int _thasg::write_file(void)
 	    /* Append return character */
 	    strcat(_t_msg->_msg, "\n");
 	    write(_file_des, _t_msg->_msg, strlen(_t_msg->_msg));
+
+	    /* If the web socket server was created, call to service sockets */
+	    if(var_websock)
+		var_websock->service_server(_t_msg->_msg, _t_msg->_msg_sz);
+	    
 	exit_loop:
 	    pthread_mutex_lock(&var_mutex);
 	    _msg_queue.pop();
