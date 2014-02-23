@@ -26,6 +26,7 @@ class _thasg_websock
  protected:
     unsigned int _num_cons;				/* Number of connections */
     unsigned int _err_flg;				/* Flag to indicates error have occured */
+    unsigned int _cont_flg;
 
     std::queue<struct _thasg_msg_wrap> _msg_queue;	/* Message queue */
     
@@ -39,7 +40,13 @@ class _thasg_websock
     _thasg_websock(int port);
     virtual ~_thasg_websock();
 
-    int query_server();
-    
+    int service_server(const char* msg, size_t sz);
+
+    /* Increment and decrement operators for the clinet */
+    _thasg_websock* operator ++();
+    _thasg_websock* operator --();
+
+    struct _thasg_msg_wrap* get_queue_front();
+    int pop_queue();
 };
 
