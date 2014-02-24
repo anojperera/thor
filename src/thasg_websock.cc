@@ -68,9 +68,15 @@ _thasg_websock::~_thasg_websock(void)
     if(_err_flg)
 	return;
 
+    /*
+     * Temporary hack to stop the server writing to the socket when
+     * SIGTERM is called.
+     */
+    _msg_queue.clear();
+    
     /* Set continue flag and service any outstanding messages */
     _cont_flg = 1;
-    _thasg_websock::_service_server();
+    _thasg_websock::service_server();
 
     /* Destroy webcontext */
     libwebsocket_context_destroy(_websock_context);
@@ -116,10 +122,7 @@ int _thasg_websock::service_server(const char* msg, size_t sz)
 	    pthread_mutex_unlock(&var_mutex);
 	}
 
-    libwebsocket_service(_websock_context, 0);
-    libwebsocket_callback_on_writable_all_protocol(&_protocols[0]);
-
-    return 0;
+    return _thasg_websock::service_server();
 
 }
 
