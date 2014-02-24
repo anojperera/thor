@@ -192,9 +192,10 @@ static int _thasg_websock_callback(struct libwebsocket_context* context,
 	case LWS_CALLBACK_CLIENT_ESTABLISHED:
 	    /* Increment counter */
 	    _websock_obj->incr_cons();
-
+	    break;
 	case LWS_CALLBACK_CLOSED:
 	    _websock_obj->decr_cons();
+	    break;
 	case LWS_CALLBACK_SERVER_WRITEABLE:
 	    /* Get message pointer */
 	    _msg_ptr = _websock_obj->get_queue_front();
