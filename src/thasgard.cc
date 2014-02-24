@@ -54,6 +54,8 @@ private:
     /*
      * A map is used to store the socket descriptor and its corresponding
      * file descriptor.
+     * First argument shall be the socket descriptor and the second
+     * argument shall be the file descriptor.
      */
     std::map<int, int> _fds;
 
@@ -74,6 +76,9 @@ public:
     int write_file(void);
     int start(void);
     int stop(void);
+
+    /* Get a reference to the internal file descriptor collection */
+    std::map<int, int>* get_fds();
 };
 
 
@@ -383,11 +388,18 @@ int _thasg::stop(void)
     /*
      * Set write flag to indicate all remaining messages are to be
      * written.
-    */
+     */
     f_flg = 1;
     _thasg::write_file();
     return 0;
 }
+
+/* Get a reference to the file descriptor collection */
+std::map<int, int>* _thasg::get_fds()
+{
+    return &_fds;
+}
+
 
 /* Create temporary file name */
 int _thasg::create_file_name(char* f_name, size_t sz)
@@ -426,6 +438,31 @@ static int _thasgard_con_made(void* self, void* con)
 /* Callback fired when a connection is closed */
 static int _thasgard_con_closed(void* self, void* con, int sock)
 {
+    _thasg* _asg;
+    std::map<int,int>* _fds_col;
+    std::map<int,int>::iterator _it;
+
+    _fds_col = NULL;
+    
+    /* Check for self pointer */
+    if(self == NULL)
+	return 0;
+
+    _asg = reinterpret_cast<_thasg*>(self);
+    
+    _fds_col = _asg->get_fds();
+    if(!_fds_col)
+	{
+	    _it = _fds_col->find(sock);
+	    if(_it != _fds_col->end())
+		{
+		    close(_it->first);
+		    
+		    /* Close the socket */
+		    _fds_col->erase(_it);		    
+		}
+
+	}
     return 0;
 }
 
