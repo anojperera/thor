@@ -2,6 +2,7 @@
 #include <cstring>
 #include "thasg_websock.h"
 
+#define THASG_NEWLINE_CODE 10
 /* Callback method for handling the connection */
 static int _thasg_websock_callback(struct libwebsocket_context* context,
 				   struct libwebsocket* wsi,
@@ -61,7 +62,7 @@ _thasg_websock::_thasg_websock(int port):_num_cons(0),_err_flg(0), _cont_flg(0)
 }
 
 /* Destructor */
-_thasg_websock::~_thasg_websock()
+_thasg_websock::~_thasg_websock(void)
 {
     /* Check if errors occured */
     if(_err_flg)
@@ -77,7 +78,7 @@ _thasg_websock::~_thasg_websock()
     return;
 }
 
-int _thasg_websock::_service_server()
+int _thasg_websock::service_server(void)
 {
     /* Service all pending sockets */
     while(1)
@@ -123,22 +124,27 @@ int _thasg_websock::service_server(const char* msg, size_t sz)
 }
 
 /* Increment operator for number of connections */
-int _thasg_websock::incr_cons()
+int _thasg_websock::incr_cons(void)
 {
-    return ++_num_cons;
+    pthread_mutex_lock(&var_mutex);
+    ++_num_cons;
+    pthread_mutex_unlock(&var_mutex);
+    return _num_cons;
 }
 
 /* Decrement number of connections */
-int _thasg_websock::decr_cons()
+int _thasg_websock::decr_cons(void)
 {
+    pthread_mutex_lock(&var_mutex);
     if(_num_cons > 0)
 	_num_cons--;
+    pthread_mutex_unlock(&var_mutex);
 
     return _num_cons;
 }
 
 /* Get the queue front */
-struct _thasg_msg_wrap* _thasg_websock::get_queue_front()
+struct _thasg_msg_wrap* _thasg_websock::get_queue_front(void)
 {
     /* if the queue is empty return a null pointer */
     if(_msg_queue.empty())
@@ -148,7 +154,7 @@ struct _thasg_msg_wrap* _thasg_websock::get_queue_front()
 }
 
 /* Remove the element from the queue */
-int _thasg_websock::pop_queue()
+int _thasg_websock::pop_queue(void)
 {
     if(_msg_queue.empty())
 	return 1;
@@ -169,6 +175,7 @@ static int _thasg_websock_callback(struct libwebsocket_context* context,
 				   void* in,
 				   size_t len)
 {
+    char* _f_pos;
     struct _thasg_msg_wrap* _msg_ptr;
     void* _t_ptr;
     unsigned char _t_buff[LWS_SEND_BUFFER_PRE_PADDING+THORNIFIX_MSG_BUFF_SZ+LWS_SEND_BUFFER_POST_PADDING];
@@ -202,14 +209,21 @@ static int _thasg_websock_callback(struct libwebsocket_context* context,
 	    if(_msg_ptr == NULL)
 		break;
 
+	    /* Replace new line character with carraige return */
+	    _f_pos = strchr(_msg_ptr->_msg, THASG_NEWLINE_CODE);
+	    if(_f_pos)
+		*_f_pos = '\r';
+
 	    /* Write to the websocket */
 	    memcpy(_t_buff+LWS_SEND_BUFFER_PRE_PADDING, reinterpret_cast<void*>(_msg_ptr->_msg), _msg_ptr->_msg_sz);
 
+	    /* Write to the websocket */
 	    libwebsocket_write(wsi,
 			       _t_buff+LWS_SEND_BUFFER_PRE_PADDING,
-			       _msg_ptr->_msg_sz,
+			       strlen(_msg_ptr->_msg),
 			       LWS_WRITE_TEXT);
-	    
+
+	    /* Remove message from queue */
 	    _websock_obj->pop_queue();
 	    break;
 	default:
