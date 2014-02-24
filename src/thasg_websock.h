@@ -43,7 +43,7 @@ class _thasg_websock
 
  public:
     _thasg_websock(int port);
-    virtual ~_thasg_websock();
+    virtual ~_thasg_websock(void);
 
     /* Perform servive operations */
     int service_server(void);        
@@ -53,7 +53,7 @@ class _thasg_websock
     int incr_cons(void);
     int decr_cons(void);
 
-    struct _thasg_msg_wrap* get_queue_front();
+    struct _thasg_msg_wrap* get_queue_front(void);
     int pop_queue(void);
 };
 

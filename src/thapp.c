@@ -356,7 +356,7 @@ static void* _thapp_start_handler(void* obj)
 
 	    /* If program is not running display message to start */
 	    getmaxyx(stdscr, _max_row, _max_col);
-	    _t_msg_pos = _max_row-3;
+	    _t_msg_pos = _max_row-4;
 	    if(_st_flg == 0)
 		{
 		    clear();

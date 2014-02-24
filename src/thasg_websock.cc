@@ -2,7 +2,7 @@
 #include <cstring>
 #include "thasg_websock.h"
 
-#define THASG_NEWLINE_CHAR_CODE 10
+#define THASG_NEWLINE_CODE 10
 
 /* Callback method for handling the connection */
 static int _thasg_websock_callback(struct libwebsocket_context* context,
@@ -63,12 +63,18 @@ _thasg_websock::_thasg_websock(int port):_num_cons(0),_err_flg(0), _cont_flg(0)
 }
 
 /* Destructor */
-_thasg_websock::~_thasg_websock()
+_thasg_websock::~_thasg_websock(void)
 {
     /* Check if errors occured */
     if(_err_flg)
 	return;
 
+    /*
+     * Temporary hack to stop the server writing to the socket when
+     * SIGTERM is called.
+     */
+    _msg_queue.clear();
+    
     /* Set continue flag and service any outstanding messages */
     _cont_flg = 1;
     _thasg_websock::service_server();
@@ -117,24 +123,26 @@ int _thasg_websock::service_server(const char* msg, size_t sz)
 	    pthread_mutex_unlock(&var_mutex);
 	}
 
-    libwebsocket_service(_websock_context, 0);
-    libwebsocket_callback_on_writable_all_protocol(&_protocols[0]);
-
-    return 0;
+    return _thasg_websock::service_server();
 
 }
 
 /* Increment operator for number of connections */
 int _thasg_websock::incr_cons(void)
 {
-    return ++_num_cons;
+    pthread_mutex_lock(&var_mutex);
+    ++_num_cons;
+    pthread_mutex_unlock(&var_mutex);
+    return _num_cons;
 }
 
 /* Decrement number of connections */
 int _thasg_websock::decr_cons(void)
 {
+    pthread_mutex_lock(&var_mutex);
     if(_num_cons > 0)
 	_num_cons--;
+    pthread_mutex_unlock(&var_mutex);
 
     return _num_cons;
 }
@@ -205,19 +213,21 @@ static int _thasg_websock_callback(struct libwebsocket_context* context,
 	    if(_msg_ptr == NULL)
 		break;
 
-	    /* Replaced new line with carraige return */
-	    _f_pos = strchr(_msg_ptr->_msg, THASG_NEWLINE_CHAR_CODE);
-	    if(_f_pos != NULL)
+	    /* Replace new line character with carraige return */
+	    _f_pos = strchr(_msg_ptr->_msg, THASG_NEWLINE_CODE);
+	    if(_f_pos)
 		*_f_pos = '\r';
-	    
+
 	    /* Write to the websocket */
 	    memcpy(_t_buff+LWS_SEND_BUFFER_PRE_PADDING, reinterpret_cast<void*>(_msg_ptr->_msg), _msg_ptr->_msg_sz);
 
+	    /* Write to the websocket */
 	    libwebsocket_write(wsi,
 			       _t_buff+LWS_SEND_BUFFER_PRE_PADDING,
 			       strlen(_msg_ptr->_msg),
 			       LWS_WRITE_TEXT);
-	    
+
+	    /* Remove message from queue */
 	    _websock_obj->pop_queue();
 	    break;
 	default:
