@@ -41,16 +41,17 @@ class _thasg_websock
 
     pthread_mutex_t var_mutex;				/* Lock for the queue */
 
+    int _service_server();    
  public:
     _thasg_websock(int port);
     virtual ~_thasg_websock();
 
-    int service_server();
+    /* Perform servive operations */
     int service_server(const char* msg, size_t sz);
 
     /* Increment and decrement operators for the clinet */
-    _thasg_websock* operator ++();
-    _thasg_websock* operator --();
+    int incr_cons();
+    int decr_cons();
 
     struct _thasg_msg_wrap* get_queue_front();
     int pop_queue();

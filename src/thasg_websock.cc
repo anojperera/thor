@@ -16,10 +16,8 @@ struct libwebsocket_protocols _protocols[] = {
 	_thasg_websock_callback,
 	sizeof(struct _thasg_msg_wrap),
 	THORNIFIX_MSG_BUFF_SZ,
-	NULL,
-	0
     },
-    {NULL, NULL, 0, 0, NULL, 0}
+    {NULL, NULL, 0, 0}
 };
 
 
@@ -71,7 +69,7 @@ _thasg_websock::~_thasg_websock()
 
     /* Set continue flag and service any outstanding messages */
     _cont_flg = 1;
-    _thasg_websock::service_server();
+    _thasg_websock::_service_server();
 
     /* Destroy webcontext */
     libwebsocket_context_destroy(_websock_context);
@@ -79,7 +77,7 @@ _thasg_websock::~_thasg_websock()
     return;
 }
 
-int _thasg_websock::service_server()
+int _thasg_websock::_service_server()
 {
     /* Service all pending sockets */
     while(1)
@@ -100,12 +98,11 @@ int _thasg_websock::service_server()
 int _thasg_websock::service_server(const char* msg, size_t sz)
 {
     struct _thasg_msg_wrap _msg_wrap;
-    /* Check for connections if no connections exist, return function */
-    if(_num_cons == 0)
-	return 0;
 
-    /* Add message to the queue */
-    if(msg != NULL && sz > 0)
+    /*
+     * Add messages to the queue, if any clients are connected
+     */
+    if(msg != NULL && sz > 0 && _num_cons > 0)
 	{
 	    memset(reinterpret_cast<void*>(&_msg_wrap), 0, sizeof(struct _thasg_msg_wrap));
 	    _msg_wrap._fd = 0;
@@ -118,23 +115,26 @@ int _thasg_websock::service_server(const char* msg, size_t sz)
 	    pthread_mutex_unlock(&var_mutex);
 	}
 
-    return _thasg_websock::service_server();
+    libwebsocket_service(_websock_context, 0);
+    libwebsocket_callback_on_writable_all_protocol(&_protocols[0]);
+
+    return 0;
+
 }
 
 /* Increment operator for number of connections */
-_thasg_websock* _thasg_websock::operator ++()
+int _thasg_websock::incr_cons()
 {
-    this->_num_cons++;
-    return this;
+    return ++_num_cons;
 }
 
 /* Decrement number of connections */
-_thasg_websock* _thasg_websock::operator --()
+int _thasg_websock::decr_cons()
 {
-    if(this->_num_cons > 0)
-	this->_num_cons--;
+    if(_num_cons > 0)
+	_num_cons--;
 
-    return this;
+    return _num_cons;
 }
 
 /* Get the queue front */
@@ -188,14 +188,13 @@ static int _thasg_websock_callback(struct libwebsocket_context* context,
     
     switch(reason)
 	{
+	case LWS_CALLBACK_ESTABLISHED:
 	case LWS_CALLBACK_CLIENT_ESTABLISHED:
 	    /* Increment counter */
-	    _websock_obj++;
-	    break;
+	    _websock_obj->incr_cons();
 
 	case LWS_CALLBACK_CLOSED:
-	    _websock_obj--;
-	    break;
+	    _websock_obj->decr_cons();
 	case LWS_CALLBACK_SERVER_WRITEABLE:
 	    /* Get message pointer */
 	    _msg_ptr = _websock_obj->get_queue_front();
