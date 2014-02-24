@@ -73,7 +73,8 @@ _thasg_websock::~_thasg_websock(void)
      * Temporary hack to stop the server writing to the socket when
      * SIGTERM is called.
      */
-    _msg_queue.clear();
+    while(!_msg_queue.empty())
+	_msg_queue.pop();
     
     /* Set continue flag and service any outstanding messages */
     _cont_flg = 1;
