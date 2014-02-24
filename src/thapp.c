@@ -58,6 +58,20 @@
     if((obj_ptr)->_var_con_sec_flg)					\
 	thcon_send_info(&(obj_ptr)->_var_con_sec, (void*) (msg_ptr), (msg_sz))
 
+/* Start logging server */
+#define THAPP_START_LOG_SVR(obj_ptr)					\
+    if((obj_ptr)->var_sec_con_start_flg == 0)				\
+	pthread_create(&(obj_ptr)->_var_sec_thread, NULL, _thapp_start_secon, (void*) (obj_ptr)); \
+    (obj_ptr)->var_sec_con_start_flg = 1
+
+/* Stop logging server */
+#define THAPP_STOP_LOG_SVR(obj_ptr)			\
+    if((obj_ptr)->var_sec_con_start_flg)		\
+	pthread_join((obj_ptr)->_var_sec_thread, NULL); \
+    (obj_ptr)->var_sec_con_start_flg = 0;		\
+    thcon_stop(&(obj_ptr)->_var_con_sec)
+
+
 volatile sig_atomic_t _flg = 1;
 static void _thapp_sig_handler(int signo);
 
@@ -195,9 +209,7 @@ void thapp_delete(thapp* obj)
     if(obj->var_sec_con_init_flg)
 	{
 	    /* Join the thread if it was created */
-	    if(obj->var_sec_con_start_flg)
-		pthread_join(obj->_var_sec_thread, NULL);
-	    thcon_stop(&obj->_var_con_sec);
+	    THAPP_STOP_LOG_SVR(obj);
 	    thcon_delete(&obj->_var_con_sec);
 	    obj->var_sec_con_init_flg = 0;	    
 	}
@@ -363,6 +375,9 @@ static void* _thapp_start_handler(void* obj)
 		    if(_st_flg > 0)
 			break;
 
+		    /* Start logging server */
+		    THAPP_START_LOG_SVR(_obj);
+		    
 		    /*
 		     * Start connection object in a loop.
 		     * Try for 5seconds with a wait of 2seconds.
@@ -446,6 +461,9 @@ static void* _thapp_start_handler(void* obj)
 
 		    /* If the log file is open, close and set to NULL */
 		    THAPP_CLOSE_LOG(_obj);
+
+		    /* Stop logging server */
+		    THAPP_STOP_LOG_SVR(_obj);
 		    
 		    _st_flg = 0;
 		    break;
@@ -663,9 +681,7 @@ static int _thapp_init_helper(thapp* obj)
 		}
 
 	    /* Start server and set the flag to indicate that thread needs joining */
-	    pthread_create(&obj->_var_sec_thread, NULL, _thapp_start_secon, (void*) obj);
-	    obj->var_sec_con_start_flg = 1;
-
+	    THAPP_START_LOG_SVR(obj);
 	}
 
     return 0;
