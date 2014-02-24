@@ -117,7 +117,7 @@ int _thasg_websock::service_server(const char* msg, size_t sz)
 	    _msg_wrap._fd = 0;
 	    strncpy(_msg_wrap._msg, msg, (sz > (THORNIFIX_MSG_BUFF_SZ-1)? THORNIFIX_MSG_BUFF_SZ-1 : sz));
 	    _msg_wrap._msg[THORNIFIX_MSG_BUFF_SZ-1] = '\0';
-	    _msg_wrap._msg_sz = sz;
+	    _msg_wrap._msg_sz = strlen(_msg_wrap._msg);
 
 	    pthread_mutex_lock(&var_mutex);
 	    _msg_queue.push(_msg_wrap);
@@ -225,7 +225,7 @@ static int _thasg_websock_callback(struct libwebsocket_context* context,
 	    /* Write to the websocket */
 	    libwebsocket_write(wsi,
 			       _t_buff+LWS_SEND_BUFFER_PRE_PADDING,
-			       strlen(_msg_ptr->_msg),
+			       _msg_ptr->_msg_sz,
 			       LWS_WRITE_TEXT);
 
 	    /* Remove message from queue */
