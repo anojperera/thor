@@ -2,6 +2,8 @@
 #include <cstring>
 #include "thasg_websock.h"
 
+#define THASG_NEWLINE_CHAR_CODE 10
+
 /* Callback method for handling the connection */
 static int _thasg_websock_callback(struct libwebsocket_context* context,
 				   struct libwebsocket* wsi,
@@ -203,15 +205,17 @@ static int _thasg_websock_callback(struct libwebsocket_context* context,
 	    if(_msg_ptr == NULL)
 		break;
 
-	    /* Write to the websocket */
-	    memcpy(_t_buff+LWS_SEND_BUFFER_PRE_PADDING, reinterpret_cast<void*>(_msg_ptr->_msg), _msg_ptr->_msg_sz);
 	    /* Replaced new line with carraige return */
-	    _f_pos = strchr(_t_buff+LWS_SEND_BUFFER_PRE_PADDING, '\n');
+	    _f_pos = strchr(_msg_ptr->_msg, THASG_NEWLINE_CHAR_CODE);
 	    if(_f_pos != NULL)
 		*_f_pos = '\r';
+	    
+	    /* Write to the websocket */
+	    memcpy(_t_buff+LWS_SEND_BUFFER_PRE_PADDING, reinterpret_cast<void*>(_msg_ptr->_msg), _msg_ptr->_msg_sz);
+
 	    libwebsocket_write(wsi,
 			       _t_buff+LWS_SEND_BUFFER_PRE_PADDING,
-			       _msg_ptr->_msg_sz,
+			       strlen(_msg_ptr->_msg),
 			       LWS_WRITE_TEXT);
 	    
 	    _websock_obj->pop_queue();
