@@ -36,7 +36,7 @@
 #define THASG_DEF_COM_PORT "11001"
 #define THASG_DEF_TIMEOUT "def_time_out"
 #define THASG_WEBSOCK_PORT "websock_port"
-#define THASG_DEF_WAIT_TIME 200000
+#define THASG_DEF_WAIT_TIME 100000
 
 #define THASG_FILE_NAME_BUFF_SZ 256
 #define THASG_DEFAULT_LOG_FILE_NAME "%Y-%m-%d-%I-%M-%S.txt"
