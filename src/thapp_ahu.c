@@ -46,6 +46,30 @@
     "M_SP\t"					\
     "TMP\r"
 
+#define THAPP_AHU_DISP_VAL1			\
+    "%.2f\t"					\
+    "%.2f\t"					\
+    "%.2f\t"					\
+    "%.2f\t"					\
+    "%.2f\t"					\
+    "%.2f\t"					\
+    "%.2f\t"					\
+    "%.2f\t"					\
+    "%.2f\t"					\
+    "%.2f\t\r"    
+
+#define THAPP_AHU_DISP_VAL2			\
+    "%.2f\t"					\
+    "%.2f\t"					\
+    "%.2f\t"					\
+    "%.2f\t"					\
+    "%.2f\t"					\
+    "%.2f\t"					\
+    "%.2f\t"					\
+    "%04i\t"					\
+    "%04i\t"					\
+    "%.2f\t\r"    
+
 
 /* Control Keys */
 #define THAPP_AHU_ACT_INCR_CODE 43							/* + */
@@ -536,7 +560,7 @@ static int _thapp_cmd(thapp* obj, void* self, char cmd)
     if(_obj->var_auto_mode_flg == 0 && _obj->var_def_static > 0.0 &&  _obj->var_calib_flg == 0)
 	_obj->var_calib_flg = 1;
 
-    
+
     /*
      * If the raw flag was set, continue and return flag 2 to
      * display message continuously. We increment the _msg_cnt of
@@ -581,7 +605,7 @@ static int _thapp_cmd(thapp* obj, void* self, char cmd)
 		    _obj->var_calib_app_flg = 1;
 		}
 	}
-    
+
     /*
      * After the cycle is complete, we display the results to the user
      */
@@ -602,7 +626,7 @@ static int _thapp_cmd(thapp* obj, void* self, char cmd)
 		{
 		    _obj->var_dmp_cnt = 0;
 		    _rt_val = THAPP_RT_CHILD;
-		    _obj->var_calib_app_flg = 0;		    
+		    _obj->var_calib_app_flg = 0;
 		}
 	}
     /*======================================================================*/
@@ -618,7 +642,7 @@ static int _thapp_cmd(thapp* obj, void* self, char cmd)
 
     _f_sp = thsen_get_value(_obj->_var_sp_sen);
     _obj->var_t_ext_st = thsen_get_value(_obj->_var_st_sen) + _obj->var_duct_loss;
-    
+
     /*
      * Check if we are operating in auto mode, we reset the flag to
      * stop incrementing the actuator.
@@ -628,21 +652,12 @@ static int _thapp_cmd(thapp* obj, void* self, char cmd)
 	    _obj->var_calib_flg = 0;
 	    _obj->var_auto_mode_flg = 1;
 	}
-    
+
 
     /* Temporary message buffer */
     memset(_obj->_var_parent.var_disp_vals, 0, THAPP_DISP_BUFF_SZ);
     sprintf(_obj->_var_parent.var_disp_vals,
-	    "%.2f\t"
-	    "%.2f\t"
-	    "%.2f\t"
-	    "%.2f\t"
-	    "%.2f\t"
-	    "%.2f\t"
-	    "%.2f\t"
-	    "%.2f\t"
-    	    "%.2f\t"
-	    "%.2f\t\r",
+	    _obj->var_raw_flg? THAPP_AHU_DISP_VAL1 : THAPP_AHU_DISP_VAL2,
 	    _obj->var_raw_flg? _obj->_var_parent._msg_buff._ai4_val : (_obj->_var_dp_val_ptr? *_obj->_var_dp_val_ptr[0] : 0.0),
 	    _obj->var_raw_flg? _obj->_var_parent._msg_buff._ai5_val : (_obj->_var_dp_val_ptr? *_obj->_var_dp_val_ptr[1] : 0.0),
 	    _obj->var_raw_flg? _obj->_var_parent._msg_buff._ai6_val : (_obj->_var_dp_val_ptr? *_obj->_var_dp_val_ptr[2] : 0.0),
@@ -650,8 +665,8 @@ static int _thapp_cmd(thapp* obj, void* self, char cmd)
 	    _obj->var_raw_flg? 0.0 :_obj->var_duct_vel,
 	    _obj->var_raw_flg? 0.0 :_obj->var_duct_vol,
 	    _obj->var_raw_flg? _obj->_var_parent._msg_buff._ai2_val : _obj->var_t_ext_st,
-	    _obj->var_raw_flg? _obj->_var_parent._msg_buff._ai1_val : _f_sp,
-	    _obj->var_raw_flg? 0.0 :_obj->var_fm_ratio*_f_sp,
+	    _obj->var_raw_flg? _obj->_var_parent._msg_buff._ai1_val : (int) _f_sp,
+	    _obj->var_raw_flg? 0.0 : (int) (_obj->var_fm_ratio*_f_sp),
 	    _obj->var_raw_flg? _obj->_var_parent._msg_buff._ai0_val : thsen_get_value(_obj->_var_tp_sen));
 
     return _rt_val;
