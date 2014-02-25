@@ -1,0 +1,37 @@
+.Table
+{
+    display:table;
+    width:600px;
+    border-style:solid;
+    border-width:2px;
+    border-color:black;
+}
+
+.Row
+{
+    display:table-row;
+}
+
+.Cell
+{
+    display:table-cell;
+    border-style:solid;
+    border-width:2px;
+    text-align:left;
+}
+
+.Cell_cent
+{
+    display:table-cell;
+    border-style:solid;
+    border-width:2px;
+    text-align:center;
+}
+
+.Cell_right
+{
+    display:table-cell;
+    border-style:solid;
+    border-width:2px;
+    text-align:right;
+}
