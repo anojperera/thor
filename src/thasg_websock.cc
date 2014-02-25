@@ -2,6 +2,7 @@
 #include <cstring>
 #include "thasg_websock.h"
 
+#define THASG_QUEUE_LIMIT 20
 #define THASG_NEWLINE_CODE 10
 
 /* Callback method for handling the connection */
@@ -111,7 +112,10 @@ int _thasg_websock::service_server(const char* msg, size_t sz)
     /*
      * Add messages to the queue, if any clients are connected
      */
-    if(msg != NULL && sz > 0 && _num_cons > 0)
+    if(msg != NULL &&
+       sz > 0 &&
+       _num_cons > 0 &&
+       _msg_queue.size() < THASG_QUEUE_LIMIT)
 	{
 	    memset(reinterpret_cast<void*>(&_msg_wrap), 0, sizeof(struct _thasg_msg_wrap));
 	    _msg_wrap._fd = 0;
