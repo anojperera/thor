@@ -36,6 +36,7 @@
 #define THASG_DEF_COM_PORT "11001"
 #define THASG_DEF_TIMEOUT "def_time_out"
 #define THASG_WEBSOCK_PORT "websock_port"
+#define THASG_QUEUE_LEN_KEY "app_queue_limit"
 #define THASG_DEF_WAIT_TIME 100000
 
 #define THASG_FILE_NAME_BUFF_SZ 256
@@ -49,6 +50,7 @@ class _thasg
 private:
     int err_flg;
     int f_flg;						/* Flag to indicate complete all write actions */
+    int queue_length;					/* Queue length */
     std::queue<struct _thasg_msg_wrap> _msg_queue;	/* Message queue */
 
     /*
@@ -124,7 +126,7 @@ int main(int argc, char** argv)
 /*----------------------- Implementation of the class ----------------------*/
 
 /* Class constructor */
-_thasg::_thasg():err_flg(0), f_flg(0)
+_thasg::_thasg():err_flg(0), f_flg(0), queue_length(0)
 {
     int stat = 0;
     struct config_setting_t* _setting = NULL;
@@ -215,6 +217,17 @@ _thasg::_thasg():err_flg(0), f_flg(0)
 		{
 		    /* Create websocket server */
 		    var_websock = new _thasg_websock(atoi(_t_buff));
+		}
+	}
+
+    /* Set queue length */
+    _setting = config_lookup(&var_config, THASG_QUEUE_LEN_KEY);
+    if(_setting)
+	{
+	    _t_buff = config_setting_get_string(_setting);
+	    if(_t_buff)
+		{
+		    queue_length = atoi(_t_buff);
 		}
 	}
 
