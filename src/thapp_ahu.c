@@ -657,7 +657,7 @@ static int _thapp_cmd(thapp* obj, void* self, char cmd)
     /* Temporary message buffer */
     memset(_obj->_var_parent.var_disp_vals, 0, THAPP_DISP_BUFF_SZ);
     sprintf(_obj->_var_parent.var_disp_vals,
-	    _obj->var_raw_flg? THAPP_AHU_DISP_VAL1 : THAPP_AHU_DISP_VAL2,
+	    THAPP_AHU_DISP_VAL1,
 	    _obj->var_raw_flg? _obj->_var_parent._msg_buff._ai4_val : (_obj->_var_dp_val_ptr? *_obj->_var_dp_val_ptr[0] : 0.0),
 	    _obj->var_raw_flg? _obj->_var_parent._msg_buff._ai5_val : (_obj->_var_dp_val_ptr? *_obj->_var_dp_val_ptr[1] : 0.0),
 	    _obj->var_raw_flg? _obj->_var_parent._msg_buff._ai6_val : (_obj->_var_dp_val_ptr? *_obj->_var_dp_val_ptr[2] : 0.0),
@@ -665,8 +665,8 @@ static int _thapp_cmd(thapp* obj, void* self, char cmd)
 	    _obj->var_raw_flg? 0.0 :_obj->var_duct_vel,
 	    _obj->var_raw_flg? 0.0 :_obj->var_duct_vol,
 	    _obj->var_raw_flg? _obj->_var_parent._msg_buff._ai2_val : _obj->var_t_ext_st,
-	    _obj->var_raw_flg? _obj->_var_parent._msg_buff._ai1_val : (int) _f_sp,
-	    _obj->var_raw_flg? 0.0 : (int) (_obj->var_fm_ratio*_f_sp),
+	    _obj->var_raw_flg? _obj->_var_parent._msg_buff._ai1_val : _f_sp,
+	    _obj->var_raw_flg? 0.0 : _obj->var_fm_ratio*_f_sp,
 	    _obj->var_raw_flg? _obj->_var_parent._msg_buff._ai0_val : thsen_get_value(_obj->_var_tp_sen));
 
     return _rt_val;
