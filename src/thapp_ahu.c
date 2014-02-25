@@ -44,7 +44,7 @@
     "ST\t"					\
     "F_SP\t"					\
     "M_SP\t"					\
-    "TMP\r"
+    "TMP"
 
 #define THAPP_AHU_DISP_VAL1			\
     "%.2f\t"					\
@@ -56,7 +56,7 @@
     "%.2f\t"					\
     "%.2f\t"					\
     "%.2f\t"					\
-    "%.2f\t\r"    
+    "%.2f\t"    
 
 #define THAPP_AHU_DISP_VAL2			\
     "%.2f\t"					\
