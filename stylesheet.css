@@ -1,13 +1,15 @@
 #wozair_logo
 {
     width:120px;
+    margin-top:106px;
     margin-right:auto;
     margin-left:auto;
 }
 
 #title
 {
-    width:450px;
+    width:550px;
+    margin-top:20px;
     margin-right:auto;
     margin-left:auto;
     text-align:center;
@@ -16,11 +18,29 @@
 #left
 {
     font-size:small;
+    width:85px;
 }
 
 #right
 {
     font-size:small;
+    width:85px;
+}
+
+#Tables
+{
+    margin-top:30px;
+}
+
+.header_1
+{
+    font-size:x-large;
+    text-decoration:underline;
+}
+
+.header_2
+{
+    text-weight:bold;
 }
 
 .Table
@@ -29,6 +49,7 @@
     width:600px;
     border-style:solid;
     border-color:black;
+    border-collapse:collapse;
     margin-right:auto;
     margin-left:auto;
 }
@@ -37,9 +58,16 @@
 {
     display:table-row;
     height:27px;
+    border-bottom:solid;
 }
 
 .Row_Eng
+{
+    display:table-row;
+    height:27px;
+}
+
+.Row_Eng_1
 {
     display:table_row;
     height:80px;
@@ -48,6 +76,7 @@
 .Cell_Eng
 {
     display:table-cell;
+    border-right:solid;
     text-align:left;
 }
 
@@ -55,8 +84,7 @@
 {
     display:table-cell;
     width:300px;
-    border-style:solid;
-    border-width:1px;
+    border-right:solid;
     text-align:left;
 }
 
@@ -64,16 +92,14 @@
 {
     display:table-cell;
     width:300px;
-    border-style:solid;
-    border-width:1px;
+    border-right:solid;
     text-align:center;
 }
 
 .Cell
 {
     display:table-cell;
-    border-style:solid;
-    border-width:1px;
+    border-right:solid;
     text-align:left;
 }
 
@@ -81,16 +107,14 @@
 {
     display:table-cell;
     width:200px;
-    border-style:solid;
-    border-width:1px;
+    border-right:solid;
     text-align:left;
 }
 
 .Cell_cent
 {
     display:table-cell;
-    border-style:solid;
-    border-width:1px;
+    border-right:solid;
     text-align:center;
 }
 
@@ -98,8 +122,7 @@
 {
     display:table-cell;
     width:65px;
-    border-style:solid;
-    border-width:1px;
+    border-right:solid;
     text-align:center;
 }
 
@@ -107,8 +130,7 @@
 {
     display:table-cell;
     width:150px;
-    border-style:solid;
-    border-width:1px;
+    border-right:solid;
     text-align:right;
 }
 
@@ -116,17 +138,6 @@
 {
     display:table-cell;
     width:150px;
-    border-style:solid;
-    border-width:1px;
+    border-right:solid;
     text-align:center;
-}
-
-.header_1
-{
-    text-decoration:underline;
-}
-
-.header_2
-{
-    text-weight:bold;
 }
