@@ -3,20 +3,54 @@
     display:table;
     width:600px;
     border-style:solid;
-    border-width:2px;
+    border-width:1px;
     border-color:black;
 }
 
 .Row
 {
     display:table-row;
+    height:27px;
+}
+
+.Row_Eng
+{
+    display:table_row;
+    height:80px;
+}
+
+.Cell_1
+{
+    display:table-cell;
+    width:300px;
+    border-style:solid;
+    border-width:1px;
+    text-align:left;
+}
+
+.Cell_cent_1
+{
+    display:table-cell;
+    width:300px;
+    border-style:solid;
+    border-width:1px;
+    text-align:center;
 }
 
 .Cell
 {
     display:table-cell;
     border-style:solid;
-    border-width:2px;
+    border-width:1px;
+    text-align:left;
+}
+
+.Cell_2
+{
+    display:table-cell;
+    width:200px;
+    border-style:solid;
+    border-width:1px;
     text-align:left;
 }
 
@@ -24,14 +58,32 @@
 {
     display:table-cell;
     border-style:solid;
-    border-width:2px;
+    border-width:1px;
+    text-align:center;
+}
+
+.Cell_cent_2
+{
+    display:table-cell;
+    border-style:solid;
+    border-width:1px;
     text-align:center;
 }
 
 .Cell_right
 {
     display:table-cell;
+    width:150px;
     border-style:solid;
-    border-width:2px;
+    border-width:1px;
     text-align:right;
+}
+
+.Cell_last
+{
+    display:table-cell;
+    width:150px;
+    border-style:solid;
+    border-width:1px;
+    text-align:center;
 }
