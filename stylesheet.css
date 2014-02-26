@@ -93,3 +93,18 @@
     border-width:1px;
     text-align:center;
 }
+
+.header_1
+{
+    text-decoration:underline;
+}
+
+.header_2
+{
+    text-weight:bold;
+}
+
+#reference
+{
+    font-size:small;
+}
