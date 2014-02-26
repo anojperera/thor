@@ -1,9 +1,36 @@
+#wozair_logo
+{
+    width:120px;
+    margin-right:auto;
+    margin-left:auto;
+}
+
+#title
+{
+    width:450px;
+    margin-right:auto;
+    margin-left:auto;
+    text-align:center;
+}
+
+#left
+{
+    font-size:small;
+}
+
+#right
+{
+    font-size:small;
+}
+
 .Table
 {
     display:table;
     width:600px;
     border-style:solid;
     border-color:black;
+    margin-right:auto;
+    margin-left:auto;
 }
 
 .Row
@@ -102,9 +129,4 @@
 .header_2
 {
     text-weight:bold;
-}
-
-#reference
-{
-    font-size:small;
 }
