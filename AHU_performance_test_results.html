@@ -75,6 +75,195 @@
 
       <div id="tabs">
 
+	<table class="table_1">
+	  <tr class="row">
+	    <td colspan="4" class="cell_1a">CONTRACT REQUIREMENTS</td>
+	  </tr>
+
+	  <tr class="row">
+	    <td class="cell_1 cell_1b">Airflow (m<sup>3</sup>/s)</td>
+	    <td id="airflow" class="cell_1"></td>
+	    <td class="cell_1 cell_1c">System Pressure (Pa)(External)</td>
+	    <td id="system_pressure" class="cell_1"></td>
+	  </tr>
+
+	  <tr class="row">
+	    <td class="cell_1 cell_1b">Power Supply</td>
+	    <td id="power_supply" class="cell_1"></td>
+	    <td class="cell_1 cell_1c">Additional Pressure for Mid Point Filters</td>
+	    <td id="additional_pressure" class="cell_1"></td>
+	  </tr>
+	</table>
+
+
+	<table class="table_2">
+	  <tr class="row">
+	    <td colspan="7" class="cell_1a">TEST RESULTS</td>
+	  </tr>
+
+	  <tr class="row">
+	    <td colspan="2" class="cell_1">Simulated System Pressure (Pa)</td>
+	    <td id="simulated_pressure" class="cell_1 cell_2a"></td>
+	    <td colspan="2" class="cell_1">Power Supply</td>
+	    <td colspan="2" id="power_supply2" class="cell_1 cell_2a"></td>
+	  </tr>
+
+	  <tr class="row">
+	    <td colspan="2" class="cell_1">Motor Serial No.</td>
+	    <td id="motor_serial" class="cell_1 cell_2a"></td>
+	    <td colspan="2" class="cell_1">Fan Serial No.</td>
+	    <td colspan="2" id="fan_serial" class="cell_1 cell_2a"></td>
+	  </tr>
+
+	  <tr class="row">
+	    <td colspan="2" class="cell_1">Motor Pulley Size (mm Dia)</td>
+	    <td id="motor_pulley_size" class="cell_1 cell_2a"></td>
+	    <td colspan="2" class="cell_1">Fan Pulley Size (mm Dia)</td>
+	    <td colspan="2" id="fan_pulley_size" class="cell_1 cell_2a"></td>
+	  </tr>
+
+	  <tr class="row">
+	    <td class="cell_1">Motor Windings Resistance (&Omega;)</td>
+	    <td class="cell_1">U1-U2</td>
+	    <td id="U1-U2" class="cell_1 cell_2a"></td>
+	    <td class="cell_1">V1-V2</td>
+	    <td id="V1-V2" class="cell_1"></td>
+	    <td class="cell_1">W1-W2</td>
+	    <td id="W1-W2" class="cell_1"></td>
+	  </tr>
+
+	  <tr class="row">
+	    <td class="cell_1">Motor Insulation Resistance (M&Omega;)</td>
+	    <td class="cell_1">U1-V1</td>
+	    <td id="U1-V1" class="cell_1 cell_2a"></td>
+	    <td class="cell_1">U1-W1</td>
+	    <td id="U1-W1" class="cell_1"></td>
+	    <td class="cell_1">V1-W1</td>
+	    <td id="V1-W1" class="cell_1"></td>
+	  </tr>
+
+	  <tr class="row">
+	    <td id="motor_description" class="cell_1"></td>
+	    <td class="cell_1">U1-E</td>
+	    <td id="U1-E" class="cell_1 cell_2a"></td>
+	    <td class="cell_1">V1-E</td>
+	    <td id="V1-E" class="cell_1"></td>
+	    <td class="cell_1">W1-E</td>
+	    <td id="W1-E" class="cell_1"></td>
+	  </tr>
+
+	  <tr class="row">
+	    <td colspan="2" class="cell_1">Motor Speed (r.p.m)</td>
+	    <td id="motor_speed" class="cell_1 cell_2a"></td>
+	    <td colspan="2" class="cell_1">Fan Speed (r.p.m)</td>
+	    <td colspan="2" id="fan_speed" class="cell_1 cell_2a"></td>
+	  </tr>
+
+	  <tr class="row">
+	    <td class="cell_1">Motor Amps/phase (Amps)</td>
+	    <td class="cell_1">U</td>
+	    <td id="U" class="cell_1 cell_2a"></td>
+	    <td class="cell_1">V</td>
+	    <td id="V" class="cell_1"></td>
+	    <td class="cell_1">W</td>
+	    <td id="W" class="cell_1"></td>
+	  </tr>
+
+	  <tr class="row">
+	    <td colspan="2" class="cell_1">Duct Velocity (m/s)</td>
+	    <td id="duct_velocity" class="cell_1 cell_2a"></td>
+	    <td colspan="2" class="cell_1">Duct Area (m<sup>2</sup>)</td>
+	    <td colspan="2" id="duct_area" class="cell_1 cell_2a"></td>
+	  </tr>
+
+	  <tr class="row">
+	    <td colspan="2" class="cell_1">Airflow (m<sup>3</sup>/s)</td>
+	    <td colspan="5" id="airflow2"></td>
+	  </tr>
+	</table>
+
+
+	<table class="table_3">
+	  <tr class="row">
+	    <td colspan="3" class="cell_1a">TEST EQUIPMENT USED</td>
+	  </tr>
+
+	  <tr class="row">
+	    <td class="cell_1a cell_3a">Description</td>
+	    <td class="cell_1a">Woz Ref. No.</td>
+	    <td class="cell_1a">Calibration Due</td>
+	  </tr>
+
+	  <tr class="row2">
+	    <td id="desc_1" class="cell_1 cell_3a"></td>
+	    <td id="ref_1" class="cell_1"></td>
+	    <td id="cal_1" class="cell_1"></td>
+	  </tr>
+
+	  <tr class="row2">
+	    <td id="desc_2" class="cell_1 cell_3a"></td>
+	    <td id="ref_2" class="cell_1"></td>
+	    <td id="cal_2" class="cell_1"></td>
+	  </tr>
+
+	  <tr class="row2">
+	    <td id="desc_3" class="cell_1 cell_3a"></td>
+	    <td id="ref_3" class="cell_1"></td>
+	    <td id="cal_3" class="cell_1"></td>
+	  </tr>
+
+	  <tr class="row2">
+	    <td id="desc_4" class="cell_1 cell_3a"></td>
+	    <td id="ref_4" class="cell_1"></td>
+	    <td id="cal_4" class="cell_1"></td>
+	  </tr>
+
+	  <tr class="row2">
+	    <td id="desc_5" class="cell_1 cell_3a"></td>
+	    <td id="ref_5" class="cell_1"></td>
+	    <td id="cal_5" class="cell_1"></td>
+	  </tr>
+
+	  <tr class="row2">
+	    <td id="desc_6" class="cell_1 cell_3a"></td>
+	    <td id="ref_6" class="cell_1"></td>
+	    <td id="cal_6" class="cell_1"></td>
+	  </tr>
+
+	  <tr class="row2">
+	    <td id="desc_7" class="cell_1 cell_3a"></td>
+	    <td id="ref_7" class="cell_1"></td>
+	    <td id="cal_7" class="cell_1"></td>
+	  </tr>
+
+	  <tr class="row2">
+	    <td id="desc_8" class="cell_1 cell_3a"></td>
+	    <td id="ref_8" class="cell_1"></td>
+	    <td id="cal_8" class="cell_1"></td>
+	  </tr>
+
+	  <tr class="row2">
+	    <td id="desc_9" class="cell_1 cell_3a"></td>
+	    <td id="ref_9" class="cell_1"></td>
+	    <td id="cal_9" class="cell_1"></td>
+	  </tr>
+
+	  <tr class="row2">
+	    <td id="desc_10" class="cell_1 cell_3a"></td>
+	    <td id="ref_10" class="cell_1"></td>
+	    <td id="cal_10" class="cell_1"></td>
+	  </tr>
+	</table>
+
+
+	<table class="table_4">
+
+	</table>
+
+
+	<table class="table_5">
+
+	</table>
       </div>
 
     </article>
