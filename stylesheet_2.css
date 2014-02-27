@@ -117,5 +117,142 @@ header
 {
     position: relative;
     width: 600px;
-    
+    top: 0px;
+    left: 0px;
+    padding: 0px;
+    margin: 0px auto;
+    font-size: small;
+    /* background-color: red; */
+}
+
+.table_1
+{
+    display: table;
+    position: relative;
+    top: 0px;
+    left: 0px;
+    width: 600px;
+    height: 81px;
+    margin: 0px auto;
+    border-collapse: collapse;
+    border-style: solid;
+    border-color: black;
+    border-spacing: 0px;
+    /* background-color: blue; */
+}
+
+/* .table_4 */
+/* { */
+/*     position: relative; */
+/*     top: 0px; */
+/*     left: 0px; */
+/*     width: 600px; */
+/*     height: 100px; */
+/*     margin: 20px auto 0px auto; */
+/*     background-color: blue; */
+/* } */
+
+/* .table_5 */
+/* { */
+/*     position: relative; */
+/*     top: 0px; */
+/*     left: 0px; */
+/*     width: 600px; */
+/*     height: 100px; */
+/*     margin: 20px auto 0px auto; */
+/*     background-color: green; */
+/* } */
+
+.row
+{
+    display: table-row;
+    position: relative;
+    top: 0px;
+    left: 0px;
+    width: 600px;
+    height: 23px;
+    margin: 0px auto;
+    padding: 0px;
+    border-bottom: solid 1px;
+    /* background-color: red; */
+}
+
+.cell_1a
+{
+    border-right: solid 1px;
+    font-weight: bold;
+    text-align: center;
+}
+
+.cell_1
+{
+    padding: 0px 0px 0px 3px;
+    border-right: solid 1px;
+    text-align: left;
+}
+
+.cell_1b
+{
+    width: 85px;
+}
+
+.cell_1c
+{
+    width: 235px;
+}
+
+.table_2
+{
+    display: table;
+    position: relative;
+    top: 0px;
+    left: 0px;
+    width: 600px;
+    height: 286px;
+    margin: 20px auto 0px auto;
+    border-collapse: collapse;
+    border-style: solid;
+    border-color: black;
+    border-spacing: 0px;
+    /* background-color: green; */
+}
+
+.cell_2a
+{
+    width: 80px;
+}
+
+.table_3
+{
+    display: table;
+    position: relative;
+    top: 0px;
+    left: 0px;
+    width: 600px;
+    height: 232px;
+    margin: 20px auto 0px auto;
+    border-collapse: collapse;
+    border-style: solid;
+    border-color: black;
+    border-spacing: 0px;
+    /* background-color: red; */
+}
+
+.row2
+{
+    display: table-row;
+    position: relative;
+    top: 0px;
+    left: 0px;
+    width: 600px;
+    height: 18px;
+    margin: 0px auto;
+    padding: 0px;
+    border-bottom: solid 1px;
+    /* background-color: red; */
+}
+
+.cell_3a
+{
+    width: 250px;
 }
