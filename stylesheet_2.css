@@ -22,8 +22,8 @@ header
 {
     position: relative;
     width: 600px;
-    height: 300px;
-    margin: 0px auto;
+    height: 301px;
+    margin: 0px auto 20px auto;
     top: 0px;
     /* background-color: blue: */
 }
@@ -42,8 +42,80 @@ header
 {
     position: relative;
     width: 550px;
-    height: 40px;
+    height: 30px;
     margin: 20px auto 0px auto;
     text-align: center;
     /* background-color: blue; */
+}
+
+#ref
+{
+    position: relative;
+    width: 600px;
+    height: 120px;
+    margin: 0px auto;
+    top: 0px;
+    /* background-color: green; */
+}
+
+.ref_sec
+{
+    position: relative;
+    width: 300px;
+    height: 120px;
+    top: 0px;
+    left: 0px;
+    padding: 0px;
+    float: left;
+    /* background-color: blue; */
+}
+
+.ref_row
+{
+    position: relative;
+    width: 300px;
+    height: 40px;
+    top: 0px;
+    left: 0px;
+    padding: 0px;
+    margin: 0px auto;
+    /* background-color: red; */
+}
+
+.ref_col
+{
+    position: relative;
+    height: 40px;
+    top: 0px;
+    left: 0px;
+    margin: 0px;
+    padding-top: 15px;
+    float: left;
+    box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    /* background-color: blue; */
+}
+
+.ref_col_a 
+{
+    width: 125px;
+    text-align: right;
+}
+
+.ref_col_b
+{
+    width: 135px;
+    text-align: left;
+    border-bottom: dashed;
+    border-width: 1px;
+    margin: 0px 20px 0px 20px;
+    /* background-color: green; */
+}
+
+#tabs
+{
+    position: relative;
+    width: 600px;
+    
 }
