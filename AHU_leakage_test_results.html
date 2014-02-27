@@ -2,175 +2,192 @@
 <html>
 
   <head>
-    <link rel="stylesheet" type="text/css" href="stylesheet.css">
+    <link rel="stylesheet" type="text/css" href="stylesheet.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheet.css" media="print">
   </head>
 
-  <header>
-    <div id="wozair_logo">
-    <img src="Wozair_logo/new_logo2.png" alt="Wozair logo">
-    </div>
-    
-    <div id="title">
-      <h3 class="header_1">AIR HANDLING UNIT LEAKAGE TEST RESULTS</h3>
-      <h3 class="header_2">POSITIVE PRESSURE</h3>
-    </div>
-
-    <div id="left">
-      <h3>WOZ REF.:</h3>
-      <h3>CLIENT:</h3>
-    </div>
-    <div id="right">
-      <h3>PROJECT:</h3>
-      <h3>TAG No.:</h3>
-    </div>
-  </header>
-
+  
   <body>
-    <div id="Tables">
-    <table class="Table">
-      <col class="Column">
-      <tr class="Row">
-	<td class="Cell_1">Unit Measurement (H x W x L mm)</td>
-	<td class="Cell_cent_1"><div id="unit_measurement"></div></td>
-      </tr>
-      </col>
-      <tr class="Row">
-	<td class="Cell_1">Plant Internal Area (m<sup>2</sup>)</td>
-	<td class="Cell_cent_1"><div id="plant_internal_area"></div></td>
-      </tr>
-      <tr class="Row">
-	<td class="Cell_1">Required Static Pressure (Pa)</td>
-	<td class="Cell_cent_1"><div id="required_static_pressure"></div></td>
-      </tr>
-      <tr class="Row">
-	<td class="Cell_1">Maximum Allowable Leakage (l/s/m<sup>2</sup>)<div id="maximum_allowable_leakage"></div></td>
-	<td class="Cell_cent_1"></td>
-      </tr>
-      <tr class="Row">
-	<td class="Cell_1">Total Allowable Leakage (l/s)</td>
-	<td class="Cell_cent_1"><div id="total_allowable_leakage"></div></td>
-      </tr>
-    </table>
-    </div>
+    <article>
+      <header>
+        <div id="wozair_logo">
+          <object type="image/svg+xml" data="Wozair_logo/wozair_logo.svg"></object>
+        </div>
+	
+        <div id="title">
+          <h3 class="header_1">AIR HANDLING UNIT LEAKAGE TEST RESULTS</h3>
+          <h3 class="header_2">POSITIVE PRESSURE</h3>
+        </div>
 
-    <div id="Tables">
-    <table class="Table">
-	<tr class="Row">
-	    <td class="Cell_cent" rowspan="2">ITEM</td>
-	    <td class="Cell_cent" colspan="4">READINGS</td>
-	</tr>
-	<tr class="Row">
-	    <td class="Cell_cent_2">START</td>
-	    <td class="Cell_cent_2">1</td>
-	    <td class="Cell_cent_2">2</td>
-	    <td class="Cell_cent_2">3</td>
-	</tr>
-	<tr class="Row">
-	    <td class="Cell_2">Static Pressure (Pa)</td>
-	    <td class="Cell_cent_2"><div id="stat_pressure_start"></div></td>
-	    <td class="Cell_cent_2"><div id="stat_pressure_1"></div></td>
-	    <td class="Cell_cent_2"><div id="stat_pressure_2"></div></td>
-	    <td class="Cell_cent_2"><div id="stat_pressure_3"></div></td>
-	</tr>
-	<tr class="Row">
-	    <td class="Cell_2">Differential Pressure (Pa)</td>
-	    <td class="Cell_cent_2"><div id="diff_pressure_start"></div></td>
-	    <td class="Cell_cent_2"><div id="diff_pressure_1"></div></td>
-	    <td class="Cell_cent_2"><div id="diff_pressure_2"></div></td>
-	    <td class="Cell_cent_2"><div id="diff_pressure_3"></div></td>
-	</tr>
-	<tr class="Row">
-	    <td class="Cell_2">Actual Leakage Rate (l/s)</td>
-	    <td class="Cell_cent_2">0</td>
-	    <td class="Cell_cent_2">0</td>
-	    <td class="Cell_cent_2">0</td>
-	    <td class="Cell_cent_2">0</td>
-	</tr>
-	<tr class="Row">
-	    <td class="Cell_2">Leakage F700 Scale</td>
-	    <td class="Cell_cent_2">0</td>
-	    <td class="Cell_cent_2">0</td>
-	    <td class="Cell_cent_2">0</td>
-	    <td class="Cell_cent_2">0</td>
-	</tr>
-	<tr class="Row">
-	    <td class="Cell_2">Time (minutes)</td>
-	    <td class="Cell_cent_2">0</td>
-	    <td class="Cell_cent_2">5</td>
-	    <td class="Cell_cent_2">10</td>
-	    <td class="Cell_cent_2">15</td>
-	</tr>
-    </table>
-    </div>
+        <div id="reference">
+	  <div class="reference_sec">
+	    <div class="reference_row">
+	      <div class="reference_col reference_col_a">
+		WOZ REF.:
+	      </div>
+	      <div id="woz_ref" class="reference_col reference_col_b">
+	      </div>	      
+	    </div>
+	    <div class="reference_row">
+	      <div class="reference_col reference_col_a">
+		CLIENT:
+	      </div>
+	      <div id="client" class="reference_col reference_col_b">
+	      </div>
+	    </div>	      
+	  </div>
+	<div class="reference_sec">
+	  <div class="reference_row">
+	    <div class="reference_col reference_col_a">
+	      PROJECT:
+	    </div>
+	    <div id="project" class="reference_col reference_col_b">
+	    </div>
+	  </div>
+	  <div class="reference_row">
+	    <div class="reference_col reference_col_a">
+	      TAG No.:
+	    </div>
+	    <div id="tag_no" class="reference_col reference_col_b">
+	    </div>
+	  </div>
+	</div>	  
+        </div>
+      </header>
 
-    <div id="Tables">
-    <table class="Table">
-	<tr class="Row">
-	    <td class="Cell_cent" colspan="3">Test Equipment Used</td>
-	</tr>
-	<tr class="Row">
-	    <td class="Cell_cent">Description</td>
-	    <td class="Cell_cent">Woz Ref No.</td>
-	    <td class="Cell_cent">Calibration Due</td>
-	</tr>
-	<tr class="Row">
-	    <td class="Cell">Orifice Plate No.</td>
-	    <td class="Cell_cent"><div id="Woz_ref_1"></div></td>
-	    <td class="Cell_cent"><div id="Cal_due_1"></div></td>
-	</tr>
-	<tr class="Row">
-	    <td class="Cell"><div id="description_2"></div></td>
-	    <td class="Cell_cent"><div id="Woz_ref_2"></div></td>
-	    <td class="Cell_cent"><div id="Cal_due_2"></div></td>
-	</tr>
-	<tr class="Row">
-	    <td class="Cell"><div id="description_3"></div></td>
-	    <td class="Cell_cent"><div id="Woz_ref_3"></div></td>
-	    <td class="Cell_cent"><div id="Cal_due_3"></div></td>
-	</tr>
-    </table>
-    </div>
+      <table class="Table">
+        <tr class="Row">
+      	  <td class="Cell_1">Unit Measurement (H x W x L mm)</td>
+      	  <td class="Cell_cent_1"><div id="unit_measurement"></div></td>
+        </tr>
+        <tr class="Row">
+      	  <td class="Cell_1">Plant Internal Area (m<sup>2</sup>)</td>
+      	  <td class="Cell_cent_1"><div id="plant_internal_area"></div></td>
+        </tr>
+        <tr class="Row">
+      	  <td class="Cell_1">Required Static Pressure (Pa)</td>
+      	  <td class="Cell_cent_1"><div id="required_static_pressure"></div></td>
+        </tr>
+        <tr class="Row">
+      	  <td class="Cell_1">Maximum Allowable Leakage (l/s/m<sup>2</sup>)<div id="maximum_allowable_leakage"></div></td>
+      	  <td class="Cell_cent_1"></td>
+        </tr>
+        <tr class="Row">
+      	  <td class="Cell_1">Total Allowable Leakage (l/s)</td>
+      	  <td class="Cell_cent_1"><div id="total_allowable_leakage"></div></td>
+        </tr>
+      </table>
 
-    <div id="Tables">
-    <table class="Table">
-	<tr class="Row_Eng">
-	    <td class="Cell_Eng">Engineer's Comments: </td>
-	</tr>
-	<tr class="Row_Eng_1">
-	  <td class="Cell_Eng"><div id="Eng_comments"></div></td>
-	</tr>
-    </table>
-    </div>
+      <table class="Table">
+      	<tr class="Row">
+      	  <td class="Cell_cent" rowspan="2">ITEM</td>
+      	  <td class="Cell_cent" colspan="4">READINGS</td>
+      	</tr>
+      	<tr class="Row">
+      	  <td class="Cell_cent_2">START</td>
+      	  <td class="Cell_cent_2">1</td>
+      	  <td class="Cell_cent_2">2</td>
+      	  <td class="Cell_cent_2">3</td>
+      	</tr>
+      	<tr class="Row">
+      	  <td class="Cell_2">Static Pressure (Pa)</td>
+      	  <td class="Cell_cent_2"><div id="stat_pressure_start"></div></td>
+      	  <td class="Cell_cent_2"><div id="stat_pressure_1"></div></td>
+      	  <td class="Cell_cent_2"><div id="stat_pressure_2"></div></td>
+      	  <td class="Cell_cent_2"><div id="stat_pressure_3"></div></td>
+      	</tr>
+      	<tr class="Row">
+      	  <td class="Cell_2">Differential Pressure (Pa)</td>
+      	  <td class="Cell_cent_2"><div id="diff_pressure_start"></div></td>
+      	  <td class="Cell_cent_2"><div id="diff_pressure_1"></div></td>
+      	  <td class="Cell_cent_2"><div id="diff_pressure_2"></div></td>
+      	  <td class="Cell_cent_2"><div id="diff_pressure_3"></div></td>
+      	</tr>
+      	<tr class="Row">
+      	  <td class="Cell_2">Actual Leakage Rate (l/s)</td>
+      	  <td class="Cell_cent_2">0</td>
+      	  <td class="Cell_cent_2">0</td>
+      	  <td class="Cell_cent_2">0</td>
+      	  <td class="Cell_cent_2">0</td>
+      	</tr>
+      	<tr class="Row">
+      	  <td class="Cell_2">Leakage F700 Scale</td>
+      	  <td class="Cell_cent_2">0</td>
+      	  <td class="Cell_cent_2">0</td>
+      	  <td class="Cell_cent_2">0</td>
+      	  <td class="Cell_cent_2">0</td>
+      	</tr>
+      	<tr class="Row">
+      	  <td class="Cell_2">Time (minutes)</td>
+      	  <td class="Cell_cent_2">0</td>
+      	  <td class="Cell_cent_2">5</td>
+      	  <td class="Cell_cent_2">10</td>
+      	  <td class="Cell_cent_2">15</td>
+      	</tr>
+      </table>
 
-    <div id="Tables">
-    <table class="Table">
-	<tr class="Row">
-	    <td class="Cell_last"></td>
-	    <td class="Cell_last">Wozair</td>
-	    <td class="Cell_last"><div id="comp_2"></div></td>
-	    <td class="Cell_last"><div id="comp_3"></div></td>
-	</tr>
-	<tr class="Row">
-	    <td class="Cell_right">Signature</td>
-	    <td class="Cell_last"></td>
-	    <td class="Cell_last"></td>
-	    <td class="Cell_last"></td>
-	</tr>
-	<tr class="Row">
-	    <td class="Cell_right">Print</td>
-	    <td class="Cell_last"><div id="print_wozair"></div></td>
-	    <td class="Cell_last"><div id="print_2"></div></td>
-	    <td class="Cell_last"><div id="print_3"></div></td>
-	</tr>
-	<tr class="Row">
-	    <td class="Cell_right">Date</td>
-	    <td class="Cell_last"><div id="date_wozair"></div></td>
-	    <td class="Cell_last"><div id="date_2"></div></td>
-	    <td class="Cell_last"><div id="date_3"></div></td>
-	</tr>
-    </table>
-    </div>
+        <table class="Table">
+      	<tr class="Row">
+      	    <td class="Cell_cent" colspan="3">Test Equipment Used</td>
+      	</tr>
+      	<tr class="Row">
+      	    <td class="Cell_cent">Description</td>
+      	    <td class="Cell_cent">Woz Ref No.</td>
+      	    <td class="Cell_cent">Calibration Due</td>
+      	</tr>
+      	<tr class="Row">
+      	  <td class="Cell">Orifice Plate No.</td>
+      	  <td class="Cell_cent"><div id="Woz_ref_1"></div></td>
+      	  <td class="Cell_cent"><div id="Cal_due_1"></div></td>
+      	</tr>
+      	<tr class="Row">
+      	  <td class="Cell"><div id="description_2"></div></td>
+      	  <td class="Cell_cent"><div id="Woz_ref_2"></div></td>
+      	  <td class="Cell_cent"><div id="Cal_due_2"></div></td>
+      	</tr>
+      	<tr class="Row">
+      	  <td class="Cell"><div id="description_3"></div></td>
+      	  <td class="Cell_cent"><div id="Woz_ref_3"></div></td>
+      	  <td class="Cell_cent"><div id="Cal_due_3"></div></td>
+      	</tr>
+        </table>
 
+        <table class="Table">
+      	  <tr class="Row_Eng">
+      	    <td class="Cell_Eng">Engineer's Comments: </td>
+      	  </tr>
+      	  <tr class="Row_Eng_1">
+      	    <td class="Cell_Eng"><div id="Eng_comments"></div></td>
+      	  </tr>
+        </table>
+
+        <table class="Table">
+      	  <tr class="Row">
+      	    <td class="Cell_last"></td>
+      	    <td class="Cell_last">Wozair</td>
+      	    <td class="Cell_last"><div id="comp_2"></div></td>
+      	    <td class="Cell_last"><div id="comp_3"></div></td>
+      	  </tr>
+      	  <tr class="Row">
+      	    <td class="Cell_right">Signature</td>
+      	    <td class="Cell_last"></td>
+      	    <td class="Cell_last"></td>
+      	    <td class="Cell_last"></td>
+      	  </tr>
+      	  <tr class="Row">
+      	    <td class="Cell_right">Print</td>
+      	    <td class="Cell_last"><div id="print_wozair"></div></td>
+      	    <td class="Cell_last"><div id="print_2"></div></td>
+      	    <td class="Cell_last"><div id="print_3"></div></td>
+      	  </tr>
+      	  <tr class="Row">
+      	    <td class="Cell_right">Date</td>
+      	    <td class="Cell_last"><div id="date_wozair"></div></td>
+      	    <td class="Cell_last"><div id="date_2"></div></td>
+      	    <td class="Cell_last"><div id="date_3"></div></td>
+      	  </tr>
+        </table>
+    </article>
   </body>
 
 </html>
