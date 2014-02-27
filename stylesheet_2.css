@@ -10,7 +10,7 @@ body
 article
 {
     position: relative;
-    width: 600px;
+    width: 610px;
     height: 100%;
     margin: 0px auto;
     padding: 0px;
@@ -21,9 +21,9 @@ article
 header
 {
     position: relative;
-    width: 600px;
-    height: 301px;
-    margin: 0px auto 20px auto;
+    width: 610px;
+    height: 251px;
+    margin: 0px auto 10px auto;
     top: 0px;
     /* background-color: blue: */
 }
@@ -42,27 +42,30 @@ header
 {
     position: relative;
     width: 550px;
-    height: 30px;
-    margin: 20px auto 0px auto;
+    height: 20px;
+    margin: 10px auto 0px auto;
     text-align: center;
+    font-size: large;
+    font-weight: bold;
     /* background-color: blue; */
 }
 
 #ref
 {
     position: relative;
-    width: 600px;
-    height: 120px;
+    width: 610px;
+    height: 90px;
     margin: 0px auto;
     top: 0px;
+    font-size: x-small;
     /* background-color: green; */
 }
 
 .ref_sec
 {
     position: relative;
-    width: 300px;
-    height: 120px;
+    width: 305px;
+    height: 90px;
     top: 0px;
     left: 0px;
     padding: 0px;
@@ -73,8 +76,8 @@ header
 .ref_row
 {
     position: relative;
-    width: 300px;
-    height: 40px;
+    width: 305px;
+    height: 25px;
     top: 0px;
     left: 0px;
     padding: 0px;
@@ -85,7 +88,7 @@ header
 .ref_col
 {
     position: relative;
-    height: 40px;
+    height: 25px;
     top: 0px;
     left: 0px;
     margin: 0px;
@@ -99,13 +102,13 @@ header
 
 .ref_col_a 
 {
-    width: 125px;
-    text-align: right;
+    width: 90px;
+    text-align: left;
 }
 
 .ref_col_b
 {
-    width: 135px;
+    width: 160px;
     text-align: left;
     border-bottom: dashed;
     border-width: 1px;
@@ -116,12 +119,12 @@ header
 #tabs
 {
     position: relative;
-    width: 600px;
+    width: 610px;
     top: 0px;
     left: 0px;
     padding: 0px;
     margin: 0px auto;
-    font-size: small;
+    font-size: x-small;
     /* background-color: red; */
 }
 
@@ -131,8 +134,8 @@ header
     position: relative;
     top: 0px;
     left: 0px;
-    width: 600px;
-    height: 81px;
+    width: 610px;
+    height: 65px;
     margin: 0px auto;
     border-collapse: collapse;
     border-style: solid;
@@ -141,36 +144,14 @@ header
     /* background-color: blue; */
 }
 
-/* .table_4 */
-/* { */
-/*     position: relative; */
-/*     top: 0px; */
-/*     left: 0px; */
-/*     width: 600px; */
-/*     height: 100px; */
-/*     margin: 20px auto 0px auto; */
-/*     background-color: blue; */
-/* } */
-
-/* .table_5 */
-/* { */
-/*     position: relative; */
-/*     top: 0px; */
-/*     left: 0px; */
-/*     width: 600px; */
-/*     height: 100px; */
-/*     margin: 20px auto 0px auto; */
-/*     background-color: green; */
-/* } */
-
 .row
 {
     display: table-row;
     position: relative;
     top: 0px;
     left: 0px;
-    width: 600px;
-    height: 23px;
+    width: 610px;
+    height: 20px;
     margin: 0px auto;
     padding: 0px;
     border-bottom: solid 1px;
@@ -207,9 +188,9 @@ header
     position: relative;
     top: 0px;
     left: 0px;
-    width: 600px;
-    height: 286px;
-    margin: 20px auto 0px auto;
+    width: 610px;
+    height: 240px;
+    margin: 15px auto 0px auto;
     border-collapse: collapse;
     border-style: solid;
     border-color: black;
@@ -219,18 +200,27 @@ header
 
 .cell_2a
 {
-    width: 80px;
+    width: 100px;
 }
 
+.cell_2b
+{
+    width: 50px;
+}
+
+.cell_2c
+{
+    width: 150px;
+}
 .table_3
 {
     display: table;
     position: relative;
     top: 0px;
     left: 0px;
-    width: 600px;
-    height: 232px;
-    margin: 20px auto 0px auto;
+    width: 610px;
+    height: 220px;
+    margin: 15px auto 0px auto;
     border-collapse: collapse;
     border-style: solid;
     border-color: black;
@@ -244,7 +234,7 @@ header
     position: relative;
     top: 0px;
     left: 0px;
-    width: 600px;
+    width: 610px;
     height: 18px;
     margin: 0px auto;
     padding: 0px;
@@ -255,4 +245,74 @@ header
 .cell_3a
 {
     width: 250px;
+}
+ 
+.table_4
+{
+    display: table;
+    position: relative;
+    top: 0px;
+    left: 0px;
+    width: 610px;
+    height: 60px;
+    margin: 15px auto 0px auto;
+    border-collapse: collapse;
+    border-style: solid;
+    border-color: black;
+    border-spacing: 0px;
+    /* background-color: blue; */
+}
+
+.row_eng
+{
+    display: table-row;
+    position: relative;
+    top: 0px;
+    left: 0px;
+    width: 610px;
+    height: 25px;
+    margin: 0px auto;
+    padding: 0px;
+}
+
+.row_eng2
+{
+    display: table-row;
+    position: relative;
+    top: 0px;
+    left: 0px;
+    width: 610px;
+    height: 31px;
+    margin: 0px auto;
+    padding: 0px;
+}
+
+.table_5
+{
+    display: table;
+    position: relative;
+    top: 0px;
+    left: 0px;
+    width: 610px;
+    height: 75 px;
+    margin: 15px auto 0px auto;
+    border-collapse: collapse;
+    border-style: solid;
+    border-color: black;
+    border-spacing: 0px;
+    /* background-color: green; */
+}
+
+.cell_5a
+{
+    width: 150px;
+    text-align: center;
+    border-right: solid 1px;
+}
+
+.cell_5b
+{
+    text-align: right;
+    border-right: solid 1px;
+    padding-right: 5px;
 }
