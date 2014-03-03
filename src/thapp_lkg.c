@@ -737,8 +737,8 @@ static int _thapp_lkg_cmd(thapp* obj, void* self, char cmd)
 		    /* Set class name */
 
 		    /* Check if f700 values are within the class */
-		    if((_obj->_var_lkg_f700 / (_obj->var_s_area <=0.0? 1 : _obj->var_s_area)) < _obj->var_d_lkg_arr[i]);
-		    break;
+		    if((_obj->_var_lkg_f700 / (_obj->var_s_area <=0.0? 1 : _obj->var_s_area)) < _obj->var_d_lkg_arr[i])
+			break;
 		    i++;
 		}while(_obj->var_lkg_cls_arr[i]);
 	}
