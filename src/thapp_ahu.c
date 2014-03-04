@@ -691,7 +691,7 @@ static int _thapp_ahu_init(thapp* obj, void* self)
 
     /* Generate actuator control values */
     for(i=0; i<THAPP_AHU_DMP_BUFF; i++)
-	_obj->var_dmp_buff[i] = sin(M_PI*(double)i/THAPP_AHU_DMP_BUFF)*96.0;
+	_obj->var_dmp_buff[i] = sin(M_PI*(double)i/THAPP_AHU_DMP_BUFF)*70.0;
 
     /* Set raw value pointers for the sensors */
     /*----------------------------------------*/
