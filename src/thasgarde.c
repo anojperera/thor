@@ -31,7 +31,7 @@ int main(int argc, char** argv)
 	exit(0);
 
     /* Unmask the file name */
-    unmask(0);
+    umask(0);
 
     /* Set new session id */
     _set_id = setsid();
@@ -46,6 +46,6 @@ int main(int argc, char** argv)
     close(STDOUT_FILENO);
     close(STDERR_FILENO);
 
-    execvp("asgard");
+    execvp("asgard", argv);
     return 0;
 }
