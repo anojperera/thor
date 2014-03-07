@@ -591,9 +591,14 @@ static int _thapp_cmd(thapp* obj, void* self, char cmd)
     /* Actuator is throttled up and down in a sin curve periodically */
     if(_obj->var_calib_flg && !(obj->_msg_cnt%(THAPP_SEC_DIV(obj)+_obj->var_calib_wait_ext)))
 	{
-	    /* If the maximum has exceeded, don't increment the actuator any further */
-	    if(_obj->var_dmp_buff[_obj->var_dmp_cnt] < _obj->obj->var_max_act_perf)
+	    /*
+	     * If the maximum has exceeded, don't increment the actuator any further only
+	     * if running on non static test.
+	     */
+	    if(_obj->var_dmp_buff[_obj->var_dmp_cnt] < _obj->obj->var_max_act_perf &&
+	       !(_obj->var_def_static > 0.0))
 		_thapp_act_ctrl(_obj, 0, &_obj->var_dmp_buff[_obj->var_dmp_cnt], &_act_per, 1);
+	    
 	    sprintf(_obj->_var_parent.var_cmd_vals,
 		    (_obj->var_def_static > 0.0? THAPP_AHU_OPT10 : THAPP_AHU_OPT8),
 		    (int) _obj->var_dmp_buff[_obj->var_dmp_cnt],
@@ -623,7 +628,10 @@ static int _thapp_cmd(thapp* obj, void* self, char cmd)
      */
     if(_obj->var_calib_app_flg > 0 && _obj->var_dmp_cnt < _obj->var_calib_settle_time)
 	{
-	    _obj->var_duct_loss = thsen_get_value(_obj->_var_stm_sen);
+	    /* Average duct loss */
+	    _obj->var_duct_loss += thsen_get_value(_obj->_var_stm_sen);
+	    _obj->var_duct_loss /= (double) _obj->var_dmp_cnt+1;
+	    
 	    if(!((THAPP_POST_INC_MSGCOUNT(obj))%THAPP_SEC_DIV(obj)))
 		    _obj->var_dmp_cnt++;
 
