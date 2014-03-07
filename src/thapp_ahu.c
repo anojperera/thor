@@ -595,7 +595,7 @@ static int _thapp_cmd(thapp* obj, void* self, char cmd)
 	     * If the maximum has exceeded, don't increment the actuator any further only
 	     * if running on non static test.
 	     */
-	    if(_obj->var_dmp_buff[_obj->var_dmp_cnt] < _obj->obj->var_max_act_perf &&
+	    if(_obj->var_dmp_buff[_obj->var_dmp_cnt] < _obj->var_max_act_perf &&
 	       !(_obj->var_def_static > 0.0))
 		_thapp_act_ctrl(_obj, 0, &_obj->var_dmp_buff[_obj->var_dmp_cnt], &_act_per, 1);
 	    
