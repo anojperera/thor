@@ -33,6 +33,7 @@
 #define THAPP_SMT_KEY "lkg"
 #define THAPP_WAIT_EXT_KEY "ahu_calib_wait_ext"
 #define THAPP_CALIB_SETTLE_KEY "ahu_calib_settle_time"
+#define THAPP_PERF_MAX_KEY "ahu_performance_throttle_max"
 
 #define THAPP_AHU_DISP_HEADER1			\
     "DP1\t"					\
@@ -88,6 +89,8 @@
 #define THAPP_AHU_INCR_PER 5.0
 #define THAPP_AHU_INCRF_PER 1.0
 #define THAPP_MAX_OPT_MESSAGE_LINES 6
+
+#define THAPP_AHU_DEFAULT_MAX_ACT_THROTTLE 50.0
 /* Callback methods */
 static int _thapp_ahu_init(thapp* obj, void* self);
 static int _thapp_ahu_start(thapp* obj, void* self);
@@ -147,6 +150,7 @@ thapp* thapp_ahu_new(void)
     _obj->var_duct_loss = 0.0;
     _obj->var_t_ext_st = 0.0;
     _obj->var_fm_ratio = 1.0;
+    _obj->var_max_act_perf = THAPP_AHU_DEFAULT_MAX_ACT_THROTTLE;
     _obj->var_dmp_cnt = 0;
     _obj->var_auto_mode_flg = 0;    
 
@@ -321,6 +325,12 @@ static int _thapp_new_helper(thapp_ahu* obj)
     _setting = config_lookup(&obj->_var_parent.var_config, THAPP_CALIB_SETTLE_KEY);
     if(_setting)
 	obj->var_calib_settle_time = config_setting_get_int(_setting);
+
+    /* Get AHU performance max actuator throttle position */
+    _setting = config_lookup(&obj->_var_parent.var_config, THAPP_PERF_MAX_KEY);
+    if(_setting)
+	obj->var_max_act_perf = config_setting_get_float(_setting);
+
     return 0;
 }
 
@@ -581,7 +591,14 @@ static int _thapp_cmd(thapp* obj, void* self, char cmd)
     /* Actuator is throttled up and down in a sin curve periodically */
     if(_obj->var_calib_flg && !(obj->_msg_cnt%(THAPP_SEC_DIV(obj)+_obj->var_calib_wait_ext)))
 	{
-	    _thapp_act_ctrl(_obj, 0, &_obj->var_dmp_buff[_obj->var_dmp_cnt], &_act_per, 1);
+	    /*
+	     * If the maximum has exceeded, don't increment the actuator any further only
+	     * if running on non static test.
+	     */
+	    if(_obj->var_dmp_buff[_obj->var_dmp_cnt] < _obj->obj->var_max_act_perf &&
+	       !(_obj->var_def_static > 0.0))
+		_thapp_act_ctrl(_obj, 0, &_obj->var_dmp_buff[_obj->var_dmp_cnt], &_act_per, 1);
+	    
 	    sprintf(_obj->_var_parent.var_cmd_vals,
 		    (_obj->var_def_static > 0.0? THAPP_AHU_OPT10 : THAPP_AHU_OPT8),
 		    (int) _obj->var_dmp_buff[_obj->var_dmp_cnt],
@@ -611,7 +628,10 @@ static int _thapp_cmd(thapp* obj, void* self, char cmd)
      */
     if(_obj->var_calib_app_flg > 0 && _obj->var_dmp_cnt < _obj->var_calib_settle_time)
 	{
-	    _obj->var_duct_loss = thsen_get_value(_obj->_var_stm_sen);
+	    /* Average duct loss */
+	    _obj->var_duct_loss += thsen_get_value(_obj->_var_stm_sen);
+	    _obj->var_duct_loss /= (double) _obj->var_dmp_cnt+1;
+	    
 	    if(!((THAPP_POST_INC_MSGCOUNT(obj))%THAPP_SEC_DIV(obj)))
 		    _obj->var_dmp_cnt++;
 
