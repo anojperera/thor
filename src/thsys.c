@@ -2,6 +2,8 @@
 #include <unistd.h>
 #include "thsys.h"
 
+#define THSYS_USEC_CONV 1000000
+
 /* thread function */
 static void* _thsys_start_async(void* para);
 static void _thsys_thread_cleanup(void* para);
@@ -256,6 +258,7 @@ static void* _thsys_start_async(void* para)
     thsys* _obj;
     int32 _samples_read = 0;
     float64* _buff;
+    int _rate = 0, _cnt = 0;
 
     /* push cleanup handler */
     pthread_cleanup_push(_thsys_thread_cleanup, para);
@@ -271,6 +274,13 @@ static void* _thsys_start_async(void* para)
     ERR_CHECK(NIStartTask(_obj->var_a_intask));
     ERR_CHECK(NIStartTask(_obj->var_a_outask));
 
+    /*
+     * Determin rate at wich needs updating.
+     * A counter is used to count time increments and only
+     * update on second intervals.
+     */
+    _rate = (THSYS_USEC_CONV /(_obj->var_sample_rate*THSYS_READ_WRITE_FACTOR));
+    _cnt = 0;
     while(1)
     	{
     	    /* test for cancel state */
@@ -286,7 +296,7 @@ static void* _thsys_start_async(void* para)
     	    ERR_CHECK(NIReadAnalogF64(_obj->var_a_intask, 1, THSYS_DEF_TIMEOUT, DAQmx_Val_GroupByScanNumber, _obj->var_inbuff, THSYS_NUM_AI_CHANNELS, &_samples_read, NULL));
 
 	    /* if a callback for update is hooked, this shall call the callback function */
-	    if(_obj->var_callback_update)
+	    if(_obj->var_callback_update && !_cnt)
 	      _obj->var_callback_update(_obj, _obj->var_ext_obj, _obj->var_inbuff, THSYS_NUM_AI_CHANNELS);
 
 	    /* If write values are available write to the device */
@@ -309,7 +319,11 @@ static void* _thsys_start_async(void* para)
 	    pthread_setcancelstate(_old_state, NULL);
 
     	    pthread_testcancel();
-    	    usleep((int) (1000000 /(_obj->var_sample_rate*THSYS_READ_WRITE_FACTOR)));
+    	    usleep((int) ((THSYS_USEC_CONV /(_obj->var_sample_rate*THSYS_READ_WRITE_FACTOR))));
+
+	    if((_cnt += _rate) > THSYS_USEC_CONV)
+	      _cnt = 0;
+
     	}
 
     pthread_cleanup_pop(1);
