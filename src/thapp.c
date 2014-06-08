@@ -12,6 +12,7 @@
 #define THAPP_START_MSG "Press 'Shift + s' to begin"
 #define THAPP_PAUSED_MSG "<============================== Paused ===================================>"
 #define THAPP_MSG_BLANK "                                                                           "
+#define THAPP_GEO_LOC_DISPLAY "My IP Address: %s\n"
 
 #define THAPP_GEOLOC_KEY "mygeo_location"
 #define THAPP_SLEEP_KEY "main_sleep"
@@ -232,11 +233,15 @@ static void* _thapp_start_handler(void* obj)
     int cnt = THAPP_DEFAULT_TRY_COUNT;
     char _cmd;
     char _start_msg[] = THAPP_START_MSG;
+    const char* _geo_loc;
     thapp* _obj;
     unsigned int _st_flg = 0;
     int _max_row, _max_col, _t_msg_pos;
     int _sec_cnt = 0, _msg_cnt_max = 0;
     unsigned int _p_flg = 0;						/* pause flag */
+    size_t _sz;
+
+    
     struct thor_msg* _msg = NULL;
 
     /* Check object pointer and cast to the correct type */
@@ -315,11 +320,6 @@ static void* _thapp_start_handler(void* obj)
 			    sleep(THAPP_DEFAULT_WAIT_TIME);
 			}
 
-		    /* /\* Call to get the geo location *\/ */
-		    /* if(!thcon_get_my_geo(&_obj->_var_con)) */
-		    /* 	{ */
-			    
-		    /* 	} */
 		    
 		    /* Open log file */
 		    _thapp_open_log_file(_obj);
@@ -348,6 +348,18 @@ static void* _thapp_start_handler(void* obj)
 		     */
 		    if(_obj->_var_fptr.var_start_ptr)
 			_obj->_var_fptr.var_start_ptr(_obj, _obj->var_child);
+
+		    /*
+		     * After getting derrived classes to handle their start up methods,
+		     * get location and display in app.
+		     */
+		    if(!thcon_get_my_geo(&_obj->_var_con))
+			{
+			    _geo_loc = thcon_get_my_addr(&_obj->_var_con);
+			    /* Add to the display options list */
+			    _sz = strlen(_obj->var_disp_opts);
+			    sprintf(_obj->var_disp_opts+_sz, THAPP_GEO_LOC_DISPLAY, _geo_loc);
+			}
 
 		    /* Disable line buffering and keyboard echo */
 		    raw();
@@ -552,6 +564,15 @@ static int _thapp_init_helper(thapp* obj)
 	    _t_buff = config_setting_get_string(_setting);
 	    if(_t_buff)
 		thcon_set_server_name(&obj->_var_con, _t_buff);
+	}
+
+    /* Get geolocation ip address */
+    _setting = config_lookup(&obj->var_config, THAPP_GEOLOC_KEY);
+    if(_setting != NULL)
+	{
+	    _t_buff = config_setting_get_string(_setting);
+	    if(_t_buff)
+		thcon_set_geo_ip(&obj->_var_con, _t_buff);
 	}
 
     return 0;
