@@ -79,7 +79,7 @@ int main(int argc, char** argv)
 		    if(_exit_flg)
 			break;
 	    
-		    usleep(100000);
+		    usleep(200000);
 		}
 
 	    /* If application was quit in the main screen it will exit it */
@@ -91,12 +91,13 @@ int main(int argc, char** argv)
         
 	    /* Unpost menu and clear the screen */
 	    c = item_count(_menu);
-	    /* unpost_menu(_menu); */
+	    unpost_menu(_menu);
 	    clear();
 
 	    /* Call the function */
 	    _item_fptr();
 	    c = 0;
+	    _exit_flg = 0;
 	    clear();
 	}
     
