@@ -126,7 +126,8 @@ int thgsens_reset_all(thgsensor* obj)
 	obj->var_ave_buff[i] = 0.0;
 
      obj->_var_ave_buff = 0.0;
-
+    obj->var_val = 0.0;
+    obj->var_raw = 0.0;
     obj->_count = 0;
     obj->_count_flg = 0;
     return 0;
