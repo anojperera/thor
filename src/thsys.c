@@ -3,6 +3,7 @@
 #include "thsys.h"
 
 #define THSYS_USEC_CONV 1000000
+#define THSYS_UPDATE_RATE (THSYS_USEC_CONV / 2)
 
 /* thread function */
 static void* _thsys_start_async(void* para);
@@ -321,7 +322,11 @@ static void* _thsys_start_async(void* para)
     	    pthread_testcancel();
     	    usleep((int) ((THSYS_USEC_CONV /(_obj->var_sample_rate*THSYS_READ_WRITE_FACTOR))));
 
-	    if((_cnt += _rate) > THSYS_USEC_CONV)
+	    /*
+	     * When update rate has exceeded, results shall sent to
+	     * the comm server.
+	     */
+	    if((_cnt += _rate) > THSYS_UPDATE_RATE)
 	      _cnt = 0;
 
     	}
