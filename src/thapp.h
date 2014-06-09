@@ -75,6 +75,7 @@ struct _thapp
     unsigned int var_run_flg;							/* flag to indicate test is running */
     unsigned int var_sleep_time;						/* sleep time (miliseconds) */
     unsigned int var_max_opt_rows;						/* Maximum optional rows */
+    unsigned int var_queue_limit;	
     int _msg_cnt;
 
     thapp_opmode var_op_mode;							/* operation mode */

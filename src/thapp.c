@@ -18,13 +18,14 @@
 #define THAPP_SLEEP_KEY "main_sleep"
 #define THAPP_PORT_KEY "main_con_port"
 #define THAPP_SERVER_NAME_KEY "self_url"
+#define THAPP_QUEUE_LIMIT_KEY "app_queue_limit"
 
-
-#define THAPP_DEFAULT_PORT "9000"
+#define THAPP_DEFAULT_PORT "11000"
 #define THAPP_DEFAULT_SLEEP 100000
 #define THAPP_DEFAULT_WAIT_TIME 1
 #define THAPP_DEFAULT_TRY_COUNT 5
 #define THAPP_DEFAULT_CMD_MSG_TIME 6000000
+#define THAPP_DEFAULT_QUEUE_LIMIT 10
 /*
  * Configuration paths. The default is to look in the home
  * directory if not in /etc/
@@ -102,6 +103,7 @@ int thapp_init(thapp* obj)
     obj->var_max_opt_rows = 0;
     obj->_msg_cnt = 0;
     obj->var_sleep_time = THAPP_DEFAULT_SLEEP;
+    obj->var_queue_limit = THAPP_DEFAULT_QUEUE_LIMIT;
     obj->var_child = NULL;
     obj->var_def_log = NULL;
 
@@ -575,6 +577,12 @@ static int _thapp_init_helper(thapp* obj)
 		thcon_set_geo_ip(&obj->_var_con, _t_buff);
 	}
 
+    /* Get queue limit */
+    _setting = config_lookup(&obj->var_config, THAPP_QUEUE_LIMIT_KEY);
+    if(_setting != NULL)
+      obj->var_queue_limit = (unsigned int) config_setting_get_int(_setting);
+
+
     return 0;
 }
 
@@ -612,9 +620,13 @@ static int _thapp_con_recv_callback(void* obj, void* msg, size_t sz)
     /* decode message */
     thornifix_decode_msg((char*) msg, sz, _msg);
 
-    /* Lock mutex and add to the queue */
+    /*
+     * Lock mutex and add to the queue if the queue
+     * count hasn't exceeded.
+     */
     pthread_mutex_lock(&_obj->_var_mutex);
-    gqueue_in(&_obj->_var_msg_queue, (void*) _msg);
+    if(gqueue_count(&_obj->_var_msg_queue) < _obj->var_queue_limit)
+      gqueue_in(&_obj->_var_msg_queue, (void*) _msg);
     pthread_mutex_unlock(&_obj->_var_mutex);
 
     return 0;
