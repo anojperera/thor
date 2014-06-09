@@ -16,7 +16,7 @@
 #define THGS_MIN_VOLT 0.0
 #define THGS_MAX_VOLT 10.0
 #define THGS_CH_NAME_SZ 64
-#define THGS_CH_RBUFF_SZ 20
+#define THGS_CH_RBUFF_SZ 50
 
 /* macros for calculating gradient and intercept */
 #define THGS_CALC_GRAD(sensor)						\
