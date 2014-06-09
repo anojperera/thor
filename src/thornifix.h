@@ -9,7 +9,7 @@
 #include <math.h>
 #include <syslog.h>
 
-/* #define THOR_INC_NI */
+#define THOR_INC_NI
 #define THOR_HEADLESS
 #ifdef THOR_HEADLESS
 #define THOR_LOG_ERROR(msg)			\
