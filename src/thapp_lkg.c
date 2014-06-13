@@ -437,7 +437,19 @@ static int _thapp_lkg_cmd(thapp* obj, void* self, char cmd)
 	case THAPP_LKG_FAN_DECRF_CODE:
 	    _thapp_fan_ctrl(_obj, -1*THAPP_LKG_INCRF_PER, NULL, NULL, 0);
 	    break;
-	    
+	case THAPP_LKG_RAW_VALUES:
+	    if(_obj->var_raw_flg > 0)
+		_obj->var_raw_flg = 0;
+	    else
+		{
+		    _obj->var_raw_flg = 1;
+
+		    /* Message to indicate raw voltage values instead of physical values */
+    		    memset(_obj->_var_parent.var_cmd_vals, 0, THAPP_DISP_BUFF_SZ);
+		    sprintf(_obj->_var_parent.var_cmd_vals,
+			    "<==================== Raw Voltage Values ====================>");
+		}
+	  break;
 	default:
 	    break;
 	}
