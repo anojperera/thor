@@ -165,6 +165,7 @@ static int _thsmsen_set_config(void* obj)
     _obj = (thsmsen*) obj;
 
     _obj->var_sen_cnt = _obj->var_parent._var_num_config;
+    _obj->var_raw_val_sz = _obj->var_sen_cnt;
     return 0;
 }
 
