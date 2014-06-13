@@ -628,8 +628,8 @@ static int _thapp_cmd(thapp* obj, void* self, char cmd)
 	    "%.2f\t"
 	    "%.2f\t"
 	    "%.2f\t"
-	    "%i\t"
-    	    "%i\t"
+	    "%.2f\t"
+    	    "%.2f\t"
 	    "%.2f\t\r",
 	    _obj->var_raw_flg? _obj->_var_parent._msg_buff._ai4_val : (_obj->_var_dp_val_ptr? *_obj->_var_dp_val_ptr[0] : 0.0),
 	    _obj->var_raw_flg? _obj->_var_parent._msg_buff._ai5_val : (_obj->_var_dp_val_ptr? *_obj->_var_dp_val_ptr[1] : 0.0),
