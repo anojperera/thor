@@ -23,6 +23,7 @@
 #define THAPP_AHU_OPT8 "<============= Calibration in Progress - ACT %i%%, %i =============>"
 #define THAPP_AHU_OPT9 "<============ Adding System Resistance - ACT %.2f ==============>"
 #define THAPP_AHU_OPT10 "<======== Fan Curve Generation In Progress - ACT %i%%, %i ========>"
+#define THAPP_AHU_OPT11 "Enter Static Pressure Adjustment: "
 
 /* Settting keys */
 #define THAPP_AHU_KEY "ahu"
@@ -46,6 +47,7 @@
 
 #define THAPP_AHU_MAX_ACT_PER 99
 #define THAPP_AHU_MIN_ACT_PER 0
+#define THAPP_AHU_FREQ_CONV 60.0
 
 #define THAPP_AHU_INCR_PER 5.0
 #define THAPP_AHU_INCRF_PER 1.0
@@ -319,7 +321,7 @@ static int _thapp_ahu_start(thapp* obj, void* self)
     _obj->var_duct_vol = 0.0;
     _obj->var_duct_loss = 0.0;
     _obj->var_t_ext_st = 0.0;
-    _obj->var_fm_ratio = 0.0;
+    _obj->var_fm_ratio = 1.0;
 
     /* Reset auto mode flag */
     _obj->var_auto_mode_flg = 0;    
@@ -371,6 +373,13 @@ static int _thapp_ahu_start(thapp* obj, void* self)
 	    _obj->var_def_static = atof(_scr_input_buff);
 	    clear();
 	    _pos += sprintf(&obj->var_disp_opts[_pos], "%s%i\n", THAPP_AHU_OPT3, (int) _obj->var_def_static);
+
+	    printw(THAPP_AHU_OPT11);
+	    refresh();
+	    getnstr(_scr_input_buff, THAPP_DISP_BUFF_SZ-1);
+	    _obj->var_duct_loss = (double) atoi(_scr_input_buff);
+	    clear();	    
+	    _pos += sprintf(&obj->var_disp_opts[_pos], "%s%i\n", THAPP_AHU_OPT11, (int) _obj->var_duct_loss);
 
 	    printw(THAPP_AHU_OPT4);
 	    refresh();
@@ -595,7 +604,7 @@ static int _thapp_cmd(thapp* obj, void* self, char cmd)
 	    _obj->var_duct_vol /= 1000000;
 	}
 
-    _f_sp = thsen_get_value(_obj->_var_sp_sen);
+    _f_sp = thsen_get_value(_obj->_var_sp_sen) * THAPP_AHU_FREQ_CONV;
     _obj->var_t_ext_st = thsen_get_value(_obj->_var_st_sen) + _obj->var_duct_loss;
     
     /*
@@ -619,8 +628,8 @@ static int _thapp_cmd(thapp* obj, void* self, char cmd)
 	    "%.2f\t"
 	    "%.2f\t"
 	    "%.2f\t"
-	    "%.2f\t"
-    	    "%.2f\t"
+	    "%i\t"
+    	    "%i\t"
 	    "%.2f\t\r",
 	    _obj->var_raw_flg? _obj->_var_parent._msg_buff._ai4_val : (_obj->_var_dp_val_ptr? *_obj->_var_dp_val_ptr[0] : 0.0),
 	    _obj->var_raw_flg? _obj->_var_parent._msg_buff._ai5_val : (_obj->_var_dp_val_ptr? *_obj->_var_dp_val_ptr[1] : 0.0),
