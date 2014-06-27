@@ -530,6 +530,12 @@ static int _thapp_cmd(thapp* obj, void* self, char cmd)
 		    memset(_obj->_var_parent.var_cmd_vals, 0, THAPP_DISP_BUFF_SZ);
 		    sprintf(_obj->_var_parent.var_cmd_vals, THAPP_AHU_OPT8, 0, 0);
 
+		    /*
+		     * Set default static pressure to 0.0. This is allow controlling
+		     * calibration process.
+		     */
+		    _obj->var_def_static = 0.0;
+
 		}
 
 	    break;
