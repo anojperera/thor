@@ -530,6 +530,12 @@ static int _thapp_cmd(thapp* obj, void* self, char cmd)
 		    memset(_obj->_var_parent.var_cmd_vals, 0, THAPP_DISP_BUFF_SZ);
 		    sprintf(_obj->_var_parent.var_cmd_vals, THAPP_AHU_OPT8, 0, 0);
 
+		    /*
+		     * Set default static pressure to 0.0. This is allow controlling
+		     * calibration process.
+		     */
+		    _obj->var_def_static = 0.0;
+
 		}
 
 	    break;
@@ -594,10 +600,17 @@ static int _thapp_cmd(thapp* obj, void* self, char cmd)
 	    /*
 	     * If the maximum has exceeded, don't increment the actuator any further only
 	     * if running on non static test.
+	     * If the default static pressure was set, we expect the user to be running
+	     * the fan performance curve.
 	     */
-	    if(_obj->var_dmp_buff[_obj->var_dmp_cnt] < _obj->var_max_act_perf &&
-	       !(_obj->var_def_static > 0.0))
-		_thapp_act_ctrl(_obj, 0, &_obj->var_dmp_buff[_obj->var_dmp_cnt], &_act_per, 1);
+	    if(_obj->var_def_static > 0.0)
+		{
+		    _thapp_act_ctrl(_obj, 0, &_obj->var_dmp_buff[_obj->var_dmp_cnt], &_act_per, 1);
+		}
+	    else if(_obj->var_dmp_buff[_obj->var_dmp_cnt] < _obj->var_max_act_perf)
+		{
+		    _thapp_act_ctrl(_obj, 0, &_obj->var_dmp_buff[_obj->var_dmp_cnt], &_act_per, 1);
+		}
 	    
 	    sprintf(_obj->_var_parent.var_cmd_vals,
 		    (_obj->var_def_static > 0.0? THAPP_AHU_OPT10 : THAPP_AHU_OPT8),
