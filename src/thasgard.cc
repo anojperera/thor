@@ -98,8 +98,8 @@ int main(int argc, char** argv)
     /* Add signal handlers */
     /* Attach a signal handler */
     signal(SIGKILL, _thasgard_sigterm_handler);
-    signal(SIGINT, _thasgard_sigterm_handler);        
-    
+    signal(SIGINT, _thasgard_sigterm_handler);
+
     asg.start();
     /* Initialise pthread object */
     while(_flg)
@@ -139,7 +139,7 @@ _thasg::_thasg():err_flg(0), f_flg(0), queue_length(0)
     /* Set this pointer as the self */
     _var_self = reinterpret_cast<void*>(this);
 
-    
+
     var_websock = NULL;
     /* Check the default paths for the configuration file and find the settings */
     while(1)
@@ -241,7 +241,7 @@ _thasg::_thasg():err_flg(0), f_flg(0), queue_length(0)
 _thasg::~_thasg()
 {
     std::map<int,int>::iterator _m_itr;
-    
+
     _var_self = NULL;
 
     /* Close all open file pointers */
@@ -251,11 +251,11 @@ _thasg::~_thasg()
 	    if(_m_itr->second > 0)
 		close(_m_itr->second);
 	}
-    
+
     /* Empty container */
     _fds.erase(_fds.begin(), _fds.end());
 
-    
+
     /* If the websocket server was created destroy it */
     if(var_websock != NULL)
 	delete var_websock;
@@ -279,13 +279,13 @@ int _thasg::add_msg(void* msg_ptr, size_t sz)
     /* Check for arguments */
     if(msg_ptr == NULL || sz <= 0)
 	return 0;
-    
+
     /* Initialise message object */
     memset((void*) &_msg_obj, 0, sizeof(struct _thasg_msg_wrap));
 
     /* Get active socket descriptor */
     _msg_obj._fd = THCON_GET_ACTIVE_SOCK(&var_con);
-    
+
     /* Copy message to the internal buffer */
     memcpy((void*) _msg_obj._msg, msg_ptr, THORNIFIX_MSG_BUFF_SZ);
     _msg_obj._msg[THORNIFIX_MSG_BUFF_SZ-1] = '\0';
@@ -311,7 +311,7 @@ int _thasg::write_file(void)
 
     while(!_msg_queue.empty())
 	{
-	    
+
 	    pthread_mutex_lock(&var_mutex);
 	    _t_msg = &_msg_queue.front();
 	    pthread_mutex_unlock(&var_mutex);
@@ -329,6 +329,8 @@ int _thasg::write_file(void)
 
 		    /* Open file and store file and socket descriptors */
 		    _file_des = open(_file_name, O_CREAT | O_APPEND | O_RDWR);
+			fchmod(_file_des, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+
 		    if(_file_des == -1)
 			goto exit_loop;
 
@@ -348,7 +350,9 @@ int _thasg::write_file(void)
 		    if(_m_itr == _fds.end())
 			{
 	    		    _thasg::create_file_name(_file_name, THASG_FILE_NAME_BUFF_SZ);
-			    _file_des = open(_file_name, O_CREAT | O_APPEND);
+			    _file_des = open(_file_name, O_CREAT | O_APPEND | O_RDWR);
+				fchmod(_file_des, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+
 			    if(_file_des == -1)
 				goto exit_loop;
 			}
@@ -367,7 +371,7 @@ int _thasg::write_file(void)
 	    /* If the web socket server was created, call to service sockets */
 	    if(var_websock)
 		var_websock->service_server(_t_msg->_msg, _t_msg->_msg_sz);
-	    
+
 	exit_loop:
 	    pthread_mutex_lock(&var_mutex);
 	    _msg_queue.pop();
@@ -434,7 +438,7 @@ static int _thasgard_con_recv_msg(void* self, void* msg, size_t sz)
 
     if(self == NULL || msg == NULL || sz <= 0)
 	return 0;
-    
+
     /* Cast self pointer to the correct type */
     _obj = reinterpret_cast<_thasg*>(self);
 
@@ -456,13 +460,13 @@ static int _thasgard_con_closed(void* self, void* con, int sock)
     std::map<int,int>::iterator _it;
 
     _fds_col = NULL;
-    
+
     /* Check for self pointer */
     if(self == NULL)
 	return 0;
 
     _asg = reinterpret_cast<_thasg*>(self);
-    
+
     _fds_col = _asg->get_fds();
     if(!_fds_col)
 	{
@@ -470,9 +474,9 @@ static int _thasgard_con_closed(void* self, void* con, int sock)
 	    if(_it != _fds_col->end())
 		{
 		    close(_it->first);
-		    
+
 		    /* Close the socket */
-		    _fds_col->erase(_it);		    
+		    _fds_col->erase(_it);
 		}
 
 	}

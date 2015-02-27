@@ -50,7 +50,7 @@ struct _thapp_lkg
     int var_ahu_lkg_tst_time;					/* Total test time */
     int var_ahu_lkg_tst_incr;					/* Increment the readings should be taken */
     unsigned int var_ahu_lkg_m_cnt;				/* Measurement counter for the leakage test */
-    
+
     /*
      * Leak test type which controls the fan.
      */
@@ -60,44 +60,44 @@ struct _thapp_lkg
      * Product type being tested.
      */
     thapp_lkg_prod_type var_prod_type;
-    
+
     /*
      * Extra time is added to when calibration is in progress.
      */
     int var_calib_wait_ext;
 
     unsigned int var_lkg_start_flg;				/* Flag to indicate leakage test is started */
-    unsigned int var_or_ix;					/* Orifice plate index */
+    unsigned int var_or_ix;						/* Orifice plate index */
     unsigned int var_calib_flg;
 
     unsigned int var_raw_flg;
 
     unsigned int var_positive_flg;				/*
-								 * Flag to indicate test is running under
-								 * positive pressure. This option is only
-								 *applicable for the AHU test.
-								 */
+												 * Flag to indicate test is running under
+												 * positive pressure. This option is only
+												 *applicable for the AHU test.
+												 */
     /*
      * Variable to store the last insertion position
      * into the buffer.
-     */    
-    unsigned int var_disp_sp_pos;				
+     */
+    unsigned int var_disp_sp_pos;
     char _var_t_sp_buff[THOR_BUFF_SZ];
-    
+
     /*
      * AHU case leak figures are expressed in L1,L2...
      * these figures are stored in the configuration file.
      * following are the buffer and number of elements.
-     */ 
+     */
     unsigned int var_num_lkg_arr;
     double* var_lkg_nl_arr;
     double* var_lkg_pl_arr;
     const double* var_d_lkg_arr;
     lkg_cls_arr* var_lkg_cls_arr;
-    
+
     double var_tst_positive_pre;
     double var_tst_negative_pre;
-    
+
 
     /*
      * This is pointer to the raw voltage value
@@ -107,7 +107,7 @@ struct _thapp_lkg
      * the smart sensor.
      */
     const double** var_raw_act_ptr;
-    
+
     double var_fan_pct;
 
     double var_fan_buff[THAPP_LKG_BUFF];
@@ -121,7 +121,7 @@ struct _thapp_lkg
     thsen* _var_sm_sen;
     thsen* _var_st_sen;
     thsen* _var_tmp_sen;
-    
+
     /*
      * Venturi meter sensor.
      */
@@ -142,12 +142,12 @@ struct _thapp_lkg
     double _var_lkg_m2;
     double _var_lkg_f700;
     double _var_lkg_f770_base_pressure;					/* This shall depend on positive or negative pressure */
-    
+
     double var_width;
     double var_height;
     double var_depth;
 
-    double var_s_area;							/* Surface area */
+    double var_s_area;									/* Surface area */
     struct _thapp_fptr_arr _var_fptr;
     void* var_child;
 };
@@ -160,7 +160,7 @@ extern "C" {
     void thapp_lkg_delete(thapp_lkg* obj);
 
     /* Start stop methods are implemented in the parent class */
-    
+
 
 #ifdef __cplusplus
 }

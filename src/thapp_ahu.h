@@ -22,7 +22,7 @@ struct _thapp_ahu
 {
     thapp _var_parent;
     int var_init_flg;
-    
+
     /*
      * 0 - manual (default)
      * 1 - auto.
@@ -50,19 +50,19 @@ struct _thapp_ahu
     unsigned int var_raw_flg;						/* Toggle flag to show raw voltage values */
     unsigned int var_dmp_cnt;
     double var_max_act_perf;						/* Maximum percentage for actuator throttle on performance test */
-    double var_act_pct;							/* Actuator percentage */
-    
+    double var_act_pct;								/* Actuator percentage */
+
     double var_dmp_buff[THAPP_AHU_DMP_BUFF];
-    
+
     /*
      * Sensor array for the AHUs.
      * Velocity sensors.
      */
     thsen* _var_vsen;
-    
-    thsen* _var_tp_sen;							/* Temperature sensor */
-    thsen* _var_sp_sen;							/* Speed sensor */
-    thsen* _var_st_sen;							/* Static sensor */
+
+    thsen* _var_tp_sen;								/* Temperature sensor */
+    thsen* _var_sp_sen;								/* Speed sensor */
+    thsen* _var_st_sen;								/* Static sensor */
 
     /*
      * Array of pointers to hold addr of message struct.
@@ -79,18 +79,18 @@ struct _thapp_ahu
      * It uses a smart sensor which is an array of sensors used for
      * acurately measuring a diverse range of pressure.
      */
-    thsen* _var_stm_sen;						/* Static smart sensor */
+    thsen* _var_stm_sen;							/* Static smart sensor */
 
     double var_def_static;
     double var_duct_dia;
     double var_duct_vel;
     double var_duct_vol;
-    double var_duct_loss;						/* Static pressure loss in duct */
-    double var_t_ext_st;						/* Total external static pressure */
-    double var_fm_ratio;						/* fan motor pulley ratio */
+    double var_duct_loss;							/* Static pressure loss in duct */
+    double var_t_ext_st;							/* Total external static pressure */
+    double var_fm_ratio;							/* fan motor pulley ratio */
 
     /* Array of function pointers */
-    struct _thapp_fptr_arr _var_fptr;    
+    struct _thapp_fptr_arr _var_fptr;
     void* var_child;
 };
 
@@ -104,10 +104,10 @@ extern "C" {
 
     /* Start and stop methods are implemented in the parent class. */
 
-    
-    
+
+
 #ifdef __cplusplus
 }
-#endif    
+#endif
 
 #endif /* __THAPP_AHU_H__ */

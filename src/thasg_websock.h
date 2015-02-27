@@ -10,7 +10,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <pthread.h>
-#include <libwebsockets/libwebsockets.h>
+#include "libwebsockets.h"
 
 #include "thornifix.h"
 
@@ -32,7 +32,7 @@ class _thasg_websock
     unsigned int _cont_flg;
 
     std::queue<struct _thasg_msg_wrap> _msg_queue;	/* Message queue */
-    
+
 
     struct libwebsocket_context* _websock_context;	/* Websocket context */
     struct lws_context_creation_info _websock_info;	/* Infor struct */
@@ -46,7 +46,7 @@ class _thasg_websock
     virtual ~_thasg_websock(void);
 
     /* Perform servive operations */
-    int service_server(void);        
+    int service_server(void);
     int service_server(const char* msg, size_t sz);
 
     /* Increment and decrement operators for the clinet */
@@ -56,4 +56,3 @@ class _thasg_websock
     struct _thasg_msg_wrap* get_queue_front(void);
     int pop_queue(void);
 };
-
