@@ -37,12 +37,12 @@ int main(int argc, char** argv)
 
 static int _update(thsys* obj, void* _ext_obj, const float64* buff, const int sz)
 {
-  int i = 0;
-  for(i=0; i<sz; i++)
-    fprintf(stderr, "%f\t", buff[i]);
-  fprintf(stderr, "\r");
-  fflush(stderr);
-  return 0;
+	int i = 0;
+	for(i=0; i<sz; i++)
+		fprintf(stderr, "%f\t", buff[i]);
+	fprintf(stderr, "\r");
+	fflush(stderr);
+	return 0;
 }
 
 static void _sig_handler(int signo)

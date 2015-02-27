@@ -13,10 +13,10 @@
 #include <libxml/HTMLparser.h>
 
 #define THCON_CLIENT_RECV_SLEEP_TIME 100000			/* wait time for receiving */
-#define THCON_MAX_CLIENTS 10 					/* maximum connections */
-#define THCON_MAX_EVENTS 64					/* maximum events */
+#define THCON_MAX_CLIENTS 10 						/* maximum connections */
+#define THCON_MAX_EVENTS 64							/* maximum events */
 #define HTML_STACK_SZ 16
-#define THCON_DEF_TIMEOUT 5					/* Default time out for geolocation */
+#define THCON_DEF_TIMEOUT 5							/* Default time out for geolocation */
 
 /* #define HTML_STACK_DEBUG_MODE */
 
@@ -51,28 +51,28 @@ struct _html_parser_stack {
 
 
 /* macros for handling parser stack */
-#define HTML_PARSER_TRY_INCREMENT(obj)			\
+#define HTML_PARSER_TRY_INCREMENT(obj)				\
     ++(obj)->stack_ix < (obj)->stack_count? 0 : 1
-#define HTML_PARSER_GET_DIR(obj)		\
+#define HTML_PARSER_GET_DIR(obj)				\
     (obj)->stack_elms[(obj)->stack_ix].dir
-#define HTML_PARSER_ELEM_INC_TRY(obj)					\
+#define HTML_PARSER_ELEM_INC_TRY(obj)									\
     (obj)->stack_elms[(obj)->stack_ix].act_cnt++ < (obj)->stack_elms[(obj)->stack_ix].num? 1 : 0
 
 /* initialise elements in parser stack */
-#define HTML_PARSER_ELEM_INIT(obj)			\
-    for(i=0; i<(obj)->stack_count; i++)			\
-	{						\
-	    (obj)->stack_elms[i].num = 0;		\
-	    (obj)->stack_elms[i].act_cnt = 0;		\
+#define HTML_PARSER_ELEM_INIT(obj)					\
+    for(i=0; i<(obj)->stack_count; i++)				\
+	{												\
+	    (obj)->stack_elms[i].num = 0;				\
+	    (obj)->stack_elms[i].act_cnt = 0;			\
 	    (obj)->stack_elms[i].dir = _html_nav_into;	\
 	}
 
 /* set element direction */
 #define HTML_PARSER_ELEM_SET_DIR(obj, ix, nav_dir, nav_num)	\
-    if(ix < (obj)->stack_count)					\
-	{							\
-	    (obj)->stack_elms[ix].dir = nav_dir;		\
-	    (obj)->stack_elms[ix].num = nav_num;		\
+    if(ix < (obj)->stack_count)								\
+	{														\
+	    (obj)->stack_elms[ix].dir = nav_dir;				\
+	    (obj)->stack_elms[ix].num = nav_num;				\
 	}
 
 /*---------------------------------------------------------------------------*/
@@ -145,7 +145,7 @@ static void _thcon_queue_del_helper(void* data);
 int thcon_init(thcon* obj, thcon_mode mode)
 {
     if(obj == NULL)
-	return -1;
+		return -1;
     memset((void*) obj, 0, sizeof(thcon));
     memset((void*) obj->var_port_name, 0, THCON_PORT_NAME_SZ);
     memset((void*) obj->var_svr_name, 0, THCON_SERVER_NAME_SZ);
@@ -153,7 +153,7 @@ int thcon_init(thcon* obj, thcon_mode mode)
     obj->var_con_sock = 0;
     obj->var_acc_sock = 0;
     obj->_var_act_sock = 0;
-    
+
     obj->_var_curl_timeout = 0;
     obj->var_flg = 1;
 
@@ -200,7 +200,7 @@ void thcon_delete(thcon* obj)
 
     /* delete socket fd array */
     if(obj->var_num_conns && obj->_var_cons_fds)
-	free(obj->_var_cons_fds);
+		free(obj->_var_cons_fds);
     obj->_var_cons_fds = NULL;
     obj->_var_epol_inst = NULL;
     obj->_var_event_col = NULL;
@@ -222,14 +222,14 @@ const char* thcon_get_my_addr(thcon* obj)
 
     /* check for object */
     if(obj == NULL)
-	return NULL;
+		return NULL;
 
     /* check for ip address url */
     if(obj->var_ip_flg > 0)
-	return obj->var_my_info._my_address;
-    
+		return obj->var_my_info._my_address;
+
     if(obj->var_ip_addr_url[0] == '\0' || obj->var_ip_addr_url[0] == 0)
-	return NULL;
+		return NULL;
 
     _rt_val = _thcon_get_url_content(obj->var_ip_addr_url, &_ip_buff);
 
@@ -243,12 +243,12 @@ const char* thcon_get_my_addr(thcon* obj)
 
     /* clean up memory */
     if(_ip_buff.memory)
-	free(_ip_buff.memory);
+		free(_ip_buff.memory);
 
     if(_rt_val == 0)
-	return obj->var_my_info._my_address;
+		return obj->var_my_info._my_address;
     else
-	return NULL;
+		return NULL;
 
     return NULL;
 }
@@ -261,17 +261,17 @@ int thcon_get_my_geo(thcon* obj)
 
     /* check for object */
     if(obj == NULL)
-	return -1;
+		return -1;
 
     if(obj->var_geo_addr_url[0] == '\0' || obj->var_geo_addr_url[0] == 0)
-	return -1;
+		return -1;
 
     /* Initialise the memory buffer */
     memset((void*) &_ip_buff, 0, sizeof(struct _curl_mem));
     _ip_buff.memory = NULL;
     _rt_val = _thcon_get_url_content(obj->var_geo_addr_url, &_ip_buff);
     if(_rt_val)
-	return -1;
+		return -1;
     _parse_html_geo(&_ip_buff, &obj->var_my_info);
 
     obj->var_geo_flg = 1;
@@ -293,57 +293,57 @@ int thcon_contact_admin(thcon* obj, const char* admin_url)
     static const char _buff[] = "Expect:";
 
     if(obj == NULL || admin_url == NULL)
-	return -1;
+		return -1;
 
     if(!obj->var_geo_flg && !obj->var_ip_flg)
-	thcon_get_my_geo(obj);
+		thcon_get_my_geo(obj);
 
     /* initialise curl */
     curl_global_init(CURL_GLOBAL_ALL);
 
     /* fill form data */
     curl_formadd(&_form_post,
-		 &_last_ptr,
-		 CURLFORM_COPYNAME, THCON_FORM_IP,
-		 CURLFORM_COPYCONTENTS, obj->var_my_info._my_address,
-		 CURLFORM_END);
+				 &_last_ptr,
+				 CURLFORM_COPYNAME, THCON_FORM_IP,
+				 CURLFORM_COPYCONTENTS, obj->var_my_info._my_address,
+				 CURLFORM_END);
 
     curl_formadd(&_form_post,
-		 &_last_ptr,
-		 CURLFORM_COPYNAME, THCON_GEO_COUNTRY,
-		 CURLFORM_COPYCONTENTS, obj->var_my_info._country,
-		 CURLFORM_END);
+				 &_last_ptr,
+				 CURLFORM_COPYNAME, THCON_GEO_COUNTRY,
+				 CURLFORM_COPYCONTENTS, obj->var_my_info._country,
+				 CURLFORM_END);
 
     curl_formadd(&_form_post,
-		 &_last_ptr,
-		 CURLFORM_COPYNAME, THCON_GEO_REGION,
-		 CURLFORM_COPYCONTENTS, obj->var_my_info._my_region,
-		 CURLFORM_END);
+				 &_last_ptr,
+				 CURLFORM_COPYNAME, THCON_GEO_REGION,
+				 CURLFORM_COPYCONTENTS, obj->var_my_info._my_region,
+				 CURLFORM_END);
 
     curl_formadd(&_form_post,
-		 &_last_ptr,
-		 CURLFORM_COPYNAME, THCON_GEO_TOWN,
-		 CURLFORM_COPYCONTENTS, obj->var_my_info._my_city,
-		 CURLFORM_END);
+				 &_last_ptr,
+				 CURLFORM_COPYNAME, THCON_GEO_TOWN,
+				 CURLFORM_COPYCONTENTS, obj->var_my_info._my_city,
+				 CURLFORM_END);
 
     curl_formadd(&_form_post,
-		 &_last_ptr,
-		 CURLFORM_COPYNAME, THCON_GEO_LONG,
-		 CURLFORM_COPYCONTENTS, obj->var_my_info._long,
-		 CURLFORM_END);
+				 &_last_ptr,
+				 CURLFORM_COPYNAME, THCON_GEO_LONG,
+				 CURLFORM_COPYCONTENTS, obj->var_my_info._long,
+				 CURLFORM_END);
 
     curl_formadd(&_form_post,
-		 &_last_ptr,
-		 CURLFORM_COPYNAME, THCON_GEO_LAT,
-		 CURLFORM_COPYCONTENTS, obj->var_my_info._lat,
-		 CURLFORM_END);
+				 &_last_ptr,
+				 CURLFORM_COPYNAME, THCON_GEO_LAT,
+				 CURLFORM_COPYCONTENTS, obj->var_my_info._lat,
+				 CURLFORM_END);
 
     /* initialise easy interface */
     _curl = curl_easy_init();
 
     _header_list = curl_slist_append(_header_list, _buff);
     if(!_curl)
-	goto contact_admin_cleanup;
+		goto contact_admin_cleanup;
 
     /* set admin url */
     curl_easy_setopt(_curl, CURLOPT_URL, admin_url);
@@ -355,12 +355,12 @@ int thcon_contact_admin(thcon* obj, const char* admin_url)
 
     _res = curl_easy_perform(_curl);
     if(_res != CURLE_OK)
-	THOR_LOG_ERROR("Unable to send information to admin");
+		THOR_LOG_ERROR("Unable to send information to admin");
 
     /* check for errors */
     curl_easy_cleanup(_curl);
 
- contact_admin_cleanup:
+contact_admin_cleanup:
     curl_formfree(_form_post);
     curl_slist_free_all(_header_list);
 
@@ -371,7 +371,7 @@ int thcon_contact_admin(thcon* obj, const char* admin_url)
 int thcon_start(thcon* obj)
 {
     if(obj == NULL)
-	return -1;
+		return -1;
 
     /*
      * If it runs in the server mode
@@ -382,9 +382,9 @@ int thcon_start(thcon* obj)
 
     /* start server */
     pthread_create(&obj->_var_run_thread,
-		   NULL,
-		   (obj->_var_con_mode == thcon_mode_server? _thcon_thread_function_server : _thcon_thread_function_client),
-		   (void*) obj);
+				   NULL,
+				   (obj->_var_con_mode == thcon_mode_server? _thcon_thread_function_server : _thcon_thread_function_client),
+				   (void*) obj);
 
     /*
      * If we are running in the server mode, call the write methods.
@@ -392,11 +392,11 @@ int thcon_start(thcon* obj)
     if(obj->_var_con_mode == thcon_mode_server)
 	{
 	    pthread_create(&obj->_var_svr_write_thread,
-			   NULL,
-			   _thcon_thread_function_write_server,
-			   (void*) obj);
+					   NULL,
+					   _thcon_thread_function_write_server,
+					   (void*) obj);
 	}
-     return 0;
+	return 0;
 }
 
 /*
@@ -409,11 +409,11 @@ int thcon_start(thcon* obj)
 int thcon_stop(thcon* obj)
 {
     if(obj == NULL)
-	return -1;
+		return -1;
 
     /* If there is not server running, exit method */
     if(obj->_var_con_stat == thcon_disconnected)
-	return -1;
+		return -1;
 
     /* indicate server is stopped */
     obj->_var_con_stat = thcon_disconnected;
@@ -447,19 +447,19 @@ int thcon_send_info(thcon* obj, void* data, size_t sz)
 {
     unsigned int i = 0;
     if(obj == NULL || data == NULL)
-	return -1;
+		return -1;
 
     /* check if the connection was made*/
     if(obj->_var_con_stat == thcon_disconnected)
-	return -1;
+		return -1;
 
     /* call private method for sending the information */
     if(obj->_var_con_mode == thcon_mode_client)
-	_thcon_send_info(obj->var_acc_sock, data, sz);
+		_thcon_send_info(obj->var_acc_sock, data, sz);
     else
 	{
 	    for(i = 0; i < obj->var_num_conns; i++)
-		_thcon_send_info(obj->_var_cons_fds[i], data, sz);
+			_thcon_send_info(obj->_var_cons_fds[i], data, sz);
 	}
 
     return 0;
@@ -475,11 +475,11 @@ int thcon_multicast(thcon* obj, void* data, size_t sz)
 
     /* check for argument pointers */
     if(!obj || !data || !sz)
-	return -1;
+		return -1;
 
     /* check it its running in the server mode */
     if(obj->_var_con_stat == thcon_disconnected)
-	return -1;
+		return -1;
 
     _msg = (struct _curl_mem*) malloc(sizeof(struct _curl_mem));
     _msg->memory = (char*) malloc(sz);
@@ -515,7 +515,7 @@ static int _thcon_create_connection(thcon* obj, int _con_mode)
     obj->_var_info.ai_protocol = 0;
 
     if(_con_mode)
-	obj->_var_info.ai_flags = AI_PASSIVE;
+		obj->_var_info.ai_flags = AI_PASSIVE;
 
     /* create address infor struct */
     _stat = getaddrinfo((_con_mode? NULL : obj->var_svr_name), obj->var_port_name, &obj->_var_info, &_result);
@@ -529,9 +529,9 @@ static int _thcon_create_connection(thcon* obj, int _con_mode)
     /* create socket for client mode, connect to the server */
     for(_p = _result; _p != NULL; _p = _p->ai_next)
 	{
-	  obj->var_con_sock = socket(_p->ai_family, _p->ai_socktype, _p->ai_protocol);
+		obj->var_con_sock = socket(_p->ai_family, _p->ai_socktype, _p->ai_protocol);
 	    if(obj->var_con_sock == -1)
-		continue;
+			continue;
 
 	    /* if successful creating a socket, check the mode if client and connect to the host */
 	    if(_con_mode == 0)
@@ -542,7 +542,7 @@ static int _thcon_create_connection(thcon* obj, int _con_mode)
 			    continue;
 			}
 		    else
-			break;
+				break;
 		}
 	    else
 		{
@@ -553,7 +553,7 @@ static int _thcon_create_connection(thcon* obj, int _con_mode)
 			    continue;
 			}
 		    else
-			break;
+				break;
 		}
 	}
 
@@ -568,7 +568,7 @@ static int _thcon_create_connection(thcon* obj, int _con_mode)
 
     /* client mode was selected set the accept socket same as connect socket */
     if(obj->_var_con_mode == thcon_mode_client)
-	obj->var_acc_sock = obj->var_con_sock;
+		obj->var_acc_sock = obj->var_con_sock;
 
     return 0;
 }
@@ -607,7 +607,7 @@ static int _thcon_copy_to_mem(void* contents, size_t size, size_t memb, void* us
     /* allocate memory */
     _mem->memory = (char*) realloc(_mem->memory, _mem->size+rel+1);
     if(_mem->memory == NULL)
-	return 0;
+		return 0;
 
     /* copy to buffer */
     memcpy(&_mem->memory[_mem->size], contents, rel);
@@ -625,7 +625,7 @@ static int _thcon_get_url_content(const char* ip_addr, struct _curl_mem* mem)
 
     /* check for ip address url */
     if(ip_addr == NULL || mem == NULL)
-	return -1;
+		return -1;
 
     /* initialise the ip buffer */
     mem->memory = (char*) malloc(1);
@@ -633,11 +633,11 @@ static int _thcon_get_url_content(const char* ip_addr, struct _curl_mem* mem)
 
     /* initialise global variables of curl */
     if(curl_global_init(CURL_GLOBAL_ALL))
-	return -1;
+		return -1;
 
     _url_handle = curl_easy_init();
     if(_url_handle == NULL)
-	return -1;
+		return -1;
 
     /* specify url to get */
     curl_easy_setopt(_url_handle, CURLOPT_URL, ip_addr);
@@ -657,14 +657,14 @@ static int _thcon_get_url_content(const char* ip_addr, struct _curl_mem* mem)
 
     _res = curl_easy_perform(_url_handle);
     if(_res != CURLE_OK)
-	THOR_LOG_ERROR(curl_easy_strerror(_res));
+		THOR_LOG_ERROR(curl_easy_strerror(_res));
     /* clean up memory */
     curl_easy_cleanup(_url_handle);
     curl_global_cleanup();
     if(_res == CURLE_OK)
-	return 0;
+		return 0;
     else
-	return -1;
+		return -1;
 }
 
 /* parse html geo location data */
@@ -686,7 +686,7 @@ static int _parse_html_geo(const struct _curl_mem* _mem, struct thcon_host_info*
 
     _node_ptr = NULL;
     if(_node != NULL)
-	_node_ptr = xmlFirstElementChild(_node);
+		_node_ptr = xmlFirstElementChild(_node);
 
 
     /*----------------------------------------------------------------------*/
@@ -726,7 +726,7 @@ static int _parse_html_geo(const struct _curl_mem* _mem, struct thcon_host_info*
     /* iterate through the nodes */
     _search = NULL;
     while(_node_ptr)
-    	{
+	{
 	    /* check if the node is the body element */
 	    if(_node_ptr->name)
 	    	_search = strstr((char*) _node_ptr->name, "body");
@@ -770,7 +770,9 @@ static int _parse_html_geo(const struct _curl_mem* _mem, struct thcon_host_info*
 			}
 
 		    /* Get second table information */
-		    _t_node = _get_html_tag_names(_t_node->parent, &_p_stack_x);
+			if(_t_node)
+				_t_node = _get_html_tag_names(_t_node->parent, &_p_stack_x);
+
 		    if(_t_node)
 			{
 			    i = 0;
@@ -799,9 +801,9 @@ static int _parse_html_geo(const struct _curl_mem* _mem, struct thcon_host_info*
 			}
 		    break;
 		}
-    	    _node_ptr = xmlNextElementSibling(_node_ptr);
+		_node_ptr = xmlNextElementSibling(_node_ptr);
 	    _search = NULL;
-    	}
+	}
 
     xmlFreeDoc(_html_doc);
     return 0;
@@ -811,7 +813,9 @@ static int _parse_html_geo(const struct _curl_mem* _mem, struct thcon_host_info*
 static xmlNodePtr _get_html_tag_names(xmlNodePtr ptr, struct _html_parser_stack* stack)
 {
     static xmlNodePtr _ptr = NULL;
-    if(ptr == NULL || stack == NULL) return 0;
+    if(ptr == NULL || stack == NULL)
+		return NULL;
+
     _ptr = xmlFirstElementChild(ptr);
     while(_ptr)
 	{
@@ -822,7 +826,7 @@ static xmlNodePtr _get_html_tag_names(xmlNodePtr ptr, struct _html_parser_stack*
 	    if(HTML_PARSER_GET_DIR(stack) == _html_nav_into)
 		{
 		    if(HTML_PARSER_ELEM_INC_TRY(stack))
-			_get_html_tag_names(_ptr, stack);
+				_get_html_tag_names(_ptr, stack);
 		    goto stack_pop;
 		}
 
@@ -835,10 +839,10 @@ static xmlNodePtr _get_html_tag_names(xmlNodePtr ptr, struct _html_parser_stack*
 	stack_pop:
 	    /* Increment stack counter */
 	    if(HTML_PARSER_TRY_INCREMENT(stack))
-		break;
+			break;
 #if defined HTML_STACK_DEBUG_MODE
 	    else
-		goto stack_check_dir;
+			goto stack_check_dir;
 #endif
 	}
 
@@ -858,7 +862,7 @@ static void* _thcon_thread_function_client(void* obj)
 
     /* check object pointer */
     if(obj == NULL)
-	return NULL;
+		return NULL;
 
     /* initialise buffer */
     memset((void*) _t_buff, 0, THORNIFIX_MSG_BUFF_SZ);
@@ -868,11 +872,11 @@ static void* _thcon_thread_function_client(void* obj)
 
     /* create socket and bind */
     if(_thcon_create_connection(_obj, thcon_mode_client))
-	return NULL;
+		return NULL;
 
     /* make socket non blocking */
     if(_thcon_make_socket_nonblocking(_obj->var_acc_sock))
-	return NULL;
+		return NULL;
 
     pthread_testcancel();
 
@@ -890,7 +894,7 @@ static void* _thcon_thread_function_client(void* obj)
 	     * loop.
 	     */
 	    if(_stat == 0)
-	      break;
+			break;
 
 	    /* disable thread cancel state */
 	    pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &_cancel_state);
@@ -901,7 +905,7 @@ static void* _thcon_thread_function_client(void* obj)
 	     * execution.
 	     */
 	    if(_obj->_thcon_recv_callback)
-		_obj->_thcon_recv_callback(_obj->_ext_obj, _t_buff, _stat);
+			_obj->_thcon_recv_callback(_obj->_ext_obj, _t_buff, _stat);
 
 	    /* enable thread cancel state */
 	    pthread_setcancelstate(_cancel_state, NULL);
@@ -926,7 +930,7 @@ static int _thcon_send_info(int fd, void* msg, size_t sz)
 	{
 	    _buff_sent += send(fd, ((char*) msg)+_buff_sent, sz, MSG_DONTWAIT | MSG_NOSIGNAL);
 	    if(_buff_sent == EPIPE)
-		return -1;
+			return -1;
 	}while(_buff_sent < sz);
 
     return _buff_sent;
@@ -948,7 +952,7 @@ static void* _thcon_thread_function_server(void* obj)
 
     /* check for object pointer */
     if(obj == NULL)
-	return NULL;
+		return NULL;
 
     /* Initialise error buffer */
     memset(_err_msg, 0, THOR_BUFF_SZ);
@@ -964,27 +968,27 @@ static void* _thcon_thread_function_server(void* obj)
 
     /* create socket and bind */
     if(_thcon_create_connection(_obj, thcon_mode_server))
-	return NULL;
+		return NULL;
 
     /* make socket non blocking */
     if(_thcon_make_socket_nonblocking(_obj->var_con_sock))
-	goto listening_sock_exit;
+		goto listening_sock_exit;
 
     /* listen on socket */
     if(listen(_obj->var_con_sock, THCON_MAX_CLIENTS))
-	goto listening_sock_exit;
+		goto listening_sock_exit;
 
     /* create and epoll instance */
     _e_sock = epoll_create1(0);
 
     if(_e_sock == -1)
-	goto epoll_exit_lbl;
+		goto epoll_exit_lbl;
     _obj->_var_epol_inst = &_e_sock;
     _event.data.fd = _obj->var_con_sock;
     _event.events = EPOLLIN | EPOLLET;
 
     if(epoll_ctl(_e_sock, EPOLL_CTL_ADD, _obj->var_con_sock, &_event))
-	goto epoll_exit_lbl;
+		goto epoll_exit_lbl;
 
     /* Restore thread cancelling */
     pthread_setcancelstate(_old_state, NULL);
@@ -1011,22 +1015,22 @@ static void* _thcon_thread_function_server(void* obj)
 
 		    /* check for errors */
 		    if(((_events[_i].events & EPOLLERR) ||
-			(_events[_i].events & EPOLLHUP)) &&
+				(_events[_i].events & EPOLLHUP)) &&
 		       (!(_events[_i].events & EPOLLIN)))
 			{
-			  /*
-			   * If the socket is not the listening socket,
-			   * we close the file descriptor and remove the
-			   * socket from the socket array.
-			   */
+				/*
+				 * If the socket is not the listening socket,
+				 * we close the file descriptor and remove the
+				 * socket from the socket array.
+				 */
 			    if(_events[_i].data.fd != _obj->var_con_sock)
 				{
-				  /*
-				   * Number of connections are decremented by the
-				   * adjust file descriptor methods.
-				   * The all operations involved in object variables
-				   * are wrapped in mutex for thread safety.
-				   */
+					/*
+					 * Number of connections are decremented by the
+					 * adjust file descriptor methods.
+					 * The all operations involved in object variables
+					 * are wrapped in mutex for thread safety.
+					 */
 				    _thcon_adjust_fds(_obj, _events[_i].data.fd);
 				    close(_events[_i].data.fd);
 
@@ -1037,19 +1041,19 @@ static void* _thcon_thread_function_server(void* obj)
 				     * Indicate, the connection object was closed.
 				     */
 				    if(_obj->_thcon_conn_closed)
-					_obj->_thcon_conn_closed(_obj->_ext_obj, obj, _events[_i].data.fd);
+						_obj->_thcon_conn_closed(_obj->_ext_obj, obj, _events[_i].data.fd);
 				}
 			    else
-			      {
-				/* errors have occured */
-				THOR_LOG_ERROR("epoll error");
-			      }
+				{
+					/* errors have occured */
+					THOR_LOG_ERROR("epoll error");
+				}
 
 			    pthread_testcancel();
 			    continue;
 			}
 		    else if((_events[_i].events & EPOLLIN) ||
-			    (_events[_i].events & EPOLLRDHUP))
+					(_events[_i].events & EPOLLRDHUP))
 			{
 			    if(_obj->var_con_sock == _events[_i].data.fd)
 				{
@@ -1067,7 +1071,7 @@ static void* _thcon_thread_function_server(void* obj)
 				     * the sys object should be started.
 				     */
 				    if(_obj->_thcon_conn_made)
-					_obj->_thcon_conn_made(_obj->_ext_obj, obj);
+						_obj->_thcon_conn_made(_obj->_ext_obj, obj);
 
 				    pthread_setcancelstate(_old_state, NULL);
 				    pthread_testcancel();
@@ -1089,10 +1093,10 @@ static void* _thcon_thread_function_server(void* obj)
 					     * came through.
 					     */
 					    _obj->_var_act_sock = _events[_i].data.fd;
-					    
+
 					    _stat = _thcon_write_to_int_buff(_obj, _events[_i].data.fd);
 					    if(_obj->_thcon_recv_callback && _stat > 0)
-						_obj->_thcon_recv_callback(_obj->_ext_obj, _obj->var_membuff_in, THORNIFIX_MSG_BUFF_SZ);
+							_obj->_thcon_recv_callback(_obj->_ext_obj, _obj->var_membuff_in, THORNIFIX_MSG_BUFF_SZ);
 					    if(_stat == -1)
 						{
 						    /*
@@ -1100,7 +1104,7 @@ static void* _thcon_thread_function_server(void* obj)
 						     * the main loop.
 						     */
 						    if(errno != EAGAIN)
-							_complete = 1;
+								_complete = 1;
 
 						    break;
 						}
@@ -1124,17 +1128,17 @@ static void* _thcon_thread_function_server(void* obj)
 			     * are wrapped in mutex for thread safety.
 			     */
 			    _thcon_adjust_fds(_obj, _events[_i].data.fd);
-			    
-			    
+
+
 			    /*
 			     * Indicate, the connection object was closed.
 			     */
 			    if(_obj->_thcon_conn_closed)
-			      _obj->_thcon_conn_closed(_obj->_ext_obj, obj, _events[_i].data.fd);
+					_obj->_thcon_conn_closed(_obj->_ext_obj, obj, _events[_i].data.fd);
 
 			    /* close connection so that epoll shall remove the watching descriptor */
 			    close(_events[_i].data.fd);
-    			    pthread_setcancelstate(_old_state, NULL);
+				pthread_setcancelstate(_old_state, NULL);
 			    pthread_testcancel();
 			}
 		}
@@ -1147,13 +1151,13 @@ static void* _thcon_thread_function_server(void* obj)
     pthread_cleanup_pop(0);
     free(_events);
 
- epoll_exit_lbl:
+epoll_exit_lbl:
     if(_e_sock)
-	close(_e_sock);
+		close(_e_sock);
 
- listening_sock_exit:
+listening_sock_exit:
     if(_obj->var_con_sock)
-	close(_e_sock);
+		close(_e_sock);
 
     pthread_exit(NULL);
     return NULL;
@@ -1186,7 +1190,7 @@ static int _thcon_accept_conn(thcon* obj, int list_sock, int epoll_inst, struct 
 			}
 		    else
 			{
-	    		    THOR_LOG_ERROR("Accept handling error\n");
+				THOR_LOG_ERROR("Accept handling error\n");
 			    break;
 			}
 		}
@@ -1194,9 +1198,9 @@ static int _thcon_accept_conn(thcon* obj, int list_sock, int epoll_inst, struct 
 
 	    /* get information about the connection and log */
 	    _stat = getnameinfo(&_in_addr, _in_len,
-				_hbuf, NI_MAXHOST,
-				_sbuf, NI_MAXSERV,
-				NI_NUMERICHOST | NI_NUMERICSERV);
+							_hbuf, NI_MAXHOST,
+							_sbuf, NI_MAXSERV,
+							NI_NUMERICHOST | NI_NUMERICSERV);
 
 	    if(_stat == 0)
 		{
@@ -1224,7 +1228,7 @@ static int _thcon_accept_conn(thcon* obj, int list_sock, int epoll_inst, struct 
 	     * query the socket which the new connection was made.
 	     */
 	    obj->_var_act_sock = _fd;
-	    
+
 	    /* Display message in debug mode */
 	    sprintf(_err_msg, "Connection made on socket: %i\n", obj->_var_cons_fds[obj->var_num_conns-1]);
 	    THOR_LOG_ERROR(_err_msg);
@@ -1241,7 +1245,7 @@ static int _thcon_write_to_int_buff(thcon* obj, int socket_fd)
     int _sz = 0;
     memset((void*) obj->var_membuff_in, 0, THORNIFIX_MSG_BUFF_SZ);
     _sz += read(socket_fd, obj->var_membuff_in, THORNIFIX_MSG_BUFF_SZ);
-    
+
     return _sz;
 }
 
@@ -1317,7 +1321,7 @@ inline __attribute__ ((always_inline)) static int _thcon_adjust_fds(thcon* obj, 
     /* check if connection count is 0, exit method */
     pthread_mutex_lock(&obj->_var_mutex);
     if(obj->var_num_conns < 1)
-	goto _thcon_adjust_fds_exit;
+		goto _thcon_adjust_fds_exit;
 
     /* allocate memory for the new buffer */
     _t_buff = (int*) calloc((obj->var_num_conns-1), sizeof(int));
@@ -1330,7 +1334,7 @@ inline __attribute__ ((always_inline)) static int _thcon_adjust_fds(thcon* obj, 
 	     * do not copy it.
 	     */
 	    if(obj->_var_cons_fds[i] == fd)
-		continue;
+			continue;
 	    _t_buff[a++] = obj->_var_cons_fds[i];
 	}
 
@@ -1343,7 +1347,7 @@ inline __attribute__ ((always_inline)) static int _thcon_adjust_fds(thcon* obj, 
 
     /* Decrement number of connections */
     obj->var_num_conns--;
- _thcon_adjust_fds_exit:
+_thcon_adjust_fds_exit:
 
     pthread_mutex_unlock(&obj->_var_mutex);
     return 0;
@@ -1362,7 +1366,7 @@ static void* _thcon_thread_function_write_server(void* obj)
     struct _curl_mem* _msg;
 
     if(obj == NULL)
-	return NULL;
+		return NULL;
 
     /* cast argument to correct object pointer */
     _obj = (thcon*) obj;
@@ -1382,9 +1386,9 @@ static void* _thcon_thread_function_write_server(void* obj)
 	     * method.
 	     */
 	    if(gqueue_count(&_obj->_msg_queue) == 0)
-		continue;
+			continue;
 
-    	    pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &_old_state);
+		pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &_old_state);
 
 	    /* Pop message from queue */
 	    pthread_mutex_lock(&_obj->_var_mutex_q);
@@ -1423,18 +1427,18 @@ static void _thcon_thread_cleanup_server(void* obj)
     thcon* _obj;
 
     if(obj == NULL)
-	return;
+		return;
 
     /* Cast to correct object */
     _obj = (thcon*) obj;
 
     if(_obj->_var_event_col != NULL)
-	free(_obj->_var_event_col);
+		free(_obj->_var_event_col);
     _obj->_var_event_col = NULL;
 
     /* close open connections */
     for(i=0; i<_obj->var_num_conns; i++)
-	close(_obj->_var_cons_fds[i]);
+		close(_obj->_var_cons_fds[i]);
     /*
      * All open file descriptors are closed.
      * This thread join should proceed, closing the write method.
@@ -1444,12 +1448,12 @@ static void _thcon_thread_cleanup_server(void* obj)
 
 
     if(_obj->_var_epol_inst)
-	close(*_obj->_var_epol_inst);
+		close(*_obj->_var_epol_inst);
     _obj->_var_epol_inst = NULL;
 
     /* create connection socekt */
     if(_obj->var_con_sock)
-	close(_obj->var_con_sock);
+		close(_obj->var_con_sock);
 
     return;
 
@@ -1462,14 +1466,14 @@ static void _thcon_queue_del_helper(void* data)
 {
     struct _curl_mem* _mem;
     if(!data)
-	return;
+		return;
 
     /* cast data object to */
     _mem = (struct _curl_mem*) data;
 
     /* check and free buffers */
     if(_mem->memory && _mem->size)
-	free(_mem->memory);
+		free(_mem->memory);
     _mem->memory = NULL;
 
     /* free object itself */

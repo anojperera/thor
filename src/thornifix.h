@@ -22,7 +22,7 @@
 #define THOR_CONFIG_CALX "calibration_x"
 #define THOR_CONFIG_CALY "calibration_y"
 
-
+#ifndef EXCLUDE_NI
 #if defined (WIN32) || defined (_WIN32)
 #include <NIDAQmx.h>
 /* get error string */
@@ -56,7 +56,7 @@
 #define NICfgSampClkTiming DAQmxBaseCfgSampClkTiming
 #define CVICALLBACK __cdecl
 #endif
-
+#endif
 #define THOR_BUFF_SZ 2048
 
 /* pressure sensor calibration factors */
@@ -135,7 +135,7 @@ struct thor_msg
     double _ai10_val __attribute__ ((aligned (THORNIFIX_MSG_BUFF_ELM_SZ)));
     double _ai11_val __attribute__ ((aligned (THORNIFIX_MSG_BUFF_ELM_SZ)));
     double _ai12_val __attribute__ ((aligned (THORNIFIX_MSG_BUFF_ELM_SZ)));
-    double _ai13_val __attribute__ ((aligned (THORNIFIX_MSG_BUFF_ELM_SZ)));    
+    double _ai13_val __attribute__ ((aligned (THORNIFIX_MSG_BUFF_ELM_SZ)));
     /*--------------------------------------------*/
 
     /* digital input channels */
@@ -252,7 +252,7 @@ extern "C" {
 
     }
 #endif
-    
+
     inline __attribute__ ((always_inline)) static double Round(double val, unsigned int places)	/* rounds a number */
     {
 	double off = pow(10, places);
