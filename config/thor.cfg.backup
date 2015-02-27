@@ -1,0 +1,176 @@
+#Following is the main configuration file for the testing suite.
+version = 1.0;
+
+#Device and channel configuration
+device_name = "Dev1";
+ao_channel_range = "ai0:12";
+ai_channel_range = "ao0:1";
+
+#Test settings are wrapped in separate configurations for ease of access.
+#All range values must be decimal values. So does the calibration setting
+#values.
+
+#Differential pressure sensors for the AHU test
+ahu:
+{
+   s1:
+   {
+   name = "Sensor - DP1";
+   minRange = 0.0;
+   maxRange = 1600.0;
+   calibration_x = [0.0101, 2.4725, 4.9778, 7.4767, 9.9998];
+   calibration_y = [0.10, -0.21, -0.25, -0.24, -0.16];
+   };
+
+   s2:
+   {
+   name = "Sensor - DP2";
+   minRange = 0.0;
+   maxRange = 1600.0;
+   calibration_x = [0.0103, 2.5074, 5.0248, 7.5286, 10.0297];
+   calibration_y = [0.10, 0.07, 0.19, 0.25, 0.22];
+   };
+
+   s3:
+   {
+   name = "Sensor - DP3";
+   minRange = 0.0;
+   maxRange = 1600.0;
+   calibration_x = [0.0082, 2.4855, 4.9896, 7.4799, 9.9921];
+   calibration_y = [0.08, -0.14, -0.21, -0.21, -0.24];
+   };
+
+   s4:
+   {
+   name = "Sensor - DP4";
+   minRange = 0.0;
+   maxRange = 1600.0;
+   calibration_x = [0.0095, 2.4868, 5.0015, 7.5009, 10.0011];
+   calibration_y = [0.10, -0.08, -0.09, -0.07, -0.06];
+   };
+};
+
+#Differential pressure sensors for the damper leak test
+lkg:
+{
+   s5:
+   {
+   name = "Sensor - DP5";
+   minRange = 0.0;
+   maxRange = 50.0;
+   };
+
+   s6:
+   {
+   name = "Sensor - DP6";
+   minRange = 0.0;
+   maxRange = 500.0;
+   };
+
+   s7:
+   {
+   name = "Sensor - DP7";
+   minRange = 0.0;
+   maxRange = 1000.0;
+   };
+
+   s8:
+   {
+   name = "Sensor - DP8";
+   minRange = 0.0;
+   maxRange = 1600.0;
+   };
+};
+###############################################################
+#Static pressure sensors for the AHU and damper leak test
+st1:
+{
+   st_1:
+   {
+   name = "Sensor - ST1";
+   minRange = 0.0;
+   maxRange = 5000.0;
+   calibration_x = [0.0096, 2.3933, 4.7914, 7.1875, 9.5614];
+   calibration_y = [0.10, -0.03, -0.09, -0.20, -0.36];
+   };
+};
+
+st2:
+{
+   st_2:
+   {
+   name = "Sensor - ST2";
+   minRange = 0.0;
+   maxRange = 5000.0;
+   };
+};
+# Misc sensors
+###############################################################
+sp1:
+{
+   sp_1:
+   {
+   name = "Speed Sensor";
+   minRange = 0.0;
+   maxRange = 100.0;
+   };
+};
+
+tp1:
+{
+   tp_1:
+   {
+   name = "Temperature Sensor";
+   minRange = -10.0;
+   maxRange = 40.0;
+   };
+};
+#urls for checking geolocation and ip address
+mygeo_location = "http://www.iplocation.net";
+prime_admin_url = "";
+sec_admin_url = "";
+self_url = "192.168.8.100";
+main_log_url = "";
+
+#main connection port for server and client
+main_con_port = "11000";
+sec_con_port = "11001";
+multic_con_port = "11002";
+websock_port = "11003";
+debug_msg = false;
+
+# Applications queue limit
+app_queue_limit = 10;
+
+#default time out for curl in seconds
+def_time_out = 2;
+
+#Applications main sleep time micro seconds
+main_sleep = 200000;
+
+#Calibration time interval. This the time to wait between
+#actuator control signals.
+ahu_calib_wait_ext = 4;
+ahu_calib_settle_time = 200;
+
+#These time values control the AHU leakage test performance time
+ahu_leak_test_time = 20;
+ahu_leak_test_incr = 5;
+
+#Maximum limit for throttling for the duct loss test
+ahu_performance_throttle_max = 50.0;
+
+#AHU Leakage rate figures
+#The array size should be equal number of elements for both positive
+#and negative test pressure. If either is missing, substitute a 0.0
+#Please note that all figures in 'clkg' are floating point values.
+clkg:
+{
+    positive_pressure = 700.0;
+    negative_pressure = 400.0;
+    leakage_positive = [0.22, 0.63, 1.90];
+    leakage_negative = [0.15, 0.44, 1.32];
+
+    #This is the class array notation */
+    leakage_class = ["L1", "L2", "L3", "MAX"];
+};
