@@ -81,6 +81,8 @@ public:
 
     /* Get a reference to the internal file descriptor collection */
     std::map<int, int>* get_fds();
+
+	int create_new_file(int socket);
 };
 
 
@@ -150,13 +152,13 @@ _thasg::_thasg():err_flg(0), f_flg(0), queue_length(0)
 	     */
 
 	    if(config_read_file(&var_config, THASG_DEFAULT_CONFIG_PATH1) == CONFIG_TRUE)
-		goto check_path_success;
+			goto check_path_success;
 
 	    if(config_read_file(&var_config, THASG_DEFAULT_CONFIG_PATH2) == CONFIG_TRUE)
-		goto check_path_success;
+			goto check_path_success;
 
 	    if(config_read_file(&var_config, THASG_DEFAULT_CONFIG_PATH3) == CONFIG_TRUE)
-		goto check_path_success;
+			goto check_path_success;
 
 	    /*
 	     * If this point was reached, that means no settings were found. Therefore
@@ -203,10 +205,10 @@ _thasg::_thasg():err_flg(0), f_flg(0), queue_length(0)
 	{
 	    _t_buff = config_setting_get_string(_setting);
 	    if(_t_buff)
-		thcon_set_port_name(&var_con, _t_buff);
+			thcon_set_port_name(&var_con, _t_buff);
 	}
     else
-	thcon_set_port_name(&var_con, THASG_DEF_COM_PORT);
+		thcon_set_port_name(&var_con, THASG_DEF_COM_PORT);
 
     /* Get port number for the websocket server */
     _setting = config_lookup(&var_config, THASG_WEBSOCK_PORT);
@@ -249,7 +251,7 @@ _thasg::~_thasg()
 	{
 	    /* Close open files */
 	    if(_m_itr->second > 0)
-		close(_m_itr->second);
+			close(_m_itr->second);
 	}
 
     /* Empty container */
@@ -258,7 +260,7 @@ _thasg::~_thasg()
 
     /* If the websocket server was created destroy it */
     if(var_websock != NULL)
-	delete var_websock;
+		delete var_websock;
 
     /* Destroy the configuration object */
     config_destroy(&var_config);
@@ -278,7 +280,7 @@ int _thasg::add_msg(void* msg_ptr, size_t sz)
 
     /* Check for arguments */
     if(msg_ptr == NULL || sz <= 0)
-	return 0;
+		return 0;
 
     /* Initialise message object */
     memset((void*) &_msg_obj, 0, sizeof(struct _thasg_msg_wrap));
@@ -316,7 +318,7 @@ int _thasg::write_file(void)
 	    _t_msg = &_msg_queue.front();
 	    pthread_mutex_unlock(&var_mutex);
 	    if(!_t_msg)
-		break;
+			break;
 
 	    /* Set socket descriptor */
 	    _sock_des = _t_msg->_fd;
@@ -324,19 +326,10 @@ int _thasg::write_file(void)
 	    /* Check if the FDs collection is empty */
 	    if(_fds.empty())
 		{
-		    /* Create file */
-		    _thasg::create_file_name(_file_name, THASG_FILE_NAME_BUFF_SZ);
-
-		    /* Open file and store file and socket descriptors */
-		    _file_des = open(_file_name, O_CREAT | O_APPEND | O_RDWR);
-			fchmod(_file_des, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
-
+			_file_des = create_new_file(_sock_des);
 		    if(_file_des == -1)
-			goto exit_loop;
+				goto exit_loop;
 
-
-		    /* Add file and socket descriptor to the collection */
-		    _fds.insert(std::pair<int, int>(_sock_des, _file_des));
 		}
 	    else
 		{
@@ -349,15 +342,13 @@ int _thasg::write_file(void)
 		    /* Check the iterator, if the map returned end, we create a file */
 		    if(_m_itr == _fds.end())
 			{
-	    		    _thasg::create_file_name(_file_name, THASG_FILE_NAME_BUFF_SZ);
-			    _file_des = open(_file_name, O_CREAT | O_APPEND | O_RDWR);
-				fchmod(_file_des, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
-
+				_file_des = create_new_file(_sock_des);
 			    if(_file_des == -1)
-				goto exit_loop;
+					goto exit_loop;
+
 			}
 		    else
-			_file_des = _m_itr->second;
+				_file_des = _m_itr->second;
 
 		}
 
@@ -370,7 +361,7 @@ int _thasg::write_file(void)
 
 	    /* If the web socket server was created, call to service sockets */
 	    if(var_websock)
-		var_websock->service_server(_t_msg->_msg, _t_msg->_msg_sz);
+			var_websock->service_server(_t_msg->_msg, _t_msg->_msg_sz);
 
 	exit_loop:
 	    pthread_mutex_lock(&var_mutex);
@@ -383,7 +374,7 @@ int _thasg::write_file(void)
 	     * their respective file descriptors.
 	     */
 	    if(!f_flg)
-		break;
+			break;
 	}
 
     return 0;
@@ -430,6 +421,30 @@ int _thasg::create_file_name(char* f_name, size_t sz)
     return 0;
 }
 
+int _thasg::create_new_file(int socket)
+{
+    char _file_name[THASG_FILE_NAME_BUFF_SZ];
+    int _file_des = 0;
+
+	memset(_file_name, 0, THASG_FILE_NAME_BUFF_SZ);
+
+	/* Create file */
+	_thasg::create_file_name(_file_name, THASG_FILE_NAME_BUFF_SZ);
+
+	/* Open file and store file and socket descriptors */
+	_file_des = open(_file_name, O_CREAT | O_APPEND | O_RDWR);
+	if(_file_des == -1)
+		return _file_des;
+
+	/* adjust file permissions */
+	fchmod(_file_des, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+
+	/* add the new descriptor to the collection */
+    _fds.insert(std::pair<int, int>(socket, _file_des));
+
+	return _file_des;
+}
+
 /*=================================== Callback methods from the server ===================================*/
 /*--------------------------------------------------------------------------------------------------------*/
 static int _thasgard_con_recv_msg(void* self, void* msg, size_t sz)
@@ -437,7 +452,7 @@ static int _thasgard_con_recv_msg(void* self, void* msg, size_t sz)
     _thasg* _obj;
 
     if(self == NULL || msg == NULL || sz <= 0)
-	return 0;
+		return 0;
 
     /* Cast self pointer to the correct type */
     _obj = reinterpret_cast<_thasg*>(self);
@@ -449,6 +464,27 @@ static int _thasgard_con_recv_msg(void* self, void* msg, size_t sz)
 /* Callback is fired when a connection is made */
 static int _thasgard_con_made(void* self, void* con)
 {
+	thcon* _con = NULL;
+	_thasg* _asg = NULL;
+	std::map<int, int>* _fds_col = NULL;
+	int _file_des = -1;
+
+	if(self == NULL || con == NULL)
+		return -1;
+
+	_con = reinterpret_cast<thcon*>(con);
+	_asg = reinterpret_cast<_thasg*>(self);
+
+	/*
+	 * Check to see if the file and socket descriptor map is empty
+	 * or the socket doesn't have a corresponding descriptor in collection.
+	 */
+	_fds_col = _asg->get_fds();
+	if(_fds_col->empty() || _fds_col->find(THCON_GET_ACTIVE_SOCK(_con)) == _fds_col->end())
+		_file_des =_asg->create_new_file(THCON_GET_ACTIVE_SOCK(_con));
+
+	fprintf(stdout, "connection made on socket %i - assigned file %i\n", THCON_GET_ACTIVE_SOCK(_con), _file_des);
+
     return 0;
 }
 
@@ -463,11 +499,12 @@ static int _thasgard_con_closed(void* self, void* con, int sock)
 
     /* Check for self pointer */
     if(self == NULL)
-	return 0;
+		return 0;
 
     _asg = reinterpret_cast<_thasg*>(self);
-
     _fds_col = _asg->get_fds();
+
+	fprintf(stdout, "socket %i, closed\n", sock);
     if(!_fds_col)
 	{
 	    _it = _fds_col->find(sock);
@@ -477,6 +514,8 @@ static int _thasgard_con_closed(void* self, void* con, int sock)
 
 		    /* Close the socket */
 		    _fds_col->erase(_it);
+
+
 		}
 
 	}
@@ -487,7 +526,7 @@ static int _thasgard_con_closed(void* self, void* con, int sock)
 static void _thasgard_sigterm_handler(int signo)
 {
     if(signo == SIGINT || signo == SIGKILL)
-	_flg = 0;
+		_flg = 0;
 
     return;
 }
