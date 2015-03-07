@@ -18,6 +18,15 @@
 #define HTML_STACK_SZ 16
 #define THCON_DEF_TIMEOUT 5							/* Default time out for geolocation */
 
+#define THCON_DEFAULT_WOL_PORT 9
+
+#define THCON_MAGIC_PACK_BUFF 17*THCON_MAC_ADDR_BUFF
+#define THCON_MAC_ADDR_STR_BUFF 64
+#define THCON_MAC_ADDR_BASE 16						/* base 16 */
+
+#define THCON_MAC_ADDR_DEL ":"
+#define THCON_DEFAULT_SUBNET "255.255.255.255"
+
 /* #define HTML_STACK_DEBUG_MODE */
 
 /*---------------------------------------------------------------------------*/
@@ -84,6 +93,11 @@ struct _curl_mem
     size_t size;
 };
 
+/* helper methods for sending magic packet to wake on lan device */
+static int _thcon_conv_mac_addr_to_base16(thcon* obj, const char* addr);
+static int _thcon_create_udp_socket(thcon* obj);
+static int _thcon_send_magic_packet(thcon* obj);
+
 /* callback for handling content from curl lib */
 static int _thcon_copy_to_mem(void* contents, size_t size, size_t memb, void* usr_obj);
 
@@ -149,10 +163,15 @@ int thcon_init(thcon* obj, thcon_mode mode)
     memset((void*) obj, 0, sizeof(thcon));
     memset((void*) obj->var_port_name, 0, THCON_PORT_NAME_SZ);
     memset((void*) obj->var_svr_name, 0, THCON_SERVER_NAME_SZ);
+	memset(obj->var_mac_addr, 0, THCON_MAC_ADDR_BUFF);
+	memset(obj->var_subnet_addr, 0, THCON_PORT_NAME_SZ);
+
+	strcpy(obj->var_subnet_addr, THCON_DEFAULT_SUBNET);
 
     obj->var_con_sock = 0;
     obj->var_acc_sock = 0;
     obj->_var_act_sock = 0;
+	obj->var_wol_sock = 0;
 
     obj->_var_curl_timeout = 0;
     obj->var_flg = 1;
@@ -197,6 +216,10 @@ void thcon_delete(thcon* obj)
     sem_destroy(&obj->_var_sem);
     pthread_mutex_destroy(&obj->_var_mutex);
     pthread_mutex_destroy(&obj->_var_mutex_q);
+
+	/* if wake on lan socket was created close it */
+	if(obj->var_wol_sock > 0)
+		close(obj->var_wol_sock);
 
     /* delete socket fd array */
     if(obj->var_num_conns && obj->_var_cons_fds)
@@ -496,6 +519,30 @@ int thcon_multicast(thcon* obj, void* data, size_t sz)
     return 0;
 }
 
+/* send magic packet to device with mac address specified by mac_addr */
+int thcon_wol_device(thcon* obj, const char* mac_addr)
+{
+	/* check for NULL pointer */
+	if(obj == NULL || mac_addr == NULL)
+		return -1;
+
+	/* convert mac addr to base16 */
+	if(_thcon_conv_mac_addr_to_base16(obj, mac_addr))
+	{
+		THOR_LOG_ERROR("unable to translate mac address to base16");
+		return -1;
+	}
+
+	/* create UDP socket */
+	if(_thcon_create_udp_socket(obj))
+	{
+		THOR_LOG_ERROR("unable to create a udp socket");
+		return -1;
+	}
+
+	/* send magic packet */
+	returnn _thcon_send_magic_packet(obj);
+}
 /*======================================================================*/
 /* Private methods */
 /* Connection mode 1 - server mode */
@@ -1480,4 +1527,77 @@ static void _thcon_queue_del_helper(void* data)
     free(_mem);
 
     return;
+}
+
+/*
+ * convert to base16 from string
+ */
+static int _thcon_conv_mac_addr_to_base16(thcon* obj, const char* addr)
+{
+	unsigned int _cnt = 0;
+	char* _tok = NULL;
+
+	/* initialise the buffer */
+	memset(obj->var_mac_addr, 0, THCON_MAC_ADDR_BUFF);
+
+	/* split the string by delimiter  */
+	_tok = strtok(addr, THCON_MAC_ADDR_DEL);
+	while(_tok)
+	{
+		/* check buffer for overflow */
+		if(_cnt >= THCON_MAC_ADDR_BUFF)
+			break;
+		obj->var_mac_addr[_cnt] = strtol(_tok, NULL, THCON_MAC_ADDR_BASE);
+		_tok = strtok(NULL, THCON_MAC_ADDR_DEL);
+		_cnt++;
+	}
+
+	return 0;
+}
+
+/* create UDP socket */
+static int _thcon_create_udp_socket(thcon* obj)
+{
+	int _opt_val = 1;
+
+	THOR_LOG_ERROR("creating UDP socket for sending magic packet");
+	/* check if socket is connected */
+	if(obj->var_wol_sock > 0)
+		close(obj->var_wol_sock);
+	if((obj->var_wol_sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0)
+		return -1;
+
+	/* set socket options */
+	if(setsockopt(obj->var_wol_sock, SOL_SOCKET, SO_BROADCAST, &_opt_val, sizeof(int)) < 0)
+		return -1;
+	return 0;
+}
+
+/* send magic packet to the mac address specified */
+static int _thcon_send_magic_packet(thcon* obj)
+{
+	struct sockaddr_in _addr;
+	unsigned char _magic_packet[THCON_MAGIC_PACK_BUFF] = {};
+	int _i = 0, _j = 0;
+
+	memset(&_addr, 0, sizeof(struct addrinfo));
+
+	_addr.sin_family = AF_INET;
+	_addr.sin_port = htons(THCON_DEFAULT_WOL_PORT);
+
+	if(inet_aton(obj->var_subnet_addr, &_addr.sin_addr) == 0)
+		return -1;
+
+	for(; _i < THCON_MAC_ADDR_BUFF; _i++)
+		_magic_packet[_i] = 0xFF;
+
+	for(_i = 1; _i < THCON_MAGIC_PACK_BUFF; _i++) {
+		for(_j = 0; _j < THCON_MAC_ADDR_BUFF; _j++)
+			_magic_packet[_i * THCON_MAC_ADDR_BUFF + _j] = obj->var_mac_addr[_j];
+	}
+
+	if(sendto(obj->var_wol_sock, _magic_packet, THCON_MAGIC_PACK_BUFF, 0, (const struct sockaddr *) &_addr, sizeof(struct sockaddr_in)) < 0)
+		return -1;
+	THOR_LOG_ERROR("magic packet sent");
+	return 0;
 }
