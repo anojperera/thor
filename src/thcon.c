@@ -8,6 +8,8 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/epoll.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 #include <errno.h>
 #include <curl/curl.h>
 #include <libxml/HTMLparser.h>
@@ -94,7 +96,7 @@ struct _curl_mem
 };
 
 /* helper methods for sending magic packet to wake on lan device */
-static int _thcon_conv_mac_addr_to_base16(thcon* obj, const char* addr);
+static int _thcon_conv_mac_addr_to_base16(thcon* obj);
 static int _thcon_create_udp_socket(thcon* obj);
 static int _thcon_send_magic_packet(thcon* obj);
 
@@ -165,6 +167,7 @@ int thcon_init(thcon* obj, thcon_mode mode)
     memset((void*) obj->var_svr_name, 0, THCON_SERVER_NAME_SZ);
 	memset(obj->var_mac_addr, 0, THCON_MAC_ADDR_BUFF);
 	memset(obj->var_subnet_addr, 0, THCON_PORT_NAME_SZ);
+	memset(obj->var_mac_addr_str, 0, THCON_MAC_ADDR_STR_BUFF);
 
 	strcpy(obj->var_subnet_addr, THCON_DEFAULT_SUBNET);
 
@@ -526,8 +529,10 @@ int thcon_wol_device(thcon* obj, const char* mac_addr)
 	if(obj == NULL || mac_addr == NULL)
 		return -1;
 
+	strcpy(obj->var_mac_addr_str, mac_addr);
+
 	/* convert mac addr to base16 */
-	if(_thcon_conv_mac_addr_to_base16(obj, mac_addr))
+	if(_thcon_conv_mac_addr_to_base16(obj))
 	{
 		THOR_LOG_ERROR("unable to translate mac address to base16");
 		return -1;
@@ -541,7 +546,7 @@ int thcon_wol_device(thcon* obj, const char* mac_addr)
 	}
 
 	/* send magic packet */
-	returnn _thcon_send_magic_packet(obj);
+	return _thcon_send_magic_packet(obj);
 }
 /*======================================================================*/
 /* Private methods */
@@ -1532,7 +1537,7 @@ static void _thcon_queue_del_helper(void* data)
 /*
  * convert to base16 from string
  */
-static int _thcon_conv_mac_addr_to_base16(thcon* obj, const char* addr)
+static int _thcon_conv_mac_addr_to_base16(thcon* obj)
 {
 	unsigned int _cnt = 0;
 	char* _tok = NULL;
@@ -1541,7 +1546,7 @@ static int _thcon_conv_mac_addr_to_base16(thcon* obj, const char* addr)
 	memset(obj->var_mac_addr, 0, THCON_MAC_ADDR_BUFF);
 
 	/* split the string by delimiter  */
-	_tok = strtok(addr, THCON_MAC_ADDR_DEL);
+	_tok = strtok(obj->var_mac_addr_str, THCON_MAC_ADDR_DEL);
 	while(_tok)
 	{
 		/* check buffer for overflow */

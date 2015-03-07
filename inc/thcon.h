@@ -20,6 +20,7 @@
 #define THCON_GEN_INFO_SZ 64
 
 #define THCON_MAC_ADDR_BUFF 6						/* base 16 mac address buffer */
+#define THCON_MAC_ADDR_STR_BUFF 64					/* mac address buffer */
 
 #define THCON_FORM_IP "ip_addr"
 #define THCON_GEO_COUNTRY "my_country"
@@ -98,6 +99,7 @@ struct _thcon
 
 	unsigned char var_mac_addr[THCON_MAC_ADDR_BUFF];
 	char var_subnet_addr[THCON_SUBNET_NAME_SZ];
+	char var_mac_addr_str[THCON_MAC_ADDR_STR_BUFF];
 
     /*-----------------------------------------*/
     /*
