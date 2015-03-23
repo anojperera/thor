@@ -238,7 +238,7 @@ extern "C" {
 
 	/* Set subnet */
 #define thcon_set_subnet(obj, subnet)								\
-	memset(obj->var_subnet_addr, 0, THCON_PORT_NAME_SZ);			\
+	memset((obj)->var_subnet_addr, 0, THCON_PORT_NAME_SZ);			\
 	strncpy((obj)->var_subnet_addr, subnet, THCON_PORT_NAME_SZ-1);	\
 	(obj)->var_subnet_addr[THCON_PORT_NAME_SZ-1] = '\0'
 

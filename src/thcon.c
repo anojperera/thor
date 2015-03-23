@@ -22,7 +22,8 @@
 
 #define THCON_DEFAULT_WOL_PORT 9
 
-#define THCON_MAGIC_PACK_BUFF 17*THCON_MAC_ADDR_BUFF
+#define THCON_MAGIC_REPEAT 17
+#define THCON_MAGIC_PACK_BUFF THCON_MAGIC_REPEAT*THCON_MAC_ADDR_BUFF
 #define THCON_MAC_ADDR_STR_BUFF 64
 #define THCON_MAC_ADDR_BASE 16						/* base 16 */
 
@@ -1541,12 +1542,17 @@ static int _thcon_conv_mac_addr_to_base16(thcon* obj)
 {
 	unsigned int _cnt = 0;
 	char* _tok = NULL;
+	char _buff[THCON_MAC_ADDR_STR_BUFF];
 
 	/* initialise the buffer */
 	memset(obj->var_mac_addr, 0, THCON_MAC_ADDR_BUFF);
+	memset(_buff, 0, THCON_MAC_ADDR_BUFF);
+
+	strncpy(_buff, obj->var_mac_addr_str, THCON_MAC_ADDR_STR_BUFF-1);
+	_buff[THCON_MAC_ADDR_STR_BUFF-1] = '\0';
 
 	/* split the string by delimiter  */
-	_tok = strtok(obj->var_mac_addr_str, THCON_MAC_ADDR_DEL);
+	_tok = strtok(_buff, THCON_MAC_ADDR_DEL);
 	while(_tok)
 	{
 		/* check buffer for overflow */
@@ -1583,9 +1589,10 @@ static int _thcon_send_magic_packet(thcon* obj)
 {
 	struct sockaddr_in _addr;
 	unsigned char _magic_packet[THCON_MAGIC_PACK_BUFF] = {};
-	int _i = 0, _j = 0;
+	unsigned char* _packet_ptr = NULL;
+	int _i = 0;
 
-	memset(&_addr, 0, sizeof(struct addrinfo));
+	memset(&_addr, 0, sizeof(struct sockaddr_in));
 
 	_addr.sin_family = AF_INET;
 	_addr.sin_port = htons(THCON_DEFAULT_WOL_PORT);
@@ -1593,15 +1600,17 @@ static int _thcon_send_magic_packet(thcon* obj)
 	if(inet_aton(obj->var_subnet_addr, &_addr.sin_addr) == 0)
 		return -1;
 
-	for(; _i < THCON_MAC_ADDR_BUFF; _i++)
-		_magic_packet[_i] = 0xFF;
 
-	for(_i = 1; _i < THCON_MAGIC_PACK_BUFF; _i++) {
-		for(_j = 0; _j < THCON_MAC_ADDR_BUFF; _j++)
-			_magic_packet[_i * THCON_MAC_ADDR_BUFF + _j] = obj->var_mac_addr[_j];
+	_packet_ptr = _magic_packet;
+	memset(_magic_packet, 0xFF, THCON_MAC_ADDR_BUFF);
+	_packet_ptr += THCON_MAC_ADDR_BUFF;
+
+	for(_i = 0; _i < THCON_MAGIC_REPEAT-1; _i++) {
+		memcpy(_packet_ptr, obj->var_mac_addr, THCON_MAC_ADDR_BUFF);
+		_packet_ptr += THCON_MAC_ADDR_BUFF;
 	}
 
-	if(sendto(obj->var_wol_sock, _magic_packet, THCON_MAGIC_PACK_BUFF, 0, (const struct sockaddr *) &_addr, sizeof(struct sockaddr_in)) < 0)
+	if(sendto(obj->var_wol_sock, _magic_packet, THCON_MAGIC_PACK_BUFF, 0, (struct sockaddr *) &_addr, sizeof(struct sockaddr)) < 0)
 		return -1;
 	THOR_LOG_ERROR("magic packet sent");
 	return 0;
