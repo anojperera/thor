@@ -549,6 +549,20 @@ int thcon_wol_device(thcon* obj, const char* mac_addr)
 	/* send magic packet */
 	return _thcon_send_magic_packet(obj);
 }
+
+int thcon_create_raw_sock(thcon* obj)
+{
+	/* check for NULL pointer */
+	if(obj == NULL)
+		return -1;
+
+	if(_thcon_create_connection(obj, obj->_var_con_mode))
+		return -1;
+
+	/* if all was successful, return the active socket */
+	return THCON_GET_ACTIVE_SOCK(obj);
+}
+
 /*======================================================================*/
 /* Private methods */
 /* Connection mode 1 - server mode */

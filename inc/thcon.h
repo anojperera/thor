@@ -162,8 +162,8 @@ extern "C" {
 #endif
 
     /* initialise class */
-    int thcon_init(thcon* obj, thcon_mode mode);	/* initialise connection object */
-    void thcon_delete(thcon* obj);			/* free connection struct information */
+    int thcon_init(thcon* obj, thcon_mode mode);						/* initialise connection object */
+    void thcon_delete(thcon* obj);									/* free connection struct information */
 
     /* Methods for handling my information struct */
 #define thcon_reset_my_info(obj)					\
@@ -174,6 +174,15 @@ extern "C" {
 
     /* contact admin and send local ip and geo location */
     int thcon_contact_admin(thcon* obj, const char* admin_url);
+
+	/*
+	 * Creates a raw socket for communication. If successful a socket
+	 * descriptor shall be returned. If not -1 is returned.
+	 * After a sucessful call to this use GET_ACTIVE_SCOK macro to
+	 * return the active socket. This method should only be used on
+	 * client mode.
+	 */
+	int thcon_create_raw_sock(thcon* obj);
 
     /* Start stop methods */
     int thcon_start(thcon* obj);
