@@ -560,7 +560,7 @@ int thcon_create_raw_sock(thcon* obj)
 		return -1;
 
 	/* if all was successful, return the active socket */
-	return THCON_GET_ACTIVE_SOCK(obj);
+	return obj->var_acc_sock;
 }
 
 /*======================================================================*/
