@@ -6,6 +6,12 @@ parent=$(dirname $cwd )
 include_folder="/inc/"
 include_path="$parent$include_folder"
 
+# Create bin directory if it doesn't exits
+if [ ! -d ../bin ]; then
+	mkdir ../bin
+fi
+
+
 # Creates a shared object of which expose a communication server
 gcc -g -Wall -O0 -c -fPIC thcon.c thornifix.c -I$include_path -I/usr/include/libxml2/
 mv *.o ../bin/
