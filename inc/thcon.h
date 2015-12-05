@@ -96,6 +96,8 @@ struct _thcon
     unsigned int _var_bf_sz;				/* dynamic buffer size holding */
     unsigned int _var_curl_timeout;			/* default time out mode */
 
+	unsigned int var_inbuff_sz;				/* size of the inbound buffer */
+	unsigned int var_outbuff_sz;			/* size of of the outbound buffer */
 
 	unsigned char var_mac_addr[THCON_MAC_ADDR_BUFF];
 	char var_subnet_addr[THCON_SUBNET_NAME_SZ];
@@ -106,8 +108,8 @@ struct _thcon
      * Memory buffer to be used between read
      * and write to the main programm.
      */
-    char var_membuff_in[THORNIFIX_MSG_BUFF_SZ];
-    char var_membuff_out[THORNIFIX_MSG_BUFF_SZ];
+    char* var_membuff_in;
+    char* var_membuff_out;
     /*-----------------------------------------*/
 
     char var_port_name[THCON_PORT_NAME_SZ];

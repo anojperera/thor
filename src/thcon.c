@@ -137,7 +137,10 @@ static int _thcon_accept_conn(thcon* obj, int list_sock, int epoll_inst, struct 
  * clients.
  */
 static int _thcon_write_to_int_buff(thcon* obj, int socket_fd);
+static int _thcon_write_to_ext_buff(thcon* obj, int socket_fd);
 /* static int _thcon_read_from_int_buff(thcon* obj, int socket_fd); */
+
+
 
 
 /*---------------------------------------------------------------------------*/
@@ -187,6 +190,11 @@ int thcon_init(thcon* obj, thcon_mode mode)
     obj->var_geo_flg = 0;
     obj->var_ip_flg = 0;
 
+	obj->var_inbuff_sz = 0;
+	obj->var_outbuff_sz = 0;
+
+	obj->var_membuff_in = NULL;
+	obj->var_membuff_out = NULL;
     obj->_var_cons_fds = NULL;
     obj->_var_epol_inst = NULL;
     obj->_var_event_col = NULL;
@@ -215,6 +223,15 @@ void thcon_delete(thcon* obj)
     obj->_thcon_write_callback = NULL;
     obj->_thcon_conn_made = NULL;
     obj->_thcon_conn_closed = NULL;
+
+	if(obj->var_membuff_in)
+		free(obj->var_membuff_in);
+
+	if(obj->var_membuff_out)
+		free(obj->var_membuff_out);
+
+	obj->var_membuff_in = NULL;
+	obj->var_membuff_out = NULL;
 
     /* check scope */
     sem_destroy(&obj->_var_sem);
@@ -925,14 +942,10 @@ static void* _thcon_thread_function_client(void* obj)
     thcon* _obj;
     int _stat = 0;
     int _cancel_state = 0;
-    char _t_buff[THORNIFIX_MSG_BUFF_SZ];
 
     /* check object pointer */
     if(obj == NULL)
 		return NULL;
-
-    /* initialise buffer */
-    memset((void*) _t_buff, 0, THORNIFIX_MSG_BUFF_SZ);
 
     /* cast object pointer to connection type */
     _obj = (thcon*) obj;
@@ -954,7 +967,7 @@ static void* _thcon_thread_function_client(void* obj)
     do
 	{
 	    pthread_testcancel();
-	    _stat = recv(_obj->var_acc_sock, _t_buff, THORNIFIX_MSG_BUFF_SZ, MSG_DONTWAIT);
+	    _stat = _thcon_write_to_ext_buff(_obj, _obj->var_acc_sock);
 
 	    /*
 	     * Server has closed the connection therefore we exit the
@@ -971,8 +984,8 @@ static void* _thcon_thread_function_client(void* obj)
 	     * Later on, the message should be queued and have the callback pop following
 	     * execution.
 	     */
-	    if(_obj->_thcon_recv_callback)
-			_obj->_thcon_recv_callback(_obj->_ext_obj, _t_buff, _stat);
+	    if(_obj->_thcon_recv_callback && _stat > 0)
+			_obj->_thcon_recv_callback(_obj->_ext_obj, _obj->var_membuff_out, _obj->var_outbuff_sz);
 
 	    /* enable thread cancel state */
 	    pthread_setcancelstate(_cancel_state, NULL);
@@ -1163,7 +1176,7 @@ static void* _thcon_thread_function_server(void* obj)
 
 					    _stat = _thcon_write_to_int_buff(_obj, _events[_i].data.fd);
 					    if(_obj->_thcon_recv_callback && _stat > 0)
-							_obj->_thcon_recv_callback(_obj->_ext_obj, _obj->var_membuff_in, THORNIFIX_MSG_BUFF_SZ);
+							_obj->_thcon_recv_callback(_obj->_ext_obj, _obj->var_membuff_in, _obj->var_inbuff_sz);
 					    if(_stat == -1)
 						{
 						    /*
@@ -1310,10 +1323,81 @@ static int _thcon_accept_conn(thcon* obj, int list_sock, int epoll_inst, struct 
 static int _thcon_write_to_int_buff(thcon* obj, int socket_fd)
 {
     int _sz = 0;
-    memset((void*) obj->var_membuff_in, 0, THORNIFIX_MSG_BUFF_SZ);
-    _sz += read(socket_fd, obj->var_membuff_in, THORNIFIX_MSG_BUFF_SZ);
+	obj->var_inbuff_sz = 0;
 
-    return _sz;
+	/* free the buffer if it exists */
+	if(obj->var_membuff_in)
+		free(obj->var_membuff_in);
+	obj->var_membuff_in = NULL;
+
+	/* allocate and memset the initial buffer */
+	obj->var_membuff_in = (char*) malloc(sizeof(char) * THORNIFIX_MSG_BUFF_SZ);
+    memset((void*) obj->var_membuff_in, 0, THORNIFIX_MSG_BUFF_SZ);
+	do {
+		_sz = read(socket_fd,
+				   obj->var_membuff_in + obj->var_inbuff_sz,
+				   THORNIFIX_MSG_BUFF_SZ);
+
+		/* break out of the loop if its an error */
+		if(_sz == -1)
+			break;
+
+		obj->var_inbuff_sz += _sz;
+
+		/* reallocate buffer if read size is more than half of the initial buffer */
+		if((float) (THORNIFIX_MSG_BUFF_SZ / 2) > (float) _sz) {
+			obj->var_membuff_in = (char*)
+				realloc(obj->var_membuff_in, (obj->var_inbuff_sz + THORNIFIX_MSG_BUFF_SZ));
+		}
+
+	} while(_sz > 0);
+
+	obj->var_membuff_in[obj->var_inbuff_sz] = '\0';
+	if(_sz == -1 && obj->var_inbuff_sz > 0)
+		return obj->var_inbuff_sz;
+	else
+		return _sz;
+}
+
+/* Write data on socket to the external buffer */
+static int _thcon_write_to_ext_buff(thcon* obj, int socket_fd)
+{
+	int _sz = 0;
+	obj->var_outbuff_sz = 0;
+
+	/* Free the buffer if its allocated */
+	if(obj->var_membuff_out)
+		free(obj->var_membuff_out);
+	obj->var_membuff_out = NULL;
+
+	/* allocate and memset the buffer */
+	obj->var_membuff_out = (char*) malloc(sizeof(char) * THORNIFIX_MSG_BUFF_SZ);
+	memset((void*) obj->var_membuff_out, 0, THORNIFIX_MSG_BUFF_SZ);
+	do {
+		_sz = recv(socket_fd,
+				   obj->var_membuff_out + obj->var_outbuff_sz,
+				   THORNIFIX_MSG_BUFF_SZ,
+				   MSG_DONTWAIT);
+
+		/* break out of the loop if its an error */
+		if(_sz == -1)
+			break;
+
+		obj->var_outbuff_sz += _sz;
+
+		/* reallocate buffer if the read size is more than half of the initial buffer */
+		if((float) (THORNIFIX_MSG_BUFF_SZ / 2) > (float) _sz) {
+			obj->var_membuff_out = (char*)
+				realloc(obj->var_membuff_out, (obj->var_outbuff_sz + THORNIFIX_MSG_BUFF_SZ));
+		}
+
+	} while(_sz > 0);
+
+	obj->var_membuff_out[obj->var_outbuff_sz] = '\0';
+	if(_sz == -1 && obj->var_outbuff_sz > 0)
+		return obj->var_outbuff_sz;
+	else
+		return _sz;
 }
 
 
