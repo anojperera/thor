@@ -1386,7 +1386,7 @@ static int _thcon_write_to_ext_buff(thcon* obj, int socket_fd)
 		obj->var_outbuff_sz += _sz;
 
 		/* reallocate buffer if the read size is more than half of the initial buffer */
-		if((float) (THORNIFIX_MSG_BUFF_SZ / 2) > (float) _sz) {
+		if((float) _sz > (float) (THORNIFIX_MSG_BUFF_SZ / 2)) {
 			obj->var_membuff_out = (char*)
 				realloc(obj->var_membuff_out, (obj->var_outbuff_sz + THORNIFIX_MSG_BUFF_SZ));
 		}
