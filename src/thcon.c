@@ -1345,7 +1345,7 @@ static int _thcon_write_to_int_buff(thcon* obj, int socket_fd)
 		obj->var_inbuff_sz += _sz;
 
 		/* reallocate buffer if read size is more than half of the initial buffer */
-		if((float) (THORNIFIX_MSG_BUFF_SZ / 2) > (float) _sz) {
+		if((float) (THORNIFIX_MSG_BUFF_SZ / 2) < (float) _sz) {
 			obj->var_membuff_in = (char*)
 				realloc(obj->var_membuff_in, (obj->var_inbuff_sz + THORNIFIX_MSG_BUFF_SZ));
 		}
